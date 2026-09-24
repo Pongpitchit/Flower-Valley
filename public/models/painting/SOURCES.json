@@ -1,0 +1,62 @@
+[
+  {
+    "id": "cat",
+    "name": "แมว",
+    "source": "https://3dassets.dev/assets/companion-animals-and-pet-home-cat-sitting-e04caa77",
+    "license": {
+      "slug": "cc0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attributionRequired": false
+    },
+    "bytes": 172240
+  },
+  {
+    "id": "dog",
+    "name": "หมา",
+    "source": "https://3dassets.dev/assets/companion-animals-and-pet-home-dog-retriever-sit-0c4a26d8",
+    "license": {
+      "slug": "cc0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attributionRequired": false
+    },
+    "bytes": 173464
+  },
+  {
+    "id": "rabbit",
+    "name": "กระต่าย",
+    "source": "https://3dassets.dev/assets/companion-animals-and-pet-home-rabbit-0fdeb244",
+    "license": {
+      "slug": "cc0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attributionRequired": false
+    },
+    "bytes": 110328
+  },
+  {
+    "id": "tortoise",
+    "name": "เต่า",
+    "source": "https://3dassets.dev/assets/companion-animals-and-pet-home-tortoise-0bb65a27",
+    "license": {
+      "slug": "cc0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attributionRequired": false
+    },
+    "bytes": 126684
+  },
+  {
+    "id": "guinea",
+    "name": "หนูตะเภา",
+    "source": "https://3dassets.dev/assets/companion-animals-and-pet-home-guinea-pig-c4069e85",
+    "license": {
+      "slug": "cc0-1.0",
+      "name": "CC0 1.0 Universal",
+      "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attributionRequired": false
+    },
+    "bytes": 83792
+  }
+]
