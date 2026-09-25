@@ -1,0 +1,113 @@
+{
+  "size": {
+    "width": 1536,
+    "height": 1024
+  },
+  "frames": {
+    "daisy": {
+      "image": "flowers.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "tulip": {
+      "image": "flowers.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "sunflower": {
+      "image": "flowers.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "rose": {
+      "image": "flowers.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "lavender": {
+      "image": "flowers.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "seed:daisy": {
+      "image": "seeds.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "seed:tulip": {
+      "image": "seeds.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "seed:sunflower": {
+      "image": "seeds.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "seed:rose": {
+      "image": "seeds.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "seed:lavender": {
+      "image": "seeds.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "carp": {
+      "image": "fish-and-tools.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "goldfish": {
+      "image": "fish-and-tools.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "rare": {
+      "image": "fish-and-tools.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "bouquet": {
+      "image": "fish-and-tools.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "watering-can": {
+      "image": "fish-and-tools.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    }
+  }
+}

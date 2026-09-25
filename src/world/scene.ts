@@ -1,4 +1,5 @@
 import "aframe";
+import {buildMeadows,addNpcFace,createLakeFish} from "./livingDetails";
 import {buildingMaterials,buildHome,buildAtelier} from "./buildings";
 import {loadPaintModel,disposePaintModel} from "./paintModels";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
@@ -182,7 +183,14 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       d: number,
       parent?: any,
     ) => this.mesh(geometries.box, m, x, y, z, w, h, d, parent);
-    this.box(this.m.grass, 0, -0.28, 0, 160, 0.5, 160);
+    // Cut the lake out of the terrain so underwater fish are not hidden by grass.
+    const landShape = new T.Shape();
+    landShape.moveTo(-80,-80);landShape.lineTo(80,-80);landShape.lineTo(80,80);landShape.lineTo(-80,80);landShape.closePath();
+    const lakeHole = new T.Path();lakeHole.absellipse(0,31,13.2,11.2,0,Math.PI*2,true,0);landShape.holes.push(lakeHole);
+    const land = new T.ShapeGeometry(landShape,64);land.rotateX(-Math.PI/2);
+    const landUV = land.attributes.uv, landPos = land.attributes.position;
+    for(let i=0;i<landUV.count;i++)landUV.setXY(i,(landPos.getX(i)+80)/160,(landPos.getZ(i)+80)/160);
+    this.mesh(land,this.m.grass,0,-.03,0,1,1,1);
     this.box(this.m.path, 0, 0.008, 10, 3.5, 0.04, 61);
     this.box(this.m.path, -9, 0.012, 15, 18, 0.05, 3);
     this.box(this.m.path, 8, 0.012, 23, 18, 0.05, 3);
@@ -412,19 +420,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     );
     grassMatrices.forEach((m, i) => grassMesh.setMatrixAt(i, m));
     this.world.add(grassMesh);
-    for (let i = 0; i < 95; i++) {
-      const x = (random() - 0.5) * 64,
-        z = (random() - 0.5) * 66;
-      if (
-        (Math.abs(x) < 21 && z > -12 && z < 32) ||
-        (x * x) / 190 + (z + 31) ** 2 / 130 < 1.4
-      )
-        continue;
-      const f = createFlower(FLOWERS[i % 5].id);
-      f.position.set(x, 0.05, z);
-      f.scale.multiplyScalar(0.8 + random() * 0.7);
-      this.mergeGroup(f);
-    }
+    buildMeadows(this,createFlower,random);
     for (let i = 0; i < 18; i++) {
       const a = (i / 18) * Math.PI * 2;
       this.mesh(
@@ -619,7 +615,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
   },
   buildLake(this: any) {
     const bank = this.mesh(
-      new T.CircleGeometry(1, 64),
+      new T.RingGeometry(.91, 1, 64),
       this.m.path,
       0,
       -0.025,
@@ -630,6 +626,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       this.world,
     );
     bank.rotation.x = -Math.PI / 2;
+    const lakebed = this.mesh(new T.CircleGeometry(1,64),mat('#66755b'),0,-.65,-31,13.4,11.4,1,this.world);
+    lakebed.rotation.x = -Math.PI / 2;
     const waterGeo = new T.CircleGeometry(1, 96);
     this.water = new T.Mesh(
       waterGeo,
@@ -638,7 +636,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         roughness: 0.18,
         metalness: 0.45,
         transparent: true,
-        opacity: 0.9,
+        opacity: 0.56,
+        depthWrite: false,
         side: T.DoubleSide,
       }),
     );
@@ -674,30 +673,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         this.box(this.m.darkWood, x, 0.05, z, 0.16, 0.8, 0.16);
     this.fishes = [];
     for (let i = 0; i < 7; i++) {
-      const fish = new T.Group();
-      this.mesh(
-        geometries.sphere,
-        mat(i % 2 ? "#a5a67e" : "#d4a963"),
-        0,
-        0,
-        0,
-        0.25,
-        0.075,
-        0.1,
-        fish,
-      );
-      const tail = this.mesh(
-        geometries.cone,
-        mat("#b39b68"),
-        -0.27,
-        0,
-        0,
-        0.13,
-        0.24,
-        0.05,
-        fish,
-      );
-      tail.rotation.z = Math.PI / 2;
+      const fish = createLakeFish(this,i);
       this.world.add(fish);
       this.fishes.push(fish);
     }
@@ -831,18 +807,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         g,
       );
     }
-    for (const dx of [-0.07, 0.07])
-      this.mesh(
-        geometries.sphere,
-        mat("#34332d"),
-        dx,
-        1.56,
-        0.18,
-        0.023,
-        0.025,
-        0.015,
-        g,
-      );
+    addNpcFace(this,g,name,skin);
     g.position.set(x, 0, z);
     this.dynamic.add(g);
     this.npcs.push({ g, legs, x, z, name, kind });
@@ -1095,7 +1060,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     });
     this.fishes.forEach((f: any, i: number) => {
       const a = time * 0.0002 + i;
-      f.position.set(Math.sin(a) * 5, 0.015, -30 + Math.cos(a * 0.8) * 5);
+      f.position.set(Math.sin(a) * 5, -.16 + Math.sin(time*.002+i)*.025, -30 + Math.cos(a * 0.8) * 5);
+      f.userData.tail.rotation.y = Math.sin(time*.007+i)*.32;
       f.rotation.y = -a;
     });
     this.npcs.forEach((n: any, i: number) => {

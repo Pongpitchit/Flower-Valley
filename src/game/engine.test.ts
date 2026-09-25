@@ -13,8 +13,11 @@ describe('Complete farming and economy loop',()=>{
 });
 describe('Energy and time',()=>{
  it('blocks heavy actions at zero energy',()=>{const s=initialState();s.energy=0;s.inventory['seed:daisy']=1;for(const type of ['cast','plant'])expect(apply(s,type,{id:'daisy',index:0}).ok).toBe(false);});
- it('rest restores 20, clamps at max, and cannot be spammed',()=>{let s=initialState();s.energy=90;s=apply(s,'rest').state;expect(s.energy).toBe(100);expect(apply(s,'rest').ok).toBe(false);s.energy=20;s.time+=30;expect(apply(s,'rest').state.energy).toBe(40);});
- it('sleep only at night; midnight restores energy and advances day',()=>{let s=initialState();expect(apply(s,'sleep').ok).toBe(false);s.time=1439;s.energy=0;s=apply(s,'tick',{amount:2}).state;expect(s).toMatchObject({day:2,time:360,energy:100});});
+ it('rest restores up to 20 and spends 30 minutes without moving or advancing day',()=>{let s=initialState();s.energy=90;const before=s.time,position={...s.position};s=apply(s,'rest').state;expect(s.energy).toBe(100);expect(s.time).toBe(before+30);expect(s.day).toBe(1);expect(s.position).toEqual(position);const full=apply(s,'rest');expect(full.ok).toBe(false);expect(full.state.time).toBe(s.time);s.energy=20;const rested=apply(s,'rest').state;expect(rested.energy).toBe(40);expect(rested.time).toBe(before+60);});
+ it('sleep only at night; midnight gives 60 percent energy and advances day',()=>{let s=initialState();expect(apply(s,'sleep').ok).toBe(false);s.time=1439;s.energy=0;s=apply(s,'tick',{amount:2}).state;expect(s).toMatchObject({day:2,time:360,energy:60});});
+ it('normal sleep restores full upgraded energy and wakes beside the bed',()=>{const s=initialState();s.maxEnergy=160;s.energy=3;s.time=1200;const next=apply(s,'sleep').state;expect(next).toMatchObject({day:2,time:360,energy:160,position:{x:13,z:2}});});
+ it('rest crossing midnight forces sleep at 60 percent of upgraded capacity and grows crops once',()=>{const s=initialState();s.maxEnergy=160;s.energy=10;s.time=1425;s.farm[0]={seed:'daisy',age:0,watered:true};const next=apply(s,'rest').state;expect(next).toMatchObject({day:2,time:360,energy:96});expect(next.farm[0].age).toBe(1);});
+ it('stays awake until midnight and does not advance early',()=>{const s=initialState();s.time=1437;s.energy=15;const late=apply(s,'tick',{amount:2}).state;expect(late).toMatchObject({day:1,time:1439,energy:15});expect(apply(late,'tick',{amount:2}).state).toMatchObject({day:2,time:360,energy:60});});
  it('running costs one energy without going negative',()=>{const s=initialState();s.energy=1;const r=apply(s,'run');expect(r.state.energy).toBe(0);expect(apply(r.state,'run').ok).toBe(false);});
 });
 describe('Bouquets, orders and upgrades',()=>{

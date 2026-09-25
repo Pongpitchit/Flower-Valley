@@ -174,6 +174,7 @@ export type Action = {
   amount?: number;
 };
 export type Result = { state: GameState; message: string; ok: boolean };
+export const REST_MINUTES = 30;
 export function transition(
   previous: GameState,
   a: Action,
@@ -287,16 +288,16 @@ export function transition(
   }
   if (a.type === "rest") {
     const now = s.day * 1440 + s.time;
-    if (now - s.restAt < 30)
-      return fail(
-        "พักอีกครั้งได้ในอีก " +
-          Math.ceil(30 - (now - s.restAt)) +
-          " นาทีในเกม",
-      );
     if (s.energy >= s.maxEnergy) return fail("พลังงานเต็มแล้ว");
+    const gained = Math.min(20, s.maxEnergy - s.energy);
     s.energy = Math.min(s.maxEnergy, s.energy + 20);
     s.restAt = now;
-    return ok("นั่งพัก ฟื้นพลังงาน +20");
+    s.time += REST_MINUTES;
+    if (s.time >= 1440) {
+      nextDay(s, rng, false);
+      return ok("เผลอหลับจนเที่ยงคืน ตื่น 06:00 น. พร้อมพลังงาน 60%");
+    }
+    return ok(`นั่งพัก ${REST_MINUTES} นาที ฟื้นพลังงาน +${gained}`);
   }
   if (a.type === "sleep") {
     if (s.time < 1200)
@@ -307,8 +308,8 @@ export function transition(
   if (a.type === "tick") {
     s.time += a.amount ?? 2;
     if (s.time >= 1440) {
-      nextDay(s, rng);
-      return ok("เที่ยงคืนแล้ว กลับบ้านพักผ่อนและเริ่มวันใหม่");
+      nextDay(s, rng, false);
+      return ok("เที่ยงคืนแล้ว หลับด้วยความเหนื่อยล้า ตื่นพร้อมพลังงาน 60%");
     }
     return ok("");
   }
@@ -391,10 +392,10 @@ export function transition(
   }
   return fail("ไม่พบกิจกรรม");
 }
-function nextDay(s: GameState, rng: () => number) {
+function nextDay(s: GameState, rng: () => number, rested = true) {
   s.day++;
   s.time = 360;
-  s.energy = s.maxEnergy;
+  s.energy = rested ? s.maxEnergy : Math.floor(s.maxEnergy * .6);
   s.weather = rng() < 0.3 ? "rain" : "sunny";
   s.farm.forEach((p) => {
     if (p.seed) {
@@ -406,7 +407,7 @@ function nextDay(s: GameState, rng: () => number) {
     flower: FLOWERS[(s.day - 1) % FLOWERS.length].id,
     fulfilled: false,
   };
-  s.position = { x: 13, z: 8, yaw: 0 };
+  s.position = { x: 13, z: 2, yaw: -Math.PI / 2 };
 }
 let loadMessage = "";
 function load(): GameState {
