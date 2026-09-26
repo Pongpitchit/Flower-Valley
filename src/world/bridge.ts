@@ -9,6 +9,7 @@ export type Target = {
 };
 export const bridge = {
   paused: true,
+  npcModels: {} as Record<string,string>,
   keys: new Set<string>(),
   move: { x: 0, y: 0 },
   look: { x: 0, y: 0 },

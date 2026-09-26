@@ -1,3 +1,4 @@
+import { addBreeze } from './atmosphere';
 import { FLOWERS } from '../game/data';
 import { canMove } from './bridge';
 
@@ -30,6 +31,7 @@ export function buildMeadows(w: any, makeFlower: (id: string) => any, random: ()
   for (let i = 0; i < FLOWERS.length; i++) {
     const template = makeFlower(FLOWERS[i].id);
     for (const part of template.children) {
+      addBreeze(part.material,w.breezeClock,.13);
       const batch = new T.InstancedMesh(part.geometry, part.material, matrices[i].length);
       matrices[i].forEach((matrix, index) => batch.setMatrixAt(index, matrix));
       batch.receiveShadow = true;
@@ -45,6 +47,7 @@ export function addNpcFace(w: any, g: any, name: string, skin: any) {
   const hair = surface(({Lily:'#62452f',Mae:'#42302a',Finn:'#74614b',Oliver:'#a56b3e',Emma:'#53392f'} as Record<string,string>)[name]);
   const dark = surface('#322922'), white = surface('#fff2dd'), iris = surface(name === 'Finn' ? '#527d82' : '#5a704a');
   const cheek = surface('#cf8c78');
+  const eyes:any[]=[];
   const ball = (material:any,x:number,y:number,z:number,sx:number,sy:number,sz:number) =>
     w.mesh(new T.SphereGeometry(1,16,12),material,x,y,z,sx,sy,sz,g);
   const curve = (points:number[][],radius:number,material:any) => {
@@ -55,10 +58,10 @@ export function addNpcFace(w: any, g: any, name: string, skin: any) {
   for (const side of [-1,1]) {
     ball(skin,side*.194,1.52,0,.038,.061,.035);
     ball(cheek,side*.117,1.49,.162,.041,.019,.013);
-    ball(white,side*.074,1.565,.177,.039,.041,.023);
-    ball(iris,side*.072,1.565,.198,.021,.026,.009);
-    ball(dark,side*.072,1.565,.205,.012,.018,.006);
-    ball(white,side*.072-.006,1.574,.211,.006,.007,.004);
+    eyes.push(ball(white,side*.074,1.565,.177,.039,.041,.023));
+    eyes.push(ball(iris,side*.072,1.565,.198,.021,.026,.009));
+    eyes.push(ball(dark,side*.072,1.565,.205,.012,.018,.006));
+    eyes.push(ball(white,side*.072-.006,1.574,.211,.006,.007,.004));
     curve([[side*.108,1.622,.168],[side*.075,1.634,.181],[side*.041,1.623,.187]],.009,hair);
     ball(hair,side*.177,1.62,.023,.035,.12,.12);
     if (name === 'Mae' || name === 'Emma') ball(hair,side*.175,1.42,-.09,.075,.18,.09);
@@ -79,6 +82,7 @@ export function addNpcFace(w: any, g: any, name: string, skin: any) {
     w.box(surface(name === 'Mae' ? '#e8d5b4' : '#899a84'),0,1.015,.166,.34,.48,.04,g);
     w.box(hair,0,.96,.193,.16,.13,.025,g);
   }
+  eyes.forEach(eye=>eye.userData.openY=eye.scale.y);return eyes;
 }
 
 export function createLakeFish(w: any, index: number) {

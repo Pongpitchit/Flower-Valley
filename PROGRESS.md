@@ -14,7 +14,7 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 
 ## Automated verification
 
-- 25 tests pass (`npm test`): all five flower lifecycles and prices; insufficient resources; invalid actions; drought/rain; maturity; rest cooldown; sleep/midnight; running; duplicate bouquet ingredients; orders/rewards; upgrade caps; three fish rarities; artwork creation/sales; save validation; movement boundaries; five animal model IDs and saved-color compatibility.
+- 28 tests pass (`npm test`): all five flower lifecycles and prices; insufficient resources; invalid actions; drought/rain; maturity; rest time cost; normal sleep/full energy; forced midnight/60% energy; running; duplicate bouquet ingredients; orders/rewards; upgrade caps; three fish rarities; artwork creation/sales; save validation; movement boundaries; five animal model IDs and saved-color compatibility.
 - Production TypeScript/Vite build passes. A-Frame's main rendering bundle is large (roughly 1.7 MB before gzip); models are cached locally and loaded as needed.
 
 ## Browser verification performed
@@ -38,3 +38,13 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 
 - Added a wooden arranging table beside the left window, with sample flowers, wrapping paper, ribbon and scissors. Includes collision bounds and a dedicated interaction target connected to the existing bouquet system. The central doorway-to-bed route stays clear.
 - Browser verified the indoor table and its E prompt, opened the bouquet dialog and selected an inventory flower; unavailable flowers and incomplete bouquets remain disabled. Existing 25 rule tests pass.
+
+## Living world, pixel art and sleep update (2026-09-26)
+
+- Mirror Lake and The Garden now have solid wooden backing, two posts extending into the ground, caps and collision bounds. Both remain in their original positions.
+- Generated three transparent 1536×1024 pixel-art sheets, five items each; saved exact prompts and a frame manifest. Integrated all five flowers, five seed packets, three fish, bouquets and watering cans into the existing item UI. Confirmed the user wants existing prices retained.
+- Added instanced meadow flowers around the village, wind-driven grass/flowers/leaves, butterflies, birds, nighttime fireflies, smoke and animated fish. Quality mode lowers creature counts; reduced-motion preference stops ambient flight/wind animation.
+- Improved procedural NPC facial details, blinking, breathing, smooth turning, greetings and waving; Emma wanders near her regular spot. The specifically requested CGTrader pack is still blocked by its login-required download. No source files were available in Downloads. Awaiting user login or local model files.
+- Rest now costs 30 in-game minutes for up to +20 energy and stays at the bench. Normal sleep restores full energy at 06:00. Reaching midnight, including during rest, forces sleep and restores only 60% of maximum energy. Full-screen dark transition covers the day change; waking occurs next to the bed.
+- Fixed the solid terrain/bank underneath the lake that obscured fish. The lake now has a terrain opening, a lower bed, and translucent water with visibly distinct colored fish.
+- Browser verified rest 06:24→06:54 and energy 60→80 without changing day or saved standing position. Observed forced-sleep dark screen, 06:00 wake-up and 60/100 energy. Observed normal-sleep transition. Inspected generated seed/fish icons in their real shops, meadow density, NPC faces and colored fish. No rendering errors observed after the animation changes.

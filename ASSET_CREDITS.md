@@ -34,3 +34,9 @@ The pack publisher marks these assets as AI generated. Included models and their
 Original: scene layout, building geometry, procedural trees/flowers/NPCs/props, game rules, Thai UI, painting tools and synthesized ambient audio. A-Frame's underlying Three.js geometry is used inside an A-Frame component for batching and instancing.
 
 A-Frame / Three.js, React, Vite, Lucide icons and other packages retain their respective open-source licenses in `node_modules`. UI fonts (DM Sans and Noto Sans Thai) are loaded from Google Fonts with system-font fallbacks; the game remains functional if those optional font requests fail.
+
+## Generated pixel-art inventory images
+
+`public/icons/pixelart/{flowers,seeds,fish-and-tools}.png` were generated for this project using the built-in image_gen tool. Fifteen icons total, five per image, with alpha transparency. Original prompts are in `public/icons/pixelart/prompts.json`; sprite coordinates are in `atlas.json`. These generated images are separate from the Poly Haven and 3DAssets.dev assets above.
+
+The user-requested CGTrader NPC pack has **not** been downloaded or integrated: the download requires account login. Its license is not CC0 and no license claim is made for unavailable files.

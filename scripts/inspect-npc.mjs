@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import * as T from 'three';
+import {FBXLoader} from 'three/addons/loaders/FBXLoader.js';
+T.TextureLoader.prototype.load=function(url){const t=new T.Texture();t.userData.source=url;return t;};
+globalThis.window={URL:globalThis.URL,innerWidth:1024,innerHeight:768};
+const path='assets/npc-source/NPC_by and girl/NPC_boy and girl.fbx';
+const bytes=fs.readFileSync(path);const root=new FBXLoader().parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'');
+console.log('animations',root.animations.map(a=>({name:a.name,duration:a.duration,tracks:a.tracks.length})));
+root.updateMatrixWorld(true);
+root.traverse(o=>{if(o.isMesh||o.parent===root)console.log(JSON.stringify({name:o.name,type:o.type,parent:o.parent?.name,vertices:o.geometry?.attributes.position.count,bounds:new T.Box3().setFromObject(o).getSize(new T.Vector3()).toArray(),position:o.position.toArray(),material:(Array.isArray(o.material)?o.material:[o.material]).filter(Boolean).map(m=>({name:m.name,color:m.color?.getHexString(),map:m.map?.userData.source})),bones:o.skeleton?.bones.map(b=>b.name)}));});

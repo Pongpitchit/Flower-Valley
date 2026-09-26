@@ -34,7 +34,7 @@ Start with 500 coins, 100 energy and 12 empty plots. Buy seeds from Lily to the 
 
 Sell flowers to Mae, fish to Finn, and bouquets to Mae or the daily customer. A bouquet consumes exactly three flowers and sells for their combined value × 1.25 (rounded). A matching daily customer order adds 50 coins. Orders renew every morning.
 
-The clock advances two game minutes per real second while exploring and pauses in menus/activities. Shops open 07:00–20:00. NPCs walk into/out of their work locations at opening/closing time. At midnight the player returns home; sleeping at the bed after 20:00 also starts the next day. The bed offers a clearly labeled rest-until-evening action. Each new day rolls 30% rain. Rest at the bench restores 20 energy, with a 30-game-minute cooldown.
+The clock advances two game minutes per real second while exploring and pauses in menus/activities. Shops open 07:00–20:00. NPCs walk into/out of their work locations at opening/closing time. At midnight a dark transition takes the player to the next morning at 06:00 beside the bed, with 60% of maximum energy. Normal sleep at the bed after 20:00 restores full energy and uses the same transition. The bed offers a clearly labeled rest-until-evening action. Each new day rolls 30% rain. Resting at the bench restores up to 20 energy and consumes 30 game minutes. Sitting down or standing up alone does not change time or energy. Resting across midnight triggers the same forced-sleep penalty.
 
 The box outside the cottage sells an eight-plot expansion (400 coins), three energy upgrades (+20 each, 300/600/900 coins), and six decorative flower pots (100 each). Heavy activities are blocked when energy is insufficient.
 
@@ -47,7 +47,7 @@ The box outside the cottage sells an eight-plot expansion (400 coins), three ene
 
 ## Visuals and assets
 
-The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest bench is a downloaded textured glTF model. Sky uses an HDRI; foliage is instanced and flowers are batched. High quality enables shadows; low quality reduces resolution and disables shadows. See `ASSET_CREDITS.md` for exact sources/licenses.
+The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest bench is a downloaded textured glTF model. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and wave with a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `ASSET_CREDITS.md` for exact sources/licenses.
 
 The world combines detailed PBR surfaces with stylized procedural NPCs, vegetation and terrain. It is not a photorealistic scanned environment. Physical iPad/Safari performance still needs device testing.
 
@@ -69,3 +69,11 @@ The world combines detailed PBR surfaces with stylized procedural NPCs, vegetati
 See `PROGRESS.md`. Automated tests cover the economy/farming/time/energy/progression/save/model-painting rules. Browser checks cover the main gameplay loop, fishing, art creation and responsive layouts. No physical mobile device or VR headset has been tested. VR is not part of this implementation.
 
 A-Frame 1.7.1's transitive development/color-palette chain still reports four moderate npm audit entries (`got` via `nice-color-palettes` / `three-bmfont-text`); the audited issue is a Node network utility, not gameplay input. No forced downgrade to obsolete A-Frame was applied. Vitest was upgraded to the patched 4.1.11 release.
+
+## Pixel-art inventory assets
+
+Fifteen icons across three transparent PNG atlases (five items each), used in shops, inventory, bouquet selection, planting, encyclopedia and fishing. See `public/icons/pixelart/README.md`, `atlas.json` and `prompts.json`.
+
+## Requested NPC model pack
+
+The user selected Maniacie’s “NPC for male and female” on CGTrader. The download currently requires a CGTrader login; its FBX/PNG files have not been downloaded or integrated. The current procedural NPCs remain visible until the source files are available. No substitute downloaded pack is represented as that asset.

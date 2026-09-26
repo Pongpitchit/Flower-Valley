@@ -1,4 +1,6 @@
 import "aframe";
+import {loadNpcModel} from "./npcModels";
+import {addBreeze,buildAtmosphere,greetingBubble} from "./atmosphere";
 import {buildMeadows,addNpcFace,createLakeFish} from "./livingDetails";
 import {buildingMaterials,buildHome,buildAtelier} from "./buildings";
 import {loadPaintModel,disposePaintModel} from "./paintModels";
@@ -109,6 +111,9 @@ if (import.meta.hot) import.meta.hot.accept(() => window.location.reload());
 if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("flower-world", {
   init(this: any) {
     this.world = new T.Group();
+    bridge.npcModels={};
+    this.breezeClock = {value:0};
+    this.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.el.setObject3D("valley", this.world);
     this.staticBuckets = new Map();
     this.dynamic = new T.Group();
@@ -366,7 +371,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       shader.vertexShader = "uniform float uWind;\n" + shader.vertexShader;
       shader.vertexShader = shader.vertexShader.replace(
         "#include <begin_vertex>",
-        "#include <begin_vertex>\n transformed.x += sin(uWind + instanceMatrix[3].x * 0.4 + instanceMatrix[3].z) * 0.08 * position.y;",
+        "#include <begin_vertex>\n transformed.x += sin(uWind + instanceMatrix[3].x * 0.4 + instanceMatrix[3].z) * 0.22 * position.y;",
       );
     };
     const leaves = new T.InstancedMesh(
@@ -413,9 +418,11 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       new T.Float32BufferAttribute([-0.5, 0, 0, 0.5, 0, 0, 0.15, 1, 0], 3),
     );
     blade.computeVertexNormals();
+    const grassMaterial=mat("#667d3b", { side: T.DoubleSide });
+    addBreeze(grassMaterial,this.breezeClock,.16);
     const grassMesh = new T.InstancedMesh(
       blade,
-      mat("#667d3b", { side: T.DoubleSide }),
+      grassMaterial,
       grassMatrices.length,
     );
     grassMatrices.forEach((m, i) => grassMesh.setMatrixAt(i, m));
@@ -515,6 +522,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       new T.PointsMaterial({ color: "#fff3dc", size: 0.4, transparent: true }),
     );
     this.world.add(this.stars);
+    this.animateAtmosphere=buildAtmosphere(this);
     this.refresh(getState());
     bridge.onReady();
   },
@@ -769,7 +777,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       0.2,
       g,
     );
-    const legs = [];
+    const legs = [], arms:any[] = [];
     for (const dx of [-0.12, 0.12]) {
       const leg = this.mesh(
         geometries.cylinder,
@@ -783,18 +791,11 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         g,
       );
       legs.push(leg);
-      const arm = this.mesh(
-        geometries.cylinder,
-        skin,
-        dx * 2.4,
-        1.01,
-        0,
-        0.063,
-        0.52,
-        0.065,
-        g,
-      );
-      arm.rotation.z = dx > 0 ? 0.12 : -0.12;
+      const arm = new T.Group();arm.position.set(dx*2.4,1.27,0);g.add(arm);
+      this.mesh(geometries.cylinder,skin,0,-.26,0,.063,.52,.065,arm);
+      this.mesh(geometries.sphere,skin,0,-.53,0,.068,.075,.067,arm);
+      this.mesh(geometries.cylinder,cloth,0,-.09,0,.073,.19,.075,arm);
+      arm.rotation.z=dx>0?.12:-.12;arms.push(arm);
       this.mesh(
         geometries.sphere,
         mat("#463e32"),
@@ -807,10 +808,32 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         g,
       );
     }
-    addNpcFace(this,g,name,skin);
+    const headItems=[g.children[0],g.children[2],g.children[3]],faceStart=g.children.length;
+    const eyes=addNpcFace(this,g,name,skin);
+    headItems.push(...g.children.slice(faceStart).filter((o:any)=>o.position.y>1.3||o.geometry?.type==='TubeGeometry'));
+    const head=new T.Group();head.position.y=1.5;g.add(head);
+    headItems.forEach((o:any)=>{o.position.y-=1.5;head.add(o);});
+    const greeting=greetingBubble(({Lily:'วันนี้อยากปลูกดอกอะไรดีคะ?',Mae:'ดอกไม้จากสวนคุณหอมจัง',Finn:'วันนี้ปลากำลังกินเหยื่อเลย!',Oliver:'มาสร้างอะไรสนุก ๆ กันเถอะ',Emma:'เดินชมสวนด้วยกันไหมคะ?'} as Record<string,string>)[name]);
+    g.add(greeting);
     g.position.set(x, 0, z);
     this.dynamic.add(g);
-    this.npcs.push({ g, legs, x, z, name, kind });
+    const npc:any={ g, legs, arms, head, eyes, greeting, near:false, waveUntil:0, x, z, name, kind };
+    this.npcs.push(npc);
+    loadNpcModel(name).then(loaded=>{
+      if(!g.parent)return;
+      const materials=new Set<any>(),ownedGeometry=new Set<any>();
+      for(const child of [...g.children]){
+        if(child===greeting)continue;
+        child.traverse((o:any)=>{if(o.geometry&&!Object.values(geometries).includes(o.geometry))ownedGeometry.add(o.geometry);if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])materials.add(m);});
+        g.remove(child);
+      }
+      // Geometry primitives are reused by world props, so their lifetime remains with the scene.
+      for(const material of materials)material.dispose();
+      for(const geometry of ownedGeometry)geometry.dispose();
+      g.add(loaded.model);npc.model=loaded;g.userData.model=loaded.code;bridge.npcModels[name]=loaded.code;
+      npc.legs=[];npc.arms=[];npc.eyes=[];npc.head=null;
+    }).catch(()=>bridge.onError('โหลดโมเดล '+name+' ไม่สำเร็จ ลองโหลดหน้าใหม่'));
+
   },
   lamp(this: any, x: number, z: number) {
     this.box(this.m.metal, x, 1.25, z, 0.07, 2.5, 0.07);
@@ -1051,7 +1074,10 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       p.needsUpdate = true;
       this.rain.position.set(this.pos.x, 0, this.pos.z);
     }
-    if (this.windShader) this.windShader.uniforms.uWind.value = time * 0.001;
+    const motionTime=this.reducedMotion?0:time;
+    this.breezeClock.value=motionTime*.001;
+    if (this.windShader) this.windShader.uniforms.uWind.value = motionTime * 0.001;
+    this.animateAtmosphere(motionTime,night,s.weather==='rain',bridge.quality==='low');
     this.water.position.y = 0.035 + Math.sin(time * 0.0007) * 0.012;
     this.ripples.forEach((r: any, i: number) => {
       const phase = (time * 0.00015 + i * 0.11) % 1;
@@ -1069,18 +1095,32 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       const travel=hours>=6&&hours<7 || hours>=20&&hours<21;
       n.g.visible = open||travel;
       const t=hours<7 ? Math.max(0,Math.min(1,hours-6)) : hours>=20 ? Math.max(0,Math.min(1,21-hours)) : 1;
-      n.g.position.z=n.z+(1-t)*4;
       n.open=open;
-      n.g.position.x = n.x + Math.sin(time * 0.0003 + i) * 0.18;
-      n.g.position.y = Math.sin(time * 0.002 + i) * 0.015;
-      n.g.rotation.y = Math.atan2(
-        this.pos.x - n.g.position.x,
-        this.pos.z - n.g.position.z,
-      );
-      n.legs.forEach(
-        (l: any, j: number) =>
-          (l.rotation.x = Math.sin(time * (travel?.008:.002) + j * Math.PI) * (travel?.5:.025)),
-      );
+      const near=Math.hypot(this.pos.x-n.g.position.x,this.pos.z-n.g.position.z)<3.7;
+      if(near&&!n.near&&open)n.waveUntil=time+2800;
+      n.near=near;
+      const roaming=!near&&open&&n.kind==='customer';
+      const goalX=n.x+(roaming?Math.sin(time*.0004+i)*.8:0);
+      const goalZ=n.z+(1-t)*4+(roaming?Math.cos(time*.0004+i)*.5:0);
+      const walking=travel||roaming;
+      const blend=1-Math.exp(-delta*3);
+      n.g.position.x+=(goalX-n.g.position.x)*blend;
+      n.g.position.z+=(goalZ-n.g.position.z)*blend;
+      n.g.position.y=walking?Math.abs(Math.sin(motionTime*.005+i))*.035:0;
+      n.g.scale.y=1+Math.sin(motionTime*.0017+i)*.004;
+      const angle=near?Math.atan2(this.pos.x-n.g.position.x,this.pos.z-n.g.position.z):Math.sin(time*.00025+i)*.4;
+      n.g.rotation.y+=Math.atan2(Math.sin(angle-n.g.rotation.y),Math.cos(angle-n.g.rotation.y))*blend;
+      if(n.head){n.head.rotation.x=Math.sin(motionTime*.0013+i)*.035;n.head.rotation.z=Math.sin(motionTime*.0007+i)*.025;}
+      const blinking=(time+i*731)%4700<140;
+      n.eyes.forEach((eye:any)=>eye.scale.y=eye.userData.openY*(blinking?.08:1));
+      const waving=near&&time<n.waveUntil;
+      n.greeting.visible=waving&&open;
+      n.model?.animate(motionTime+i*700,walking,waving,blinking);
+      n.arms.forEach((arm:any,j:number)=>{
+        arm.rotation.x=walking?Math.sin(motionTime*.008+j*Math.PI)*.35:Math.sin(motionTime*.0016+i)*.035;
+        arm.rotation.z=waving&&j===1?-2.25+Math.sin(motionTime*.014)*.18:(j?.12:-.12);
+      });
+      n.legs.forEach((leg:any,j:number)=>leg.rotation.x=Math.sin(motionTime*(walking?.008:.002)+j*Math.PI)*(walking?.35:.012));
     });
     this.targetCheck += delta;
     if (this.targetCheck > 0.16) {
