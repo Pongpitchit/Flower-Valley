@@ -73,7 +73,6 @@ export function buildAtelier(w:any){const T=window.AFRAME.THREE,m=w.m,wall=m.stu
  // Trestle workbench, easel, shelves and visible studio tools.
  w.box(m.wood,17,1,27,2,.13,1.2);for(const x of [16.3,17.7]){w.box(m.darkWood,x,.55,27,.1,.9,.8);w.box(m.darkWood,x,.2,27,.65,.1,1);}
  w.box(m.white,13,1.65,27,1.4,1.2,.09);w.box(m.wood,13,.8,27,.09,1.6,.14);w.box(m.wood,13,1.01,26.9,1.6,.08,.2);w.box(m.wood,13,2.3,27,.2,.13,.15);
- w.box(m.wood,17,.9,23,1.5,.13,.7);for(const x of [16.4,17.6])w.box(m.darkWood,x,.5,23,.1,.8,.6);
  for(const y of [.55,1.25,2])w.box(m.wood,15,y,29.15,6.2,.08,.5);
  for(const x of [12,18])w.box(m.darkWood,x,1.25,29.1,.1,2.5,.55);
  for(let i=0;i<7;i++){const c=new T.MeshStandardMaterial({color:['#927561','#9ba27e','#bc8c75'][i%3],roughness:.85});w.mesh(new T.CylinderGeometry(.11,.09,.25,16),c,12.4+i*.3,1.42,29.1,1,1,1);}

@@ -15,6 +15,7 @@ export function buildMeadows(w: any, makeFlower: (id: string) => any, random: ()
       const angle = random() * Math.PI * 2, radius = Math.sqrt(random());
       const x = cx + Math.cos(angle) * rx * radius, z = cz + Math.sin(angle) * rz * radius;
       if (!canMove(x, z) || Math.abs(x) < 2.8 ||
+        (x > 4.8 && x < 9.2 && z > -13.5 && z < -7) ||
         (x > -18 && x < -4 && z > -7 && z < 8) ||
         (Math.abs(z - 15) < 2.3 && x > -20 && x < 1) ||
         (Math.abs(z - 6) < 2 && x > 0 && x < 20) ||

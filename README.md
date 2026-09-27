@@ -34,9 +34,9 @@ Start with 500 coins, 100 energy and 12 empty plots. Buy seeds from Lily to the 
 
 Sell flowers to Mae, fish to Finn, and bouquets to Mae or the daily customer. A bouquet consumes exactly three flowers and sells for their combined value × 1.25 (rounded). A matching daily customer order adds 50 coins. Orders renew every morning.
 
-The clock advances two game minutes per real second while exploring and pauses in menus/activities. Shops open 07:00–20:00. NPCs walk into/out of their work locations at opening/closing time. At midnight a dark transition takes the player to the next morning at 06:00 beside the bed, with 60% of maximum energy. Normal sleep at the bed after 20:00 restores full energy and uses the same transition. The bed offers a clearly labeled rest-until-evening action. Each new day rolls 30% rain. Resting at the bench restores up to 20 energy and consumes 30 game minutes. Sitting down or standing up alone does not change time or energy. Resting across midnight triggers the same forced-sleep penalty.
+The clock advances two game minutes per real second while exploring and pauses in menus/activities. Shops open 07:00–20:00. NPCs walk into/out of their work locations at opening/closing time. At midnight a dark transition takes the player to the next morning at 06:00 beside the bed, with 60% of maximum energy. Normal sleep at the bed after 20:00 restores full energy and uses the same transition. The bed offers a clearly labeled rest-until-evening action. Each new day rolls 30% rain. Resting on the log restores up to 20 energy and consumes 30 game minutes. Sitting down or standing up alone does not change time or energy. Resting across midnight triggers the same forced-sleep penalty.
 
-The box outside the cottage sells an eight-plot expansion (400 coins), three energy upgrades (+20 each, 300/600/900 coins), and six decorative flower pots (100 each). Heavy activities are blocked when energy is insufficient.
+Theo, the builder beside the cottage, sells an eight-plot expansion (400 coins), three energy upgrades (+20 each, 300/600/900 coins), and six decorative flower pots (100 each). Heavy activities are blocked when energy is insufficient.
 
 ## Workshop — simplified after user feedback
 
@@ -47,9 +47,9 @@ The box outside the cottage sells an eight-plot expansion (400 coins), three ene
 
 ## Visuals and assets
 
-The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest bench is a downloaded textured glTF model. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and wave with a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `ASSET_CREDITS.md` for exact sources/licenses.
+The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `ASSET_CREDITS.md` for exact sources/licenses.
 
-The world combines detailed PBR surfaces with stylized procedural NPCs, vegetation and terrain. It is not a photorealistic scanned environment. Physical iPad/Safari performance still needs device testing.
+The world combines detailed PBR surfaces with downloaded stylized NPCs, vegetation and terrain. It is not a photorealistic scanned environment. Physical iPad/Safari performance still needs device testing.
 
 ## Code map
 
@@ -76,4 +76,14 @@ Fifteen icons across three transparent PNG atlases (five items each), used in sh
 
 ## Requested NPC model pack
 
-The user selected Maniacie’s “NPC for male and female” on CGTrader. The download currently requires a CGTrader login; its FBX/PNG files have not been downloaded or integrated. The current procedural NPCs remain visible until the source files are available. No substitute downloaded pack is represented as that asset.
+Maniacie’s “NPC for male and female” from the user-selected CGTrader link is downloaded and integrated. Lily uses G3, Mae G2, Emma G1, Finn B3, Oliver B2, and Theo the builder B1. Original static FBX meshes and PNG textures were converted to GLB with a small procedural rig. Arms stay in a relaxed fixed pose; subtle head movement, breathing and turning remain. No source animation is claimed. See ASSET_CREDITS.md.
+
+## Campfire and NPC services
+
+Approach Oliver at the atelier and choose “ขายผลงานให้โอลิเวอร์” to sell art. Theo at (7, 8) handles the existing house/garden upgrades instead of the old box. Both follow shop hours (07:00–20:00).
+
+At the campfire (7, -12), grilling one raw fish costs 5 energy and 10 game minutes. The short progress animation can be cancelled by closing the dialog, with no resources spent. Cooked fish are separate persistent inventory items sold to Finn for 60 / 90 / 225 coins (50% more); raw fish still sell for 40 / 60 / 150. Cooking is unavailable when it cannot finish before midnight.
+
+The downloaded log at (7, -9.4) replaces the bench and uses the existing rest rules: +20 energy in 30 minutes, with no forced return home before midnight.
+
+The fishing pier has a clear rock-free approach. The rest log faces the campfire. Finn's stand displays three trays of fish on ice instead of flowers.

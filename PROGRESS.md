@@ -44,7 +44,17 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Mirror Lake and The Garden now have solid wooden backing, two posts extending into the ground, caps and collision bounds. Both remain in their original positions.
 - Generated three transparent 1536×1024 pixel-art sheets, five items each; saved exact prompts and a frame manifest. Integrated all five flowers, five seed packets, three fish, bouquets and watering cans into the existing item UI. Confirmed the user wants existing prices retained.
 - Added instanced meadow flowers around the village, wind-driven grass/flowers/leaves, butterflies, birds, nighttime fireflies, smoke and animated fish. Quality mode lowers creature counts; reduced-motion preference stops ambient flight/wind animation.
-- Improved procedural NPC facial details, blinking, breathing, smooth turning, greetings and waving; Emma wanders near her regular spot. The specifically requested CGTrader pack is still blocked by its login-required download. No source files were available in Downloads. Awaiting user login or local model files.
+- Improved procedural NPC facial details, blinking, breathing, smooth turning, greetings and waving; Emma wanders near her regular spot. The requested CGTrader pack was subsequently downloaded and integrated; see the NPC services update below.
 - Rest now costs 30 in-game minutes for up to +20 energy and stays at the bench. Normal sleep restores full energy at 06:00. Reaching midnight, including during rest, forces sleep and restores only 60% of maximum energy. Full-screen dark transition covers the day change; waking occurs next to the bed.
 - Fixed the solid terrain/bank underneath the lake that obscured fish. The lake now has a terrain opening, a lower bed, and translucent water with visibly distinct colored fish.
 - Browser verified rest 06:24→06:54 and energy 60→80 without changing day or saved standing position. Observed forced-sleep dark screen, 06:00 wake-up and 60/100 energy. Observed normal-sleep transition. Inspected generated seed/fish icons in their real shops, meadow density, NPC faces and colored fish. No rendering errors observed after the animation changes.
+
+## NPC services and campfire update (2026-09-28)
+
+- Integrated all six original Maniacie NPC models with their matching textures. Removed procedural arm waving/swinging; retained subtle head movement, breathing and smooth turning.
+- Oliver now buys art through his dialogue; removed the old gallery interaction table. Theo (B1) stands beside the cottage and handles upgrades, replacing the upgrade box.
+- Downloaded the exact user-selected Three Logs and Campfire assets, converted FBX geometry to local GLB, matched original textures and placed them in the rest area. The log replaces the bench; the campfire has subtle alpha-textured flames and light.
+- Grilling consumes one raw fish, 5 energy and 10 game minutes. Cooked fish save separately and sell for 60/90/225. Cancellation is free; invalid recipes, insufficient resources and cooking across midnight are rejected atomically.
+- 33 tests pass. Browser verified cooking 14:56→15:06, energy 23→18, cooked carp +1; selling to Finn increased coins 650→710. Verified log rest energy 18→38, Theo’s upgrade dialogue, and Oliver’s art buyer menu. No browser rendering errors.
+
+- Follow-up: removed shoreline rock intersecting the fishing pier, moved the rest log/interaction/collider/seated camera to (7, -9.4) facing the fire, and replaced fish-stall flower props with three fish trays on ice. Browser visually verified all three changes.

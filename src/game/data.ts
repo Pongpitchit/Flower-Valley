@@ -63,7 +63,12 @@ export const FISH = [
   { id: "goldfish", name: "ปลาทอง", price: 60, icon: "🐠" },
   { id: "rare", name: "ปลาหายาก", price: 150, icon: "🐡" },
 ];
+export const GRILL_MINUTES = 10;
+export const GRILL_ENERGY = 5;
+export const GRILLED_FISH = FISH.map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5) }));
 export const ZONES = [
+  {id:'grill',name:'กองไฟย่างปลา',en:'THE CAMPFIRE',x:7,z:-12,icon:'🔥'},
+  {id:'upgrades',name:'ธีโอ ช่างประจำหมู่บ้าน',en:'THEO THE BUILDER',x:7,z:8,icon:'🔨'},
   {
     id: "farm",
     name: "สวนดอกไม้",
@@ -106,10 +111,10 @@ export const ZONES = [
   },
   {
     id: "rest",
-    name: "สวนพักใจ",
+    name: "มุมนั่งพักหน้ากองไฟ",
     en: "THE QUIET CORNER",
-    x: 3,
-    z: -10,
+    x: 7,
+    z: -9.4,
     icon: "🪑",
   },
   {
@@ -137,5 +142,5 @@ export const itemName = (id: string) =>
   id.startsWith("seed:")
     ? `เมล็ด${flower(id.slice(5))?.name ?? id}`
     : (FLOWERS.find((f) => f.id === id)?.name ??
-      FISH.find((f) => f.id === id)?.name ??
+      [...FISH, ...GRILLED_FISH].find((f) => f.id === id)?.name ??
       id);

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { FLOWERS, FISH, flower, type FlowerId } from "./data";
+import { FLOWERS, FISH, GRILLED_FISH, GRILL_MINUTES, GRILL_ENERGY, flower, type FlowerId } from "./data";
 import {validModelPaint,type PaintModelId} from "./models";
 export type Plot = { seed: FlowerId | null; age: number; watered: boolean };
 export type SculpturePart = {
@@ -101,7 +101,7 @@ export function validateSave(v: any): v is GameState {
       ([k, n]) =>
         (validId(k) ||
           (k.startsWith("seed:") && validId(k.slice(5))) ||
-          FISH.some((f) => f.id === k)) &&
+          [...FISH, ...GRILLED_FISH].some((f) => f.id === k)) &&
         finite(n, 0, 1e6) &&
         Number.isInteger(n),
     ) &&
@@ -246,13 +246,22 @@ export function transition(
   }
   if (a.type === "sell") {
     const f = FLOWERS.find((f) => f.id === a.id),
-      fish = FISH.find((f) => f.id === a.id);
+      fish = [...FISH, ...GRILLED_FISH].find((f) => f.id === a.id);
     if ((!f && !fish) || !a.id || !(s.inventory[a.id] > 0))
       return fail("ไม่มีสินค้านี้ในกระเป๋า");
     add(a.id, -1);
     const value = f?.sell ?? fish!.price;
     earn(value);
     return ok(`ขายแล้ว +${value} เหรียญ`);
+  }
+  if (a.type === "grill") {
+    const fish = FISH.find(f => f.id === a.id);
+    if (!fish || !(s.inventory[fish.id] > 0)) return fail("เลือกปลาสดที่มีในกระเป๋า");
+    if (s.time + GRILL_MINUTES >= 1440) return fail("ดึกแล้ว ย่างไม่ทันก่อนเที่ยงคืน กลับไปนอนก่อนนะ");
+    if (!energy(GRILL_ENERGY)) return fail("ต้องใช้พลังงาน 5 หน่วยในการย่างปลา");
+    add(fish.id, -1);add('grilled:' + fish.id, 1);
+    s.time += GRILL_MINUTES;
+    return ok(`ย่าง${fish.name}เสร็จแล้ว นำไปขายให้ฟินน์ได้ราคาสูงขึ้น 50%`);
   }
   if (a.type === "bouquet") {
     if (s.bouquets.length >= 100) return fail("ช่อดอกไม้เต็มแล้ว");

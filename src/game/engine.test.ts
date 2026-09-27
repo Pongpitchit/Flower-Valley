@@ -1,9 +1,31 @@
 import {describe,it,expect} from 'vitest';
 import {initialState,transition,validateSave,validParts,type GameState} from './engine';
-import {FLOWERS} from './data';
+import {FLOWERS,FISH,GRILLED_FISH} from './data';
 import {canMove,colliders} from '../world/bridge';
 const apply=(s:GameState,type:string,args={})=>transition(s,{type,...args},()=>.8);
 const day=(s:GameState,rain=false)=>transition({...s,time:1200},{type:'sleep'},()=>rain?.1:.8).state;
+describe('Grilled fish economy',()=>{
+ for(const [i,fish] of FISH.entries())it(`cooks and sells ${fish.id} once, preserves save and raw prices`,()=>{
+  const s=initialState();s.inventory[fish.id]=2;
+  const cooked=apply(s,'grill',{id:fish.id});expect(cooked.ok).toBe(true);
+  expect(cooked.state.inventory[fish.id]).toBe(1);expect(cooked.state.inventory[GRILLED_FISH[i].id]).toBe(1);
+  expect(cooked.state.energy).toBe(95);expect(cooked.state.time).toBe(s.time+10);expect(cooked.state.money).toBe(s.money);
+  expect(validateSave(JSON.parse(JSON.stringify(cooked.state)))).toBe(true);
+  const sold=apply(cooked.state,'sell',{id:GRILLED_FISH[i].id});expect(sold.state.money).toBe(s.money+fish.price*1.5);
+  expect(apply(sold.state,'sell',{id:GRILLED_FISH[i].id}).ok).toBe(false);
+  expect(apply(sold.state,'sell',{id:fish.id}).state.money).toBe(s.money+fish.price*2.5);
+ });
+ it('rejects absent fish, unknown recipes, insufficient energy and midnight atomically',()=>{
+  for(const [id,energy,time,count] of [['carp',100,480,0],['rose',100,480,1],['grilled:carp',100,480,1],['carp',4,480,1],['carp',100,1430,1]] as const){
+   const s=initialState();s.inventory[id]=count;s.energy=energy;s.time=time;
+   const r=apply(s,'grill',{id});expect(r.ok).toBe(false);expect(r.state).toBe(s);
+  }
+ });
+ it('allows the last complete cooking interval before midnight',()=>{
+  const s=initialState();s.time=1429;s.inventory.carp=1;s.energy=5;
+  expect(apply(s,'grill',{id:'carp'}).state).toMatchObject({time:1439,day:1,energy:0});
+ });
+});
 describe('Complete farming and economy loop',()=>{
  for(const f of FLOWERS)it(`${f.id}: buy → plant → water daily → grow → harvest → sell`,()=>{let s=initialState();s=apply(s,'buy',{id:f.id}).state;expect(s.money).toBe(500-f.seed);s=apply(s,'plant',{id:f.id,index:0}).state;expect(s.inventory['seed:'+f.id]).toBe(0);for(let i=0;i<f.days;i++){s=apply(s,'water',{index:0}).state;s=day(s);}expect(s.farm[0].age).toBe(f.days);s=apply(s,'harvest',{index:0}).state;expect(s.inventory[f.id]).toBe(1);expect(s.farm[0].seed).toBeNull();s=apply(s,'sell',{id:f.id}).state;expect(s.money).toBe(500-f.seed+f.sell);expect(s.inventory[f.id]).toBe(0);expect(validateSave(s)).toBe(true);});
  it('rejects insufficient funds without mutation',()=>{const s={...initialState(),money:0};expect(apply(s,'buy',{id:'rose'})).toMatchObject({ok:false,state:s});});

@@ -5,6 +5,7 @@ import {buildMeadows,addNpcFace,createLakeFish} from "./livingDetails";
 import {buildingMaterials,buildHome,buildAtelier} from "./buildings";
 import {loadPaintModel,disposePaintModel} from "./paintModels";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+import { buildCampProps } from "./campProps";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { bridge, colliders, canMove, type Target } from "./bridge";
@@ -221,7 +222,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     this.loadModels();
     this.buildStall(-17, 14, "SEEDS & LITTLE THINGS", "#a7b291");
     this.buildStall(-8, 26, "FLOWER MARKET", "#be9192");
-    this.buildStall(15, -18, "FRESH FROM THE LAKE", "#8fa9a6");
+    this.buildStall(15, -18, "FINN'S FISH MARKET", "#8fa9a6", true);
     this.buildWorkshop();
     for(const [id,x] of [['cat',16.55],['dog',17.35]] as const){loadPaintModel(id).then(model=>{model.scale.setScalar(.2);model.position.set(x,1.08,27);model.rotation.y=Math.PI;this.world.add(model);}).catch(()=>bridge.onError('โหลดโมเดลตัวอย่างไม่สำเร็จ'));}
     this.buildFarm();
@@ -231,6 +232,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     this.npc(14, -16, "Finn", "#6d8b9a", "fish");
     this.npc(14, 23, "Oliver", "#b99c6f", "workshop");
     this.npc(-5, 20, "Emma", "#c6a46b", "customer");
+    this.npc(7, 8, "Theo", "#9d5f47", "upgrades");
     this.targets.push(
       {
         id: "sleep",
@@ -243,10 +245,10 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       {
         id: "rest",
         kind: "rest",
-        name: "ม้านั่งใต้ร่มไม้",
+        name: "ท่อนไม้หน้ากองไฟ",
         hint: "นั่งพัก • พลังงาน +20",
-        x: 3,
-        z: -10,
+        x: 7,
+        z: -9.4,
       },
       {
         id: "fishing",
@@ -264,14 +266,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         x: -5,
         z: 25,
       },
-      {
-        id: "upgrades",
-        kind: "upgrades",
-        name: "กล่องปรับปรุงสวน",
-        hint: "ขยายสวนและเพิ่มพลังงาน",
-        x: 9,
-        z: 8,
-      },
+      {id:"grill",kind:"grill",name:"กองไฟย่างปลา",hint:"ย่างปลาเพิ่มราคา 50%",x:7,z:-12},
       {
         id: "painting",
         kind: "painting",
@@ -288,19 +283,11 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         x: 17,
         z: 27,
       },
-      {
-        id: "gallery",
-        kind: "gallery",
-        name: "ชั้นแสดงผลงาน",
-        hint: "ชมและขายงานศิลปะ",
-        x: 17,
-        z: 23,
-      },
     );
     this.box(this.m.wood, -5, 0.75, 25, 1.8, 0.15, 1);
     for (const x of [-5.7, -4.3])
       this.box(this.m.darkWood, x, 0.38, 25, 0.12, 0.75, 0.7);
-    this.box(this.m.wood, 9, 0.55, 8, 0.8, 1.1, 0.8);
+
     this.sign("FLOWER VALLEY", 0, 3.3, 32, 4.2);
     for (const x of [-2.4, 2.4])
       this.box(this.m.wood, x, 1.7, 32, 0.22, 3.4, 0.22);
@@ -398,6 +385,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
         z = (random() - 0.5) * 86;
       if (
         Math.abs(x) < 2.3 ||
+        (x > 4.8 && x < 9.2 && z > -13.5 && z < -7) ||
+        (x > 11.5 && x < 18.5 && z > -20.5 && z < -14.5) ||
         (Math.abs(z - 15) < 2 && x < 1 && x > -21) ||
         (Math.abs(z - 23) < 2 && x > 0 && x < 20) ||
         (Math.abs(z - 6) < 2 && x > 0 && x < 20) ||
@@ -430,15 +419,19 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     buildMeadows(this,createFlower,random);
     for (let i = 0; i < 18; i++) {
       const a = (i / 18) * Math.PI * 2;
+      const rockX = Math.sin(a) * 13.5, rockZ = -31 + Math.cos(a) * 11.5;
+      const sx = .5 + random(), sy = .4 + random() * .6, sz = .6 + random();
+      // Leave the entire fishing pier and its approach free of shoreline rocks.
+      if (Math.abs(rockX) < 2.8 && rockZ > -23) continue;
       this.mesh(
         geometries.sphere,
         this.m.stone,
-        Math.sin(a) * 13.5,
+        rockX,
         0.2,
-        -31 + Math.cos(a) * 11.5,
-        0.5 + random(),
-        0.4 + random() * 0.6,
-        0.6 + random(),
+        rockZ,
+        sx,
+        sy,
+        sz,
       );
     }
     for (const [x, z] of [
@@ -700,7 +693,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     );
   },
   buildHouse(this:any){buildHome(this,createFlower);},
-  buildStall(this: any, x: number, z: number, title: string, color: string) {
+  buildStall(this: any, x: number, z: number, title: string, color: string, fishShop = false) {
     const m = this.m;
     this.box(m.stone, x, 0.08, z, 5.1, 0.15, 3.6);
     this.box(m.wood, x, 1, z, 4.4, 0.25, 1.2);
@@ -711,6 +704,22 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     this.box(mat(color), x, 2.8, z, 4.9, 0.15, 3.1);
     this.sign(title, x, 2.25, z + 1.26, 3.7);
     colliders.push({ x, z, w: 4.4, d: 1.2 });
+    if (fishShop) {
+      const ice = mat('#d3e7e5', { roughness: .32 });
+      for (let i = 0; i < 3; i++) {
+        const tx = x - 1.4 + i * 1.4;
+        this.box(m.wood, tx, 1.18, z, 1.2, .13, .9);
+        this.box(ice, tx, 1.26, z, 1.07, .06, .77);
+        for (const dx of [-.57,.57]) this.box(m.wood,tx+dx,1.3,z,.06,.18,.9);
+        for (const dz of [-.42,.42]) this.box(m.wood,tx,1.3,z+dz,1.2,.18,.06);
+        for (let j = 0; j < 2; j++) {
+          const fish = createLakeFish(this,i);
+          fish.scale.setScalar(.8);fish.rotation.y = .12 + j * .15;
+          fish.position.set(tx,1.39,z-.2+j*.36);this.mergeGroup(fish);
+        }
+      }
+      return;
+    }
     for (let i = 0; i < 5; i++) {
       this.box(m.wood, x - 1.6 + i * 0.8, 1.23, z, 0.65, 0.25, 0.65);
       const f = createFlower(i % 2 ? "daisy" : "tulip");
@@ -736,8 +745,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       { x: -10, z: -6, w: 14, d: 0.1 },
     );
   },
-  buildRest(this:any){colliders.push({x:3,z:-10,w:2.4,d:.8});},
-  loadModels(this:any){const loader=new GLTFLoader();loader.load('/models/painted_wooden_bench/painted_wooden_bench.gltf',(gltf:any)=>{const model=gltf.scene;model.rotation.y=Math.PI;const bounds=new T.Box3().setFromObject(model),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());model.scale.setScalar(2.2/size.x);model.position.set(3-center.x*model.scale.x,-bounds.min.y*model.scale.x,-10-center.z*model.scale.x);model.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});this.world.add(model);},undefined,()=>bridge.onError('โหลดโมเดลม้านั่งไม่สำเร็จ'));
+  buildRest(this:any){colliders.push({x:7,z:-9.4,w:2.7,d:.6});},
+  loadModels(this:any){const loader=new GLTFLoader();buildCampProps(this);
     loader.load('/models/flower_gazania/flower_gazania.gltf',(gltf:any)=>{const source=gltf.scene,bounds=new T.Box3().setFromObject(source),size=bounds.getSize(new T.Vector3());for(let i=0;i<12;i++){const model=source.clone();model.scale.setScalar(.7/size.y);model.position.set(i<6?-2.8:2.8,.05,10+(i%6)*1.8);model.rotation.y=i*1.4;model.traverse((o:any)=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});this.world.add(model);}},undefined,()=>bridge.onError('โหลดโมเดลดอกไม้ไม่สำเร็จ'));
   },
   buildWorkshop(this:any){buildAtelier(this);},
@@ -813,7 +822,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
     headItems.push(...g.children.slice(faceStart).filter((o:any)=>o.position.y>1.3||o.geometry?.type==='TubeGeometry'));
     const head=new T.Group();head.position.y=1.5;g.add(head);
     headItems.forEach((o:any)=>{o.position.y-=1.5;head.add(o);});
-    const greeting=greetingBubble(({Lily:'วันนี้อยากปลูกดอกอะไรดีคะ?',Mae:'ดอกไม้จากสวนคุณหอมจัง',Finn:'วันนี้ปลากำลังกินเหยื่อเลย!',Oliver:'มาสร้างอะไรสนุก ๆ กันเถอะ',Emma:'เดินชมสวนด้วยกันไหมคะ?'} as Record<string,string>)[name]);
+    const greeting=greetingBubble(({Lily:'วันนี้อยากปลูกดอกอะไรดีคะ?',Mae:'ดอกไม้จากสวนคุณหอมจัง',Finn:'วันนี้ปลากำลังกินเหยื่อเลย!',Oliver:'มาสร้างอะไรสนุก ๆ กันเถอะ',Emma:'เดินชมสวนด้วยกันไหมคะ?',Theo:'อยากปรับบ้านหรือสวนตรงไหนดีครับ?'} as Record<string,string>)[name]);
     g.add(greeting);
     g.position.set(x, 0, z);
     this.dynamic.add(g);
@@ -1090,6 +1099,7 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       f.userData.tail.rotation.y = Math.sin(time*.007+i)*.32;
       f.rotation.y = -a;
     });
+    this.campfireUpdate?.(motionTime);
     this.npcs.forEach((n: any, i: number) => {
       const open = hours >= 7 && hours < 20;
       const travel=hours>=6&&hours<7 || hours>=20&&hours<21;
@@ -1117,8 +1127,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
       n.greeting.visible=waving&&open;
       n.model?.animate(motionTime+i*700,walking,waving,blinking);
       n.arms.forEach((arm:any,j:number)=>{
-        arm.rotation.x=walking?Math.sin(motionTime*.008+j*Math.PI)*.35:Math.sin(motionTime*.0016+i)*.035;
-        arm.rotation.z=waving&&j===1?-2.25+Math.sin(motionTime*.014)*.18:(j?.12:-.12);
+        arm.rotation.x=0;
+        arm.rotation.z=j?.12:-.12;
       });
       n.legs.forEach((leg:any,j:number)=>leg.rotation.x=Math.sin(motionTime*(walking?.008:.002)+j*Math.PI)*(walking?.35:.012));
     });
@@ -1151,7 +1161,8 @@ if (!window.AFRAME.components["flower-world"]) window.AFRAME.registerComponent("
               n.kind === "customer"
                 ? "ออร์เดอร์ช่อดอกไม้"
                 : n.kind === "workshop"
-                  ? "พูดคุยกับศิลปิน"
+                  ? "พูดคุย / ขายผลงาน"
+                  : n.kind === "upgrades" ? "คุยกับช่าง / ปรับปรุงบ้านและสวน"
                   : "พูดคุย / เปิดร้าน",
             x: n.g.position.x,
             z: n.g.position.z,

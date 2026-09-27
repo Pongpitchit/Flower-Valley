@@ -1,6 +1,7 @@
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export const NPC_MODELS: Record<string, { code: string; outfit: string }> = {
+  Theo: { code: 'B1', outfit: 'เสื้อแดง ช่างประจำหมู่บ้าน' },
   Lily: { code: 'G3', outfit: 'ชุดสีเขียว ร้านเมล็ดพันธุ์' },
   Mae: { code: 'G2', outfit: 'ชุดผ้ากันเปื้อน ร้านดอกไม้' },
   Finn: { code: 'B3', outfit: 'เสื้อแขนสีมัสตาร์ดและผมสีเทา คนขายปลา' },
@@ -41,10 +42,10 @@ export async function loadNpcModel(name: string) {
     if(role === 'eye') eyes.push(mesh);
   });
   // The author's files are static. This gentle procedural rig is added by the game.
-  const animate = (time: number, walking: boolean, waving: boolean, blink: boolean) => {
+  const animate = (time: number, walking: boolean, _waving: boolean, blink: boolean) => {
     bones[1].rotation.set(Math.sin(time*.0013)*.025,Math.sin(time*.0008)*.035,Math.sin(time*.001)*.02);
-    bones[2].rotation.set(walking?Math.sin(time*.008)*.22:Math.sin(time*.0015)*.025,0,.38);
-    bones[3].rotation.set(walking?-Math.sin(time*.008)*.22:0,0,waving?.95+Math.sin(time*.014)*.16:-.38);
+    bones[2].rotation.set(0,0,.38);
+    bones[3].rotation.set(0,0,-.38);
     bones[4].rotation.x = walking?Math.sin(time*.008)*(female?.045:.18):0;
     bones[5].rotation.x = walking?-Math.sin(time*.008)*(female?.045:.18):0;
     eyes.forEach(mesh => { if(mesh.morphTargetInfluences) mesh.morphTargetInfluences[0] = blink ? 1 : 0; });
