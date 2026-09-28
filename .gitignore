@@ -2,6 +2,4 @@ node_modules/
 dist/
 test-results/
 .DS_Store
-
-assets/npc-source/
-assets/props-source/
+*.tsbuildinfo

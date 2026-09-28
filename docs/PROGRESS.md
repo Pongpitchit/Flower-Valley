@@ -58,3 +58,11 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - 33 tests pass. Browser verified cooking 14:56→15:06, energy 23→18, cooked carp +1; selling to Finn increased coins 650→710. Verified log rest energy 18→38, Theo’s upgrade dialogue, and Oliver’s art buyer menu. No browser rendering errors.
 
 - Follow-up: removed shoreline rock intersecting the fishing pier, moved the rest log/interaction/collider/seated camera to (7, -9.4) facing the fire, and replaced fish-stall flower props with three fish trays on ice. Browser visually verified all three changes.
+
+## Project cleanup (2026-09-28)
+
+- Removed 86 unused files (90,390,010 bytes): seven one-time asset scripts, extracted FBX/Blender source copies and unused textures/previews, the replaced bench, unused log variants, NPC conversion debug report and TypeScript build cache.
+- Preserved all runtime models, their referenced textures, item atlas metadata, asset provenance, game rules and backward-compatible save handling.
+- Moved QA controls to src/dev/qa.tsx and project records to docs/. Updated imports and documentation.
+- Removed the unused Playwright test dependency and its two dependent packages. Existing tests use Vitest; browser verification uses the app browser.
+- Enabled TypeScript unused-import/parameter checks. Build now uses tsc --noEmit to avoid root-level cache output.

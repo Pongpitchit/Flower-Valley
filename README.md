@@ -23,50 +23,62 @@ npm run preview
 
 - WASD: walk. Shift + movement: run, costing one energy per active second.
 - Click the world: capture the mouse. If pointer lock is unavailable, drag to look.
-- E: interact with a nearby object/NPC. I: inventory. M: map. B: flower encyclopedia.
+- E: interact with a nearby object/NPC; on plots, plant the selected seed, water, or harvest immediately. Q: inspect a plot, change seeds on an empty plot, or fertilize. I: inventory. M: map. B: flower encyclopedia.
 - Escape: close a panel / pause / release mouse. Settings include quality and touch-control toggles.
 - Phone/iPad: left joystick to walk, drag on the world to look, E touch button to interact.
-- Fishing: press the shown A/D sequence, or tap the corresponding buttons, within 14 seconds. A wrong input or timeout lets the fish escape; casting still costs energy.
+- Fishing: Space casts/recasts; press the shown A/D sequence, or tap the corresponding buttons, within 14 seconds. A wrong input or timeout lets the fish escape; casting still costs energy.
 
 ## Game systems
 
-Start with 500 coins, 100 energy and 12 empty plots. Buy seeds from Lily to the west, enter the garden from the south, plant and water. Watered crops grow once at the next day transition. Rain automatically waters planted crops; mature flowers stay ready until harvested. Flower prices and growth times follow the workflow.
+Start with 500 coins, 100 energy and 3 empty plots. Buy seeds from Lily to the west, enter the garden from the south, plant and water. Watered crops grow once at the next day transition. Rain automatically waters planted crops; mature flowers stay ready until harvested. Growth takes 2/2/3/4/5 watered nights; flower sale values are 35/50/85/135/210 coins (seeds remain 10/15/25/40/60). Empty, dry, watered and ready plots have distinct colored borders and text markers.
 
 Sell flowers to Mae, fish to Finn, and bouquets to Mae or the daily customer. A bouquet consumes exactly three flowers and sells for their combined value × 1.25 (rounded). A matching daily customer order adds 50 coins. Orders renew every morning.
 
 The clock advances two game minutes per real second while exploring and pauses in menus/activities. Shops open 07:00–20:00. NPCs walk into/out of their work locations at opening/closing time. At midnight a dark transition takes the player to the next morning at 06:00 beside the bed, with 60% of maximum energy. Normal sleep at the bed after 20:00 restores full energy and uses the same transition. The bed offers a clearly labeled rest-until-evening action. Each new day rolls 30% rain. Resting on the log restores up to 20 energy and consumes 30 game minutes. Sitting down or standing up alone does not change time or energy. Resting across midnight triggers the same forced-sleep penalty.
 
-Theo, the builder beside the cottage, sells an eight-plot expansion (400 coins), three energy upgrades (+20 each, 300/600/900 coins), and six decorative flower pots (100 each). Heavy activities are blocked when energy is insufficient.
+Theo, the builder beside the cottage, expands the garden through 3 → 6 → 9 → 12 → 16 → 20 plots (120/220/360/600/900 coins), sells watering-can upgrades (250/650 coins; water up to 3/4 plots to the right in one row for 3 energy), three energy upgrades (+20 each, 300/600/900 coins), and six decorative flower pots (100 each). Heavy activities are blocked when energy is insufficient.
 
 ## Workshop — simplified after user feedback
 
 - **Painting:** draw on a canvas with a brush, pick colors, name and save the image.
 - **Paint a model:** choose a pictured cat, dog, rabbit, tortoise or guinea pig. Pick a color and tap the model or a named color region. Drag to orbit. Undo, restore original colors, rotate and zoom are available. There are no position/rotation/scale sliders to build an animal from scratch.
-- Saving artwork costs 15 energy. Painted animal models sell for 140 coins. The gallery shows a thumbnail and the actual colored model appears inside the atelier.
+- Saving artwork costs 15 energy. Paintings sell for 80 coins and painted animal models for 110. A daily mood roll provides one creative slot (60%) or two (40%), shared between painting and models. Saving consumes a slot; selling never refunds it. Mood/quota persist across reloads and reset on the next day. The gallery shows a thumbnail and the actual colored model appears inside the atelier.
 - Previously saved primitive sculptures remain loadable, visible and sellable. The older sculpture editor is replaced by the simpler model-painting workflow.
 
 ## Visuals and assets
 
-The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `ASSET_CREDITS.md` for exact sources/licenses.
+The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `docs/ASSET_CREDITS.md` for exact sources/licenses.
+
+Lily sells fertilizer for 15 coins: one bag advances a crop by one growth day, once per planting. Shops support a chosen quantity or all of one item. Bouquet previews show ingredients, remaining inventory and the extra sale value. Settings control synthesized original background music, effects/ambience and master volume; audio starts only after a user gesture and mutes when the tab is hidden.
 
 The world combines detailed PBR surfaces with downloaded stylized NPCs, vegetation and terrain. It is not a photorealistic scanned environment. Physical iPad/Safari performance still needs device testing.
 
-## Code map
+## Project structure
 
-- `src/game/engine.ts`: validated state, all resource-changing actions, day transitions and save/load.
-- `src/game/data.ts`: flowers, fish, map zones and plot positions.
-- `src/game/models.ts`: paintable-model catalog and saved-color validation.
-- `src/world/scene.ts`: A-Frame component, lighting, weather, movement, interactions and world rendering.
-- `src/world/buildings.ts`: cottage/atelier geometry, materials and collisions.
-- `src/world/paintModels.ts`: cached glTF loading, normalization and per-region colors.
-- `src/components/ModelPainting.tsx`: easy animal-painting UI and raycast painting.
-- `src/components/Workshop.tsx`: 2D canvas painting.
-- `src/components/Fishing.tsx`: fishing state machine and timed A/D input.
-- `src/qa.tsx`: development-only landmark controls (`?qa`), isolated from the player's normal save. Not included in production.
+```text
+src/
+  components/    Game UI, fishing, grilling, painting and sleep
+  game/          State, economy, catalogs, persistence and tests
+  world/         A-Frame scene, movement, buildings, NPCs and nature
+  dev/           Development-only QA controls (?qa)
+  App.tsx        UI and interaction coordination
+  main.tsx       Application entry
+  styles.css     Game styles
+public/
+  models/        Only models and dependent textures used in the game
+  textures/      Terrain, buildings and sky
+  icons/         Pixel-art atlases with frame/provenance metadata
+docs/
+  ASSET_CREDITS.md   Asset sources and license information
+  PROGRESS.md       Implementation and verification history
+workflow.md      Original game specification
+```
+
+The QA controls use a separate save and are excluded from production. Tests remain next to the game rules in `src/game/engine.test.ts`. One-time download/conversion/inspection scripts and extracted source archives have been removed; the game loads its ready-to-use assets from `public/`. `dist/` and `node_modules/` are generated, ignored directories. The build checks for unused imports and parameters without creating TypeScript build-cache files in the root.
 
 ## Verification and limits
 
-See `PROGRESS.md`. Automated tests cover the economy/farming/time/energy/progression/save/model-painting rules. Browser checks cover the main gameplay loop, fishing, art creation and responsive layouts. No physical mobile device or VR headset has been tested. VR is not part of this implementation.
+See `docs/PROGRESS.md`. Automated tests cover the economy/farming/time/energy/progression/save/model-painting rules. Browser checks cover the main gameplay loop, fishing, art creation and responsive layouts. No physical mobile device or VR headset has been tested. VR is not part of this implementation.
 
 A-Frame 1.7.1's transitive development/color-palette chain still reports four moderate npm audit entries (`got` via `nice-color-palettes` / `three-bmfont-text`); the audited issue is a Node network utility, not gameplay input. No forced downgrade to obsolete A-Frame was applied. Vitest was upgraded to the patched 4.1.11 release.
 
@@ -76,7 +88,7 @@ Fifteen icons across three transparent PNG atlases (five items each), used in sh
 
 ## Requested NPC model pack
 
-Maniacie’s “NPC for male and female” from the user-selected CGTrader link is downloaded and integrated. Lily uses G3, Mae G2, Emma G1, Finn B3, Oliver B2, and Theo the builder B1. Original static FBX meshes and PNG textures were converted to GLB with a small procedural rig. Arms stay in a relaxed fixed pose; subtle head movement, breathing and turning remain. No source animation is claimed. See ASSET_CREDITS.md.
+Maniacie’s “NPC for male and female” from the user-selected CGTrader link is downloaded and integrated. Lily uses G3, Mae G2, Emma G1, Finn B3, Oliver B2, and Theo the builder B1. Original static FBX meshes and PNG textures were converted to GLB with a small procedural rig. Arms stay in a relaxed fixed pose; subtle head movement, breathing and turning remain. No source animation is claimed. See docs/ASSET_CREDITS.md.
 
 ## Campfire and NPC services
 
@@ -87,3 +99,7 @@ At the campfire (7, -12), grilling one raw fish costs 5 energy and 10 game minut
 The downloaded log at (7, -9.4) replaces the bench and uses the existing rest rules: +20 energy in 30 minutes, with no forced return home before midnight.
 
 The fishing pier has a clear rock-free approach. The rest log faces the campfire. Finn's stand displays three trays of fish on ice instead of flowers.
+
+## Save compatibility
+
+Version-1 saves migrate to version 2 under the same storage key. Existing 12/20-plot gardens, inventory, coins, art and historical bouquet sale values are retained. New games start with three plots. Named development fixtures (for example `?qa=farm-refresh`) have independent saves.

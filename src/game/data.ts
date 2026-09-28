@@ -6,7 +6,7 @@ export const FLOWERS = [
     icon: "🌼",
     color: "#f8eee0",
     seed: 10,
-    sell: 25,
+    sell: 35,
     days: 2,
     description: "ดอกเล็กสีขาว ใจกลางสีทอง เติบโตง่าย เหมาะกับสวนแรกของคุณ",
   },
@@ -17,7 +17,7 @@ export const FLOWERS = [
     icon: "🌷",
     color: "#ec8195",
     seed: 15,
-    sell: 30,
+    sell: 50,
     days: 2,
     description:
       "กลีบดอกอ่อนโยนที่หุบรับยามเย็น เป็นสัญลักษณ์ของความรักที่อบอุ่น",
@@ -29,7 +29,7 @@ export const FLOWERS = [
     icon: "🌻",
     color: "#edbd39",
     seed: 25,
-    sell: 50,
+    sell: 85,
     days: 3,
     description: "ดอกสีทองสูงสง่า เติมแสงแดดให้สวนและช่อดอกไม้ของคุณ",
   },
@@ -40,7 +40,7 @@ export const FLOWERS = [
     icon: "🌹",
     color: "#ce465f",
     seed: 40,
-    sell: 80,
+    sell: 135,
     days: 4,
     description: "ดอกไม้กลีบซ้อนสีแดง ต้องการการดูแลสม่ำเสมอและรางวัลก็คุ้มค่า",
   },
@@ -51,7 +51,7 @@ export const FLOWERS = [
     icon: "🪻",
     color: "#a489d4",
     seed: 60,
-    sell: 120,
+    sell: 210,
     days: 5,
     description: "ช่อดอกสีม่วงที่พลิ้วไหวในสายลม เติบโตช้าแต่มีมูลค่าสูง",
   },
@@ -139,7 +139,7 @@ export const plotPosition = (i: number) => ({
   z: -4 + Math.floor(i / 4) * 2.5,
 });
 export const itemName = (id: string) =>
-  id.startsWith("seed:")
+  id === "fertilizer" ? "ปุ๋ยเร่งโต" : id.startsWith("seed:")
     ? `เมล็ด${flower(id.slice(5))?.name ?? id}`
     : (FLOWERS.find((f) => f.id === id)?.name ??
       [...FISH, ...GRILLED_FISH].find((f) => f.id === id)?.name ??

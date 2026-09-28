@@ -15,11 +15,10 @@ License: https://polyhaven.com/license
 | Painted Plaster Wall (Amal Kumar) | Cottage and atelier plaster: color, normal, roughness, 1K | https://polyhaven.com/a/painted_plaster_wall |
 | Roof Tiles (Stephan Seeliger) | Cottage and atelier roofs: color, normal, roughness, 1K | https://polyhaven.com/a/roof_tiles |
 | Mossy Stone Wall | Foundations and sills: color, normal, roughness, 1K | https://polyhaven.com/a/mossy_stone_wall |
-| Painted Wooden Bench | Earlier bench asset retained on disk; replaced in the world by Three Logs | https://polyhaven.com/a/painted_wooden_bench |
 | Flower Gazania | Downloaded glTF model along the main path, 1K maps | https://polyhaven.com/a/flower_gazania |
 | Kloofendal 48d Partly Cloudy Puresky | HDRI sky and image-based lighting, 1K | https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky |
 
-Downloads made through the official Poly Haven API. Material/model download scripts validate supplied MD5 checksums. The cottage and workshop architecture are original procedural geometry with downloaded PBR materials; they are not downloaded complete building models.
+Downloads made through the official Poly Haven API. The original imports were checked against the supplied MD5 checksums. One-time import scripts have since been removed. The cottage and workshop architecture are original procedural geometry with downloaded PBR materials; they are not downloaded complete building models.
 
 ## 3DAssets.dev — CC0 1.0 Universal
 
@@ -49,6 +48,19 @@ These assets are separate from the CC0 assets above. Original archives were down
 | three logs | maranovskijsolomon6 | https://www.cgtrader.com/free-3d-models/plant/other/three-logs | public/models/logs; log2 is the rest seat |
 | Campfire | Zelad | https://www.cgtrader.com/items/2765262/download-page | public/models/campfire; original geometry, color map and flame atlas |
 
-NPC conversion: scripts/prepare-npc.mjs. Original files contain static meshes, without a skeleton; the game adds a gentle procedural rig. Arms remain stationary per the user’s request. G3=Lily, G2=Mae, G1=Emma, B3=Finn, B2=Oliver, B1=Theo.
+NPCs were converted locally from the source FBX files. Original files contain static meshes, without a skeleton; the game adds a gentle procedural rig. Arms remain stationary per the user’s request. G3=Lily, G2=Mae, G1=Emma, B3=Finn, B2=Oliver, B1=Theo.
 
-Prop conversion: scripts/prepare-props.mjs. Logs are rotated horizontally, centered and scaled to 2.7 m long. The campfire is 1.8 m wide. Textures are resized to at most 1024 pixels for the game. Flame animation is added by the game using the author's atlas, not the original FBX animation. Original archives are kept outside the public game assets in assets/props-source and assets/npc-source.
+Props were converted locally from the source FBX files. Logs are rotated horizontally, centered and scaled to 2.7 m long. The campfire is 1.8 m wide. Textures are resized to at most 1024 pixels for the game. Flame animation is added by the game using the author's atlas, not the original FBX animation. Only runtime-ready assets are retained in this project. One-time scripts, extracted source archives, the unused bench and unused log variants were removed during cleanup. Original downloaded ZIPs remain in the user's Downloads folder.
+
+
+## Forest trees — added 2026-09-28
+
+- User-selected [Low-Poly Forest Nature Set Free Trial](https://www.cgtrader.com/free-3d-models/exterior/landscape/low-poly-forest-nature-set-free-trial) by [flamazilla](https://www.cgtrader.com/designers/flamazilla).
+- CGTrader Royalty Free License (listing marked No AI); not CC0. Use within the game, do not redistribute the source pack as a standalone asset library.
+- Downloaded `forest_nature_set_separate_objects_fbx.zip` and `forest_nature_set_textures.zip` through the signed-in download page.
+- Only `Tree_average_lush`, `Tree_average_regular`, and `Tree_Spruce_small_01` are shipped, converted to normalized GLB with the original `texture_gradient.png` palette. Runtime files: `public/models/forest/{oak-lush,oak,spruce}.glb` and `palette.png`.
+- Meshes retain the supplied geometry and texture colors, rendered as instanced trees with a subtle vertex-shader breeze. Raw sources/conversion scripts stay outside the project.
+
+## Game audio — added 2026-09-28
+
+Original procedural Web Audio score, ambient wind/bird tones and activity cues in `src/game/audio.ts`. No external music recordings used.

@@ -1,7 +1,16 @@
+import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, FERTILIZER_PRICE, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
 import { useSyncExternalStore } from "react";
-import { FLOWERS, FISH, GRILLED_FISH, GRILL_MINUTES, GRILL_ENERGY, flower, type FlowerId } from "./data";
-import {validModelPaint,type PaintModelId} from "./models";
-export type Plot = { seed: FlowerId | null; age: number; watered: boolean };
+import {
+  FLOWERS,
+  FISH,
+  GRILLED_FISH,
+  GRILL_MINUTES,
+  GRILL_ENERGY,
+  flower,
+  type FlowerId,
+} from "./data";
+import { validModelPaint, type PaintModelId } from "./models";
+export type Plot = { seed: FlowerId | null; age: number; watered: boolean; fertilized?: boolean };
 export type SculpturePart = {
   type: "box" | "sphere" | "cylinder" | "cone";
   x: number;
@@ -18,7 +27,7 @@ export type Artwork = {
   id: string;
   kind: "painting" | "sculpture" | "model";
   modelId?: PaintModelId;
-  colors?: Record<string,string>;
+  colors?: Record<string, string>;
   name: string;
   price: number;
   image?: string;
@@ -26,7 +35,8 @@ export type Artwork = {
 };
 export type Bouquet = { id: string; flowers: FlowerId[]; price: number };
 export type GameState = {
-  version: 1;
+  version: 2;
+  artDay: ArtDay;
   day: number;
   time: number;
   weather: "sunny" | "rain";
@@ -37,7 +47,7 @@ export type GameState = {
   farm: Plot[];
   bouquets: Bouquet[];
   artworks: Artwork[];
-  upgrades: { farmLevel: number; energyLevel: number };
+  upgrades: { farmLevel: number; energyLevel: number; wateringLevel: number };
   decorations: number;
   restAt: number;
   order: { flower: FlowerId; fulfilled: boolean };
@@ -45,9 +55,16 @@ export type GameState = {
   started: boolean;
   position: { x: number; z: number; yaw: number };
 };
-export const SAVE_KEY = "flower-valley-save-v1" + (typeof location!=="undefined" && import.meta.env.DEV && new URLSearchParams(location.search).has("qa") ? "-qa" : "");
-export const initialState = (): GameState => ({
-  version: 1,
+export const SAVE_KEY =
+  "flower-valley-save-v1" +
+  (typeof location !== "undefined" &&
+  import.meta.env.DEV &&
+  new URLSearchParams(location.search).has("qa")
+    ? "-qa" + (new URLSearchParams(location.search).get("qa") ? "-" + new URLSearchParams(location.search).get("qa") : "")
+    : "");
+export const initialState = (rng = Math.random): GameState => ({
+  version: 2,
+  artDay: rollArtDay(rng),
   day: 1,
   time: 480,
   weather: "sunny",
@@ -55,14 +72,14 @@ export const initialState = (): GameState => ({
   energy: 100,
   maxEnergy: 100,
   inventory: {},
-  farm: Array.from({ length: 12 }, () => ({
+  farm: Array.from({ length: 3 }, () => ({
     seed: null,
     age: 0,
     watered: false,
   })),
   bouquets: [],
   artworks: [],
-  upgrades: { farmLevel: 0, energyLevel: 0 },
+  upgrades: { farmLevel: 0, energyLevel: 0, wateringLevel: 0 },
   decorations: 0,
   restAt: -999,
   order: { flower: "daisy", fulfilled: false },
@@ -75,7 +92,10 @@ const finite = (v: unknown, min: number, max: number) =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 export function validateSave(v: any): v is GameState {
   return (
-    v?.version === 1 &&
+    v?.version === 2 &&
+    ["calm", "inspired"].includes(v.artDay?.mood) &&
+    v.artDay.limit === (v.artDay.mood === "inspired" ? 2 : 1) &&
+    Number.isInteger(v.artDay.used) && finite(v.artDay.used, 0, v.artDay.limit) &&
     finite(v.day, 1, 1e7) &&
     finite(v.time, 360, 1440) &&
     ["sunny", "rain"].includes(v.weather) &&
@@ -83,23 +103,24 @@ export function validateSave(v: any): v is GameState {
     finite(v.maxEnergy, 100, 160) &&
     finite(v.energy, 0, v.maxEnergy) &&
     typeof v.started === "boolean" &&
-    finite(v.upgrades?.farmLevel, 0, 1) &&
+    Number.isInteger(v.upgrades?.farmLevel) && finite(v.upgrades?.farmLevel, 0, 5) &&
+    Number.isInteger(v.upgrades?.wateringLevel) && finite(v.upgrades?.wateringLevel, 0, 2) &&
     finite(v.upgrades?.energyLevel, 0, 3) &&
     v.maxEnergy === 100 + v.upgrades.energyLevel * 20 &&
     Array.isArray(v.farm) &&
-    v.farm.length === 12 + v.upgrades.farmLevel * 8 &&
+    v.farm.length === FARM_SIZES[v.upgrades.farmLevel as 0] &&
     v.farm.every(
       (p: any) =>
         (p.seed === null || validId(p.seed)) &&
         finite(p.age, 0, 100) &&
-        typeof p.watered === "boolean",
+        typeof p.watered === "boolean" && (p.fertilized === undefined || typeof p.fertilized === "boolean"),
     ) &&
     v.inventory &&
     typeof v.inventory === "object" &&
     !Array.isArray(v.inventory) &&
     Object.entries(v.inventory).every(
       ([k, n]) =>
-        (validId(k) ||
+        (k === "fertilizer" || validId(k) ||
           (k.startsWith("seed:") && validId(k.slice(5))) ||
           [...FISH, ...GRILLED_FISH].some((f) => f.id === k)) &&
         finite(n, 0, 1e6) &&
@@ -113,13 +134,13 @@ export function validateSave(v: any): v is GameState {
         Array.isArray(b.flowers) &&
         b.flowers.length === 3 &&
         b.flowers.every(validId) &&
-        b.price ===
+        (b.price === Math.round(b.flowers.reduce((n: number, id: string) => n + ({daisy:25,tulip:30,sunflower:50,rose:80,lavender:120}[id] ?? 0), 0) * 1.25) || b.price ===
           Math.round(
             b.flowers.reduce(
               (s: number, id: string) => s + flower(id).sell,
               0,
             ) * 1.25,
-          ),
+          )),
     ) &&
     Array.isArray(v.artworks) &&
     v.artworks.length <= 24 &&
@@ -134,7 +155,12 @@ export function validateSave(v: any): v is GameState {
           typeof a.image === "string" &&
           a.image.startsWith("data:image/png;base64,") &&
           a.image.length < 400000) ||
-          (a.kind === "sculpture" && validParts(a.parts)) || (a.kind === "model" && validModelPaint(a) && (!a.image || (a.image.startsWith("data:image/png;base64,") && a.image.length<400000)))),
+          (a.kind === "sculpture" && validParts(a.parts)) ||
+          (a.kind === "model" &&
+            validModelPaint(a) &&
+            (!a.image ||
+              (a.image.startsWith("data:image/png;base64,") &&
+                a.image.length < 400000)))),
     ) &&
     finite(v.decorations, 0, 6) &&
     finite(v.restAt, -999, 1e12) &&
@@ -220,16 +246,39 @@ export function transition(
     add("seed:" + f.id, -1);
     p.seed = f.id;
     p.age = 0;
+    p.fertilized = false;
     p.watered = s.weather === "rain";
     return ok(`ปลูก${f.name}แล้ว อย่าลืมรดน้ำทุกวัน`);
   }
   if (a.type === "water") {
-    const p = s.farm[a.index ?? -1];
+    const index = a.index ?? -1, p = s.farm[index];
     if (!p?.seed) return fail("แปลงนี้ยังว่าง");
-    if (p.watered) return fail("วันนี้ดินชุ่มน้ำแล้ว");
+    const count = [1, 3, 4][s.upgrades.wateringLevel];
+    const row = Math.floor(index / 4);
+    const plots = s.farm.filter((p, i) => i >= index && i < index + count && Math.floor(i / 4) === row && p.seed && !p.watered && p.age < flower(p.seed).days);
+    if (!plots.length) return fail("ไม่มีแปลงที่ต้องการน้ำในระยะนี้");
     if (!energy(3)) return fail("พลังงานไม่พอ");
-    p.watered = true;
-    return ok("รดน้ำแล้ว ดอกไม้จะเติบโตในวันถัดไป");
+    plots.forEach(p => p.watered = true);
+    return ok(`รดน้ำ ${plots.length} แปลงแล้ว −3 พลังงาน`);
+  }
+  if (a.type === "buyFertilizer") {
+    if (!spend(FERTILIZER_PRICE)) return fail("เงินไม่พอ");
+    add("fertilizer", 1);
+    return ok("ได้รับปุ๋ย 1 ถุง เร่งเติบโต 1 วัน");
+  }
+  if (a.type === "fertilize") {
+    const p = s.farm[a.index ?? -1];
+    if (!p?.seed || p.fertilized || p.age >= flower(p.seed).days) return fail("ใส่ปุ๋ยได้ครั้งเดียวต่อการปลูก ก่อนโตเต็มที่");
+    if (!(s.inventory.fertilizer > 0)) return fail("ซื้อปุ๋ยจากลิลลี่ก่อน");
+    add("fertilizer", -1); p.age++; p.fertilized = true;
+    return ok("ใส่ปุ๋ยแล้ว เติบโตเพิ่ม 1 วัน");
+  }
+  if (a.type === "upgradeWatering") {
+    const cost = WATERING_COSTS[s.upgrades.wateringLevel];
+    if (!cost) return fail("บัวรดน้ำระดับสูงสุดแล้ว");
+    if (!spend(cost)) return fail("เงินไม่พอ");
+    s.upgrades.wateringLevel++;
+    return ok("บัวรดน้ำรดหลายแปลงในแถวเดียวกันได้แล้ว");
   }
   if (a.type === "harvest") {
     const p = s.farm[a.index ?? -1];
@@ -249,17 +298,23 @@ export function transition(
       fish = [...FISH, ...GRILLED_FISH].find((f) => f.id === a.id);
     if ((!f && !fish) || !a.id || !(s.inventory[a.id] > 0))
       return fail("ไม่มีสินค้านี้ในกระเป๋า");
-    add(a.id, -1);
-    const value = f?.sell ?? fish!.price;
+    const count = a.amount ?? 1;
+    if (!Number.isInteger(count) || count < 1 || count > s.inventory[a.id]) return fail("เลือกจำนวนที่มีในกระเป๋า");
+    add(a.id, -count);
+    const value = (f?.sell ?? fish!.price) * count;
     earn(value);
-    return ok(`ขายแล้ว +${value} เหรียญ`);
+    return ok(`ขาย ${count} ชิ้น +${value} เหรียญ`);
   }
   if (a.type === "grill") {
-    const fish = FISH.find(f => f.id === a.id);
-    if (!fish || !(s.inventory[fish.id] > 0)) return fail("เลือกปลาสดที่มีในกระเป๋า");
-    if (s.time + GRILL_MINUTES >= 1440) return fail("ดึกแล้ว ย่างไม่ทันก่อนเที่ยงคืน กลับไปนอนก่อนนะ");
-    if (!energy(GRILL_ENERGY)) return fail("ต้องใช้พลังงาน 5 หน่วยในการย่างปลา");
-    add(fish.id, -1);add('grilled:' + fish.id, 1);
+    const fish = FISH.find((f) => f.id === a.id);
+    if (!fish || !(s.inventory[fish.id] > 0))
+      return fail("เลือกปลาสดที่มีในกระเป๋า");
+    if (s.time + GRILL_MINUTES >= 1440)
+      return fail("ดึกแล้ว ย่างไม่ทันก่อนเที่ยงคืน กลับไปนอนก่อนนะ");
+    if (!energy(GRILL_ENERGY))
+      return fail("ต้องใช้พลังงาน 5 หน่วยในการย่างปลา");
+    add(fish.id, -1);
+    add("grilled:" + fish.id, 1);
     s.time += GRILL_MINUTES;
     return ok(`ย่าง${fish.name}เสร็จแล้ว นำไปขายให้ฟินน์ได้ราคาสูงขึ้น 50%`);
   }
@@ -347,17 +402,13 @@ export function transition(
     return ok("พลังงานสูงสุดเพิ่มขึ้น 20");
   }
   if (a.type === "upgradeFarm") {
-    if (s.upgrades.farmLevel >= 1) return fail("ขยายแปลงสูงสุดแล้ว");
-    if (!spend(400)) return fail("ต้องใช้ 400 เหรียญ");
-    s.upgrades.farmLevel = 1;
-    s.farm.push(
-      ...Array.from({ length: 8 }, () => ({
-        seed: null,
-        age: 0,
-        watered: false,
-      })),
-    );
-    return ok("เพิ่มแปลงปลูก 8 แปลงแล้ว");
+    const cost = FARM_COSTS[s.upgrades.farmLevel];
+    if (!cost) return fail("ขยายแปลงสูงสุดแล้ว");
+    if (!spend(cost)) return fail(`ต้องใช้ ${cost} เหรียญ`);
+    s.upgrades.farmLevel++;
+    const extra = FARM_SIZES[s.upgrades.farmLevel] - s.farm.length;
+    s.farm.push(...Array.from({ length: extra }, () => ({ seed: null, age: 0, watered: false })));
+    return ok(`เพิ่มแปลงปลูก ${extra} แปลงแล้ว`);
   }
   if (a.type === "decorate") {
     if (s.decorations >= 6) return fail("ของตกแต่งครบแล้ว");
@@ -366,29 +417,35 @@ export function transition(
     return ok("เพิ่มกระถางดอกไม้ที่ทางเข้าบ้านแล้ว");
   }
   if (a.type === "art") {
+    if (s.artDay.used >= s.artDay.limit) return fail("วันนี้สร้างงานครบแล้ว พักหาแรงบันดาลใจแล้วกลับมาพรุ่งนี้");
     if (s.artworks.length >= 24) return fail("สตูดิโอเต็มแล้ว ขายผลงานก่อน");
     if (!a.art || !a.art.name.trim() || a.art.name.length > 80)
       return fail("ตั้งชื่อผลงานไม่เกิน 80 ตัวอักษร");
     if (
       a.art.kind === "painting" &&
       (!a.art.image?.startsWith("data:image/png;base64,") ||
-        a.art.image.length > 400000)
+        a.art.image.length >= 400000)
     )
       return fail("ภาพไม่ถูกต้อง");
     if (a.art.kind === "sculpture" && !validParts(a.art.parts))
       return fail("เพิ่มรูปทรง 1–16 ชิ้นในขอบเขตที่กำหนด");
-    if(a.art.kind==="model" && (!validModelPaint(a.art) || (a.art.image && (!a.art.image.startsWith("data:image/png;base64,")||a.art.image.length>=400000)))) return fail("เลือกโมเดลและระบายสีก่อนบันทึก");
+    if (
+      a.art.kind === "model" &&
+      (!validModelPaint(a.art) ||
+        (a.art.image &&
+          (!a.art.image.startsWith("data:image/png;base64,") ||
+            a.art.image.length >= 400000)))
+    )
+      return fail("เลือกโมเดลและระบายสีก่อนบันทึก");
     if (!["painting", "sculpture", "model"].includes(a.art.kind))
       return fail("รูปแบบผลงานไม่ถูกต้อง");
     if (!energy(15)) return fail("ต้องใช้พลังงาน 15 หน่วย");
     s.artworks.push({
       ...a.art,
       id: crypto.randomUUID(),
-      price:
-        a.art.kind === "painting"
-          ? 100
-          : a.art.kind === "model" ? 140 : 80 + Math.min(16, a.art.parts!.length) * 15,
+      price: ART_PRICES[a.art.kind],
     });
+    s.artDay.used++;
     return ok("บันทึกผลงานในสตูดิโอแล้ว");
   }
   if (a.type === "sellArt") {
@@ -403,8 +460,9 @@ export function transition(
 }
 function nextDay(s: GameState, rng: () => number, rested = true) {
   s.day++;
+  s.artDay = rollArtDay(rng);
   s.time = 360;
-  s.energy = rested ? s.maxEnergy : Math.floor(s.maxEnergy * .6);
+  s.energy = rested ? s.maxEnergy : Math.floor(s.maxEnergy * 0.6);
   s.weather = rng() < 0.3 ? "rain" : "sunny";
   s.farm.forEach((p) => {
     if (p.seed) {
@@ -418,12 +476,18 @@ function nextDay(s: GameState, rng: () => number, rested = true) {
   };
   s.position = { x: 13, z: 2, yaw: -Math.PI / 2 };
 }
+// Preserve existing farms, inventory, artwork and historical sale values.
+export function migrateSave(value: any): unknown {
+  if (value?.version !== 1) return value;
+  if (![12, 20].includes(value.farm?.length) || value.farm.length !== 12 + value.upgrades?.farmLevel * 8) return null;
+  return { ...value, version: 2, artDay: { mood: "calm", limit: 1, used: 0 }, upgrades: { ...value.upgrades, farmLevel: value.farm.length === 20 ? 5 : 3, wateringLevel: 0 } };
+}
 let loadMessage = "";
 function load(): GameState {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
+      const parsed = migrateSave(JSON.parse(raw));
       if (validateSave(parsed)) return parsed;
       loadMessage = "ไฟล์บันทึกไม่สมบูรณ์ เริ่มเกมใหม่โดยเก็บข้อมูลเดิมไว้";
     }
@@ -450,11 +514,14 @@ export function save() {
     return false;
   }
 }
+const activityListeners = new Set<(a: Action, r: Result) => void>();
+export function onActivity(fn: (a: Action, r: Result) => void) { activityListeners.add(fn); return () => {activityListeners.delete(fn);}; }
 export function dispatch(a: Action) {
   const r = transition(state, a);
   if (r.ok) {
     state = r.state;
     listeners.forEach((fn) => fn());
+    if (!["tick", "run", "start"].includes(a.type)) activityListeners.forEach(fn => fn(a,r));
     if (a.type !== "tick" && a.type !== "run") save();
   }
   return r;
