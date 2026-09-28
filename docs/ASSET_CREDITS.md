@@ -64,3 +64,21 @@ Props were converted locally from the source FBX files. Logs are rotated horizon
 ## Game audio — added 2026-09-28
 
 Original procedural Web Audio score, ambient wind/bird tones and activity cues in `src/game/audio.ts`. No external music recordings used.
+
+
+## Kenney Fantasy Town Kit — added 2026-09-29
+
+- Source: https://kenney.nl/assets/fantasy-town-kit (version 2.0), CC0. Downloaded free directly from Kenney.
+- Selected only `lantern.glb`, `cart.glb`, `fountain-round.glb`, their shared `Textures/colormap.png`, and `LICENSE.txt`, in `public/models/village/`.
+- Runtime changes: scale/orientation; lantern material tint to match village ironwork; fountain-water material; warm point lights. No paid models or textures added.
+- Rowan reuses the previously downloaded Maniacie B2 NPC with an outfit tint; the original CGTrader terms still apply.
+
+## Free options for later visual upgrades
+
+- [Kenney Fantasy Town Kit](https://kenney.nl/assets/fantasy-town-kit): CC0 village buildings, stalls, lantern and fountain parts; selected props already integrated.
+- [Kenney Nature Kit](https://kenney.nl/assets/nature-kit): CC0 rocks, foliage and trees; an alternative consistent low-poly environment pack.
+- [Rocky Terrain / Poly Haven](https://polyhaven.com/a/rocky_terrain): CC0 rocky ground texture by Amal Kumar; suitable as a future distant-hill surface. Recommended, not downloaded or applied in this revision.
+
+## Additional inventory art — 2026-09-29
+
+Generated with built-in image_gen. Original generated alpha preserved; CSS selects fixed atlas cells without modifying the images. `garden-expansion.png`, `lake-expansion.png`, `seeds-and-rods.png`; prompt records in `public/icons/pixelart/expansion-prompts.json` and frame definitions in `atlas.json`.

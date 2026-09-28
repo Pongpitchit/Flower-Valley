@@ -1,4 +1,4 @@
-import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, FERTILIZER_PRICE, moodName } from "./game/balance";
+import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, moodName } from "./game/balance";
 import { SaleRow } from "./components/SaleRow";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -31,6 +31,7 @@ import { Grilling } from "./components/Grilling";
 import { ItemIcon } from "./components/ItemIcon";
 import { SleepTransition } from "./components/SleepTransition";
 import {
+  FERTILIZERS, RODS, TRASH,
   FLOWERS,
   FISH,
   GRILLED_FISH,
@@ -98,8 +99,7 @@ export default function App() {
     notify(message);
   };
   const sitReturn = useRef<{ x: number; z: number; yaw: number } | null>(null);
-  const seedRef = useRef(selectedSeed);
-  seedRef.current = selectedSeed;
+
   useEffect(() => { try {localStorage.setItem("flower-valley-selected-seed",selectedSeed);} catch { /* Preference is optional. */ } },[selectedSeed]);
   const modalRef = useRef(modal);
   modalRef.current = modal;
@@ -139,12 +139,6 @@ export default function App() {
     const t = bridge.target;
     if (!t || nightRef.current || modalRef.current || !getState().started)
       return;
-    if (t.kind === "plot") {
-      const p = getState().farm[t.index!];
-      if (p.seed && p.watered && p.age < flower(p.seed).days) { open({kind:"plot",index:t.index}); return; }
-      if (p.seed) { act({type: p.age >= flower(p.seed).days ? "harvest" : "water", index:t.index}); return; }
-      if (getState().inventory["seed:" + seedRef.current] > 0) { act({type:"plant", id:seedRef.current, index:t.index}); return; }
-    }
     if (t.kind === "rest") {
       sitReturn.current = { ...bridge.position };
       bridge.teleport = { x: 7, z: -9.4, yaw: 0 };
@@ -202,6 +196,11 @@ export default function App() {
         if (modalRef.current) close();
         else if (getState().started) open({ kind: "pause" });
         return;
+      }
+      if (e.code === "Space" && !e.repeat && getState().started) {
+        const m=modalRef.current, t=bridge.target;
+        const index=m?.kind==="plot" ? m.index : !m && t?.kind==="plot" ? t.index : undefined;
+        if (index !== undefined) { act({type:"water",index}); return; }
       }
       if (modalRef.current || !getState().started) return;
       bridge.keys.add(e.code);
@@ -312,8 +311,8 @@ export default function App() {
               “สวนที่สวยงามเริ่มจากเมล็ดเล็ก ๆ เพียงเมล็ดเดียว”{" "}
               <span>— ลิลลี่</span>
             </p>
-            <button className="wide" disabled={s.money < FERTILIZER_PRICE} onClick={() => act({type:"buyFertilizer"})}>ซื้อปุ๋ยเร่งโต · {FERTILIZER_PRICE} ◉ · มี {s.inventory.fertilizer || 0} ถุง</button>
-            <p className="subtle">ปุ๋ยเพิ่มการเติบโต 1 วัน ใช้ได้ครั้งเดียวต่อการปลูก</p>
+            <div className="fertilizer-shop">{FERTILIZERS.map(f=><button className="secondary" key={f.id} disabled={s.money<f.price} onClick={()=>act({type:"buyFertilizer",id:f.id})}><ItemIcon id={f.id} size={56}/><b>{f.name}</b><span>เร่งโต {f.days} วัน · {f.price} ◉</span><small>มี {s.inventory[f.id] || 0} ถุง</small></button>)}</div>
+            <p className="subtle">ปุ๋ยใช้ได้ครั้งเดียวต่อการปลูก เลือกระดับให้เหมาะกับวันที่เหลือ</p>
             <div className="shop-grid">
               {FLOWERS.map((f) => (
                 <article className="product" key={f.id}>
@@ -365,7 +364,7 @@ export default function App() {
                   : "ดินพร้อมแล้ว เลือกเมล็ดพันธุ์เพื่อเริ่มต้น"}
               </p>
             </div>
-            <p className="subtle">E ปลูกเมล็ดที่เลือก / รดน้ำ / เก็บเกี่ยว · Q เลือกเมล็ดและใส่ปุ๋ย</p>
+            <p className="subtle">เลือกเมล็ดแล้วกดปลูก · Space รดน้ำ · เก็บดอกไม้เมื่อโตเต็มที่</p>
             {p.seed ? (
               <>
                 <div className="progress">
@@ -378,7 +377,7 @@ export default function App() {
                     disabled={p.watered || p.age >= flower(p.seed).days}
                     onClick={() => act({ type: "water", index: modal.index })}
                   >
-                    <ItemIcon id="watering-can" size={28} /> รดน้ำ −3 ⚡
+                    <ItemIcon id="watering-can" size={28} /> รดน้ำ [Space] −3 ⚡
                   </button>
                   <button
                     disabled={p.age < flower(p.seed).days}
@@ -387,7 +386,8 @@ export default function App() {
                     ✂ เก็บดอกไม้ −5 ⚡
                   </button>
                 </div>
-                <button className="secondary" disabled={p.fertilized || p.age >= flower(p.seed).days || !(s.inventory.fertilizer > 0)} onClick={() => act({type:"fertilize",index:modal.index})}>ใส่ปุ๋ย เร่งโต 1 วัน · เหลือ {s.inventory.fertilizer || 0} ถุง {p.fertilized ? "(ใช้แล้ว)" : ""}</button>
+                <div className="fertilizer-shop">{FERTILIZERS.map(f=><button key={f.id} className="secondary" disabled={p.fertilized || p.age>=flower(p.seed!).days || !(s.inventory[f.id]>0)} onClick={()=>act({type:"fertilize",id:f.id,index:modal.index})}><ItemIcon id={f.id} size={44}/>{f.name}<small>โต +{Math.min(f.days,flower(p.seed!).days-p.age)} วัน · เหลือ {s.inventory[f.id]||0}</small></button>)}</div>
+                {p.fertilized && <p className="subtle">ใส่ปุ๋ยให้การปลูกรอบนี้แล้ว</p>}
                 <p className="subtle">
                   เติบโตหนึ่งขั้นเมื่อเริ่มวันใหม่ หากรดน้ำในวันก่อนหน้า
                   ดอกไม้ที่โตเต็มที่แล้วจะรอให้คุณเก็บ
@@ -473,15 +473,18 @@ export default function App() {
         );
       case "sell":
       case "fish":
+      case "general":
         return (
           <>
             <p className="dialogue">
-              {modal.kind === "fish"
+              {modal.kind === "general" ? "“ของที่เก็บมาอาจมีค่า แวะเอามาให้ผมดูได้นะ” — โรวัน" : modal.kind === "fish"
                 ? "“ทะเลสาบมีของขวัญให้คนที่ใจเย็นเสมอ” — ฟินน์"
                 : "“ดอกไม้จากสวนของคุณจะทำให้ใครบางคนยิ้มได้” — เมย์"}
             </p>
+            {modal.kind === "fish" && <div className="recipe-summary"><ItemIcon id={"rod:"+s.upgrades.rodLevel} size={54}/><b>{RODS[s.upgrades.rodLevel].name}</b><p>ปลาหายาก {Math.round(RODS[s.upgrades.rodLevel].rare*100)}% · ขยะ {Math.round(RODS[s.upgrades.rodLevel].trash*100)}%</p><button disabled={s.upgrades.rodLevel>=2 || s.money<(RODS[s.upgrades.rodLevel+1]?.price ?? 0)} onClick={()=>act({type:"upgradeRod"})}>{s.upgrades.rodLevel>=2 ? "เบ็ดระดับสูงสุดแล้ว" : `ซื้อ${RODS[s.upgrades.rodLevel+1].name} · ${RODS[s.upgrades.rodLevel+1].price} ◉`}</button></div>}
+            {modal.kind === "general" && <p className="subtle">รับซื้อของจิปาถะที่ตกได้จากทะเลสาบ ส่วนของป่าจะเพิ่มในระบบเก็บของภายหลัง</p>}
             <div className="item-list">
-              {(modal.kind === "fish"
+              {(modal.kind === "general" ? TRASH : modal.kind === "fish"
                 ? [...FISH, ...GRILLED_FISH]
                 : FLOWERS
               ).map((f) => (
@@ -708,10 +711,11 @@ export default function App() {
                     : `อัปเกรด · ${300 * (s.upgrades.energyLevel + 1)} ◉`}
                 </button>
               </article>
+              <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["พรมทอในห้องนอน","ชั้นหนังสือข้างเตียง","มุมพักผ่อนด้านข้างบ้าน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
               <article>
                 <Flower2 />
                 <h3>แต่งทางเข้าบ้าน</h3>
-                <p>กระถางดอกไม้ {s.decorations}/6 ใบ</p>
+                <p>กระถางข้างระเบียง {s.decorations}/6 ใบ · เว้นทางเข้าตรงกลาง</p>
                 <button
                   disabled={s.decorations >= 6 || s.money < 100}
                   onClick={() => act({ type: "decorate" })}
@@ -964,6 +968,7 @@ export default function App() {
     inventory: "กระเป๋าของคุณ",
     sell: "ร้านดอกไม้ของเมย์",
     fish: "ร้านปลาของฟินน์",
+    general: "โรวัน · ของจิปาถะ",
     bouquet: "จัดช่อดอกไม้",
     customer: "ออร์เดอร์ประจำวัน",
     fishing: "ตกปลาที่ Mirror Lake",
@@ -1194,7 +1199,7 @@ export default function App() {
           {toast}
         </div>
       )}
-      {!modal && target?.kind === "plot" && <div className="farm-tool"><ItemIcon id={"seed:"+selectedSeed} /> {flower(selectedSeed).name} ×{s.inventory["seed:"+selectedSeed] || 0}<button onClick={() => open({kind:"plot",index:target.index})}>Q เมล็ด / ปุ๋ย</button></div>}
+
       {modal && (
         <ModalFrame
           title={titles[modal.kind] || modal.name || ""}

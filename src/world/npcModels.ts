@@ -1,6 +1,7 @@
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 
 export const NPC_MODELS: Record<string, { code: string; outfit: string }> = {
+  Rowan: { code:"B2", outfit:"เสื้อเขียว ผู้รับซื้อของจิปาถะ" },
   Theo: { code: "B1", outfit: "เสื้อแดง ช่างประจำหมู่บ้าน" },
   Lily: { code: "G3", outfit: "ชุดสีเขียว ร้านเมล็ดพันธุ์" },
   Mae: { code: "G2", outfit: "ชุดผ้ากันเปื้อน ร้านดอกไม้" },
@@ -81,6 +82,7 @@ export async function loadNpcModel(name: string) {
     const mesh = new T.SkinnedMesh(geometry, original.material);
     mesh.name = original.name;
     mesh.userData.role = role;
+    if(name === "Rowan" && role === "outfit") mesh.material.color.set("#729f81");
     mesh.castShadow = true;
     mesh.receiveShadow = true;
     mesh.frustumCulled = false;

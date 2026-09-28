@@ -19,10 +19,15 @@ export function ItemIcon({
     baseId,
   );
   const index = flowerIndex >= 0 ? flowerIndex : other;
-  if (id === "fertilizer") return <span className="item-icon" role="img" aria-label="ปุ๋ยเร่งโต" style={{width:size,height:size,display:"inline-grid",placeItems:"center",color:"#788653"}}><svg width="85%" height="85%" viewBox="0 0 24 24" shapeRendering="crispEdges"><path fill="#ad8154" d="M8 2h8v4h2v4h2v12H4V10h2V6h2z"/><path fill="#d4b485" d="M6 10h12v10H6z"/><path fill="#557747" d="M11 11h2v8h-2zM7 11h4v4H9v-2H7zM13 10h4v3h-2v2h-2z"/></svg></span>;
-  if (index < 0) return null;
-  const sheet =
-    flowerIndex >= 0 ? (seed ? "seeds" : "flowers") : "fish-and-tools";
+  const extra: Record<string,[string,number]> = {
+    fertilizer:["garden-expansion",0],"fertilizer:good":["garden-expansion",1],"fertilizer:premium":["garden-expansion",2],cosmos:["garden-expansion",3],hydrangea:["garden-expansion",4],
+    trout:["lake-expansion",0],perch:["lake-expansion",1],catfish:["lake-expansion",2],"tin-can":["lake-expansion",3],"old-boot":["lake-expansion",4],
+    "seed:cosmos":["seeds-and-rods",0],"seed:hydrangea":["seeds-and-rods",1],"rod:0":["seeds-and-rods",2],"rod:1":["seeds-and-rods",3],"rod:2":["seeds-and-rods",4],
+  };
+  const frame = extra[grilled ? baseId : id];
+  if(index<0 && !frame)return null;
+  const sheet = frame?.[0] ?? (flowerIndex>=0 ? (seed ? "seeds" : "flowers") : "fish-and-tools");
+  const spriteIndex=frame?.[1] ?? index;
   const name =
     label ??
     { bouquet: "ช่อดอกไม้", "watering-can": "บัวรดน้ำ" }[id] ??
@@ -37,7 +42,7 @@ export function ItemIcon({
         height: size,
         filter: grilled ? "sepia(.8) saturate(1.8) brightness(.8)" : undefined,
         backgroundImage: `url(/icons/pixelart/${sheet}.png)`,
-        backgroundPosition: `${(index % 3) * 50}% ${Math.floor(index / 3) * 100}%`,
+        backgroundPosition: `${(spriteIndex % 3) * 50}% ${Math.floor(spriteIndex / 3) * 100}%`,
       }}
     />
   );

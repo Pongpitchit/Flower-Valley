@@ -204,8 +204,7 @@ function buildFlowerTable(w: any, makeFlower: (id: string) => any) {
   });
 }
 export function buildAtelier(w: any) {
-  const T = window.AFRAME.THREE,
-    m = w.m,
+  const m = w.m,
     wall = m.studioWall;
   w.box(m.masonry, 15, 0.1, 26, 7.4, 0.2, 7.4);
   w.box(m.wood, 15, 0.25, 26, 7, 0.12, 7);
@@ -247,40 +246,25 @@ export function buildAtelier(w: any) {
   const sign = w.sign("THE LITTLE ATELIER", 15, 3.38, 22.1, 3.5);
   sign.rotation.y = Math.PI;
   // Trestle workbench, easel, shelves and visible studio tools.
-  w.box(m.wood, 17, 1, 27, 2, 0.13, 1.2);
-  for (const x of [16.3, 17.7]) {
-    w.box(m.darkWood, x, 0.55, 27, 0.1, 0.9, 0.8);
-    w.box(m.darkWood, x, 0.2, 27, 0.65, 0.1, 1);
+  w.box(m.wood, 17.4, 1, 24.7, 2, 0.13, 1.2);
+  for (const x of [16.7, 18.1]) {
+    w.box(m.darkWood, x, 0.55, 24.7, 0.1, 0.9, 0.8);
+    w.box(m.darkWood, x, 0.2, 24.7, 0.65, 0.1, 1);
   }
-  w.box(m.white, 13, 1.65, 27, 1.4, 1.2, 0.09);
-  w.box(m.wood, 13, 0.8, 27, 0.09, 1.6, 0.14);
-  w.box(m.wood, 13, 1.01, 26.9, 1.6, 0.08, 0.2);
-  w.box(m.wood, 13, 2.3, 27, 0.2, 0.13, 0.15);
-  for (const y of [0.55, 1.25, 2]) w.box(m.wood, 15, y, 29.15, 6.2, 0.08, 0.5);
-  for (const x of [12, 18]) w.box(m.darkWood, x, 1.25, 29.1, 0.1, 2.5, 0.55);
-  for (let i = 0; i < 7; i++) {
-    const c = new T.MeshStandardMaterial({
-      color: ["#927561", "#9ba27e", "#bc8c75"][i % 3],
-      roughness: 0.85,
-    });
-    w.mesh(
-      new T.CylinderGeometry(0.11, 0.09, 0.25, 16),
-      c,
-      12.4 + i * 0.3,
-      1.42,
-      29.1,
-      1,
-      1,
-      1,
-    );
-  }
+  w.box(m.white, 12.3, 1.65, 24.7, 1.4, 1.2, 0.09);
+  w.box(m.wood, 12.3, 0.8, 24.7, 0.09, 1.6, 0.14);
+  w.box(m.wood, 12.3, 1.01, 24.6, 1.6, 0.08, 0.2);
+  w.box(m.wood, 12.3, 2.3, 24.7, 0.2, 0.13, 0.15);
+  // Four gallery shelves leave one distinct slot per unsold artwork (up to 24).
+  for(const y of [.67,1.35,2.03,2.71])w.box(m.wood,15,y,29.04,6.35,.06,.58);
+  for(const x of [11.9,18.1])w.box(m.darkWood,x,1.72,29.12,.08,2.9,.4);
   for (const [x, z, width, depth] of [
     [11.5, 26, 0.25, 7],
     [18.5, 26, 0.25, 7],
     [15, 29.5, 7, 0.25],
     [12.25, 22.5, 1.5, 0.25],
     [17.75, 22.5, 1.5, 0.25],
-    [17, 27, 2, 1.2],
+    [17.4, 24.7, 2, 1.2],
   ])
     colliders.push({ x, z, w: width, d: depth });
 }

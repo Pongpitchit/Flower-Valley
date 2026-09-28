@@ -12,7 +12,7 @@ export function buildActivityFeedback(world:any) {
   const labels:Record<string,string>={plant:'ปลูกแล้ว',water:'ชุ่มน้ำ',harvest:'+1 ดอกไม้',fertilize:'โต +1 วัน',catch:'+1 ปลา',grill:'ย่างเสร็จ',bouquet:'ช่อพร้อมแล้ว',art:'สร้างงานแล้ว',sell:'ขายแล้ว',sellArt:'ขายแล้ว',sellBouquet:'ขายแล้ว',order:'ส่งช่อแล้ว',buy:'ได้เมล็ด',buyFertilizer:'ได้ปุ๋ย',upgradeFarm:'สวนขยายแล้ว',upgradeWatering:'อัปเกรดแล้ว'};
   function dispose(sprite:any){world.remove(sprite);sprite.material.map?.dispose();sprite.material.dispose();}
   const stop=onActivity(a=>{
-    const label=labels[a.type];if(!label)return;
+    const label=labels[a.type];if(!label || a.index !== undefined)return;
     const point=a.index!==undefined?plotPosition(a.index):(bridge.target??bridge.position);
     const sprite=plotMarker(label,a.type==='water'?'#8bdded':'#ffe3a0');const base=a.index!==undefined?.9:2.2;
     sprite.position.set(point.x,base,point.z);world.add(sprite);effects.push({sprite,age:0,base});

@@ -28,12 +28,12 @@ describe("Grilled fish economy", () => {
       expect(cooked.state.money).toBe(s.money);
       expect(validateSave(JSON.parse(JSON.stringify(cooked.state)))).toBe(true);
       const sold = apply(cooked.state, "sell", { id: GRILLED_FISH[i].id });
-      expect(sold.state.money).toBe(s.money + fish.price * 1.5);
+      expect(sold.state.money).toBe(s.money + Math.round(fish.price * 1.5));
       expect(apply(sold.state, "sell", { id: GRILLED_FISH[i].id }).ok).toBe(
         false,
       );
       expect(apply(sold.state, "sell", { id: fish.id }).state.money).toBe(
-        s.money + fish.price * 2.5,
+        s.money + fish.price + Math.round(fish.price * 1.5),
       );
     });
   it("rejects absent fish, unknown recipes, insufficient energy and midnight atomically", () => {
@@ -259,8 +259,8 @@ describe("Bouquets, orders and upgrades", () => {
 describe("Fishing and art", () => {
   it("charges for a cast and adds all three fish rarities with correct sale prices", () => {
     for (const [rng, id, price] of [
-      [0.1, "carp", 40],
-      [0.8, "goldfish", 60],
+      [0.4, "carp", 40],
+      [0.6, "goldfish", 60],
       [0.98, "rare", 150],
     ] as const) {
       let s = apply(initialState(() => 0.1), "cast").state;
@@ -473,5 +473,42 @@ describe('Daily creativity, farm progression and bulk trade', () => {
     expect(apply(r.state,'water',{index:0}).state).toBe(r.state);
     const edge=apply(r.state,'water',{index:3}).state;expect(edge.farm[3].watered).toBe(true);expect(edge.farm[4].watered).toBe(false);
     s.energy=2;expect(apply(s,'water',{index:0}).state).toBe(s);
+  });
+});
+
+describe('Village expansion rules',()=>{
+  it('migrates the previous daily-mood save without losing its quota or fertilizer',()=>{
+    const old:any=initialState(()=>.1);old.version=2;old.artDay.used=1;old.inventory.fertilizer=4;
+    delete old.upgrades.rodLevel;delete old.upgrades.homeLevel;
+    const upgraded=migrateSave(old) as GameState;
+    expect(validateSave(upgraded)).toBe(true);expect(upgraded.artDay.used).toBe(1);expect(upgraded.inventory.fertilizer).toBe(4);expect(upgraded.upgrades.rodLevel).toBe(0);
+  });
+  it('fertilizer tiers consume exactly one bag, cap at maturity and cannot stack',()=>{
+    for(const [id,price,days] of [['fertilizer',15,1],['fertilizer:good',40,2],['fertilizer:premium',75,3]] as const){
+      let s=initialState();s.inventory['seed:hydrangea']=1;s=apply(s,'buyFertilizer',{id}).state;
+      expect(s.money).toBe(500-price);s=apply(s,'plant',{id:'hydrangea',index:0}).state;
+      s=apply(s,'fertilize',{id,index:0}).state;expect(s.farm[0].age).toBe(days);expect(s.inventory[id]).toBe(0);expect(validateSave(s)).toBe(true);
+      s.inventory[id]=1;expect(apply(s,'fertilize',{id,index:0}).state).toBe(s);
+      s.farm[1]={seed:'daisy',age:1,watered:false};s=apply(s,'fertilize',{id,index:1}).state;expect(s.farm[1].age).toBe(2);
+    }
+  });
+  it('buys rod and home upgrades once per level and refuses unaffordable purchases',()=>{
+    let s=initialState();s.money=4000;
+    s=apply(s,'upgradeRod').state;s=apply(s,'upgradeRod').state;expect(s.money).toBe(2750);expect(s.upgrades.rodLevel).toBe(2);expect(apply(s,'upgradeRod').state).toBe(s);
+    for(let i=0;i<3;i++)s=apply(s,'upgradeHome').state;
+    expect(s.money).toBe(1300);expect(apply(s,'upgradeHome').state).toBe(s);expect(validateSave(s)).toBe(true);
+    const broke=initialState();broke.money=0;expect(apply(broke,'upgradeRod').state).toBe(broke);expect(apply(broke,'upgradeHome').state).toBe(broke);
+  });
+  it('all catch probabilities sum to one, match rod rarity, and include low-value sellable trash',()=>{
+    for(const level of [0,1,2]){
+      const counts:Record<string,number>={};
+      const s=initialState();s.upgrades.rodLevel=level;
+      for(let i=0;i<1000;i++){
+        const r=transition(s,{type:'catch'},()=>(i+.5)/1000);const id=Object.keys(r.state.inventory)[0];counts[id]=(counts[id]||0)+1;
+        if(id==='tin-can'||id==='old-boot')expect(r.state.stats.fish).toBe(0);
+      }
+      expect(counts.rare).toBe([40,80,140][level]);expect(counts['tin-can']+counts['old-boot']).toBe([300,250,200][level]);expect(Object.keys(counts)).toHaveLength(8);
+    }
+    for(const [id,price] of [['tin-can',3],['old-boot',5]] as const){const s=initialState();s.inventory[id]=4;expect(apply(s,'sell',{id,amount:4}).state.money).toBe(500+price*4);expect(apply(s,'grill',{id}).state).toBe(s);}
   });
 });

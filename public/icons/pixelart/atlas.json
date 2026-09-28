@@ -108,6 +108,111 @@
       "y": 512,
       "width": 512,
       "height": 512
+    },
+    "fertilizer": {
+      "image": "garden-expansion.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "fertilizer:good": {
+      "image": "garden-expansion.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "fertilizer:premium": {
+      "image": "garden-expansion.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "cosmos": {
+      "image": "garden-expansion.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "hydrangea": {
+      "image": "garden-expansion.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "trout": {
+      "image": "lake-expansion.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "perch": {
+      "image": "lake-expansion.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "catfish": {
+      "image": "lake-expansion.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "tin-can": {
+      "image": "lake-expansion.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "old-boot": {
+      "image": "lake-expansion.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "seed:cosmos": {
+      "image": "seeds-and-rods.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "seed:hydrangea": {
+      "image": "seeds-and-rods.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "rod:0": {
+      "image": "seeds-and-rods.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "rod:1": {
+      "image": "seeds-and-rods.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "rod:2": {
+      "image": "seeds-and-rods.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
     }
   }
 }

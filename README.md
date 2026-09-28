@@ -23,14 +23,14 @@ npm run preview
 
 - WASD: walk. Shift + movement: run, costing one energy per active second.
 - Click the world: capture the mouse. If pointer lock is unavailable, drag to look.
-- E: interact with a nearby object/NPC; on plots, plant the selected seed, water, or harvest immediately. Q: inspect a plot, change seeds on an empty plot, or fertilize. I: inventory. M: map. B: flower encyclopedia.
+- E: interact with a nearby object/NPC; on plots, open the original seed-selection/crop panel. Choose a seed and explicitly press Plant. Space waters the targeted plot (also works inside its panel); Q opens plot details. I: inventory. M: map. B: flower encyclopedia.
 - Escape: close a panel / pause / release mouse. Settings include quality and touch-control toggles.
 - Phone/iPad: left joystick to walk, drag on the world to look, E touch button to interact.
 - Fishing: Space casts/recasts; press the shown A/D sequence, or tap the corresponding buttons, within 14 seconds. A wrong input or timeout lets the fish escape; casting still costs energy.
 
 ## Game systems
 
-Start with 500 coins, 100 energy and 3 empty plots. Buy seeds from Lily to the west, enter the garden from the south, plant and water. Watered crops grow once at the next day transition. Rain automatically waters planted crops; mature flowers stay ready until harvested. Growth takes 2/2/3/4/5 watered nights; flower sale values are 35/50/85/135/210 coins (seeds remain 10/15/25/40/60). Empty, dry, watered and ready plots have distinct colored borders and text markers.
+Start with 500 coins, 100 energy and 3 empty plots. Buy seeds from Lily to the west, enter the garden from the south, plant and water. Watered crops grow once at the next day transition. Rain automatically waters planted crops; mature flowers stay ready until harvested. Growth takes 2/2/3/4/5 watered nights; flower sale values are 35/50/85/135/210 coins (seeds remain 10/15/25/40/60). Plots keep their original wooden borders and natural wet/dry soil; floating status labels were removed. Cosmos (20 seed / 75 sale / 3 days) and hydrangea (90 / 320 / 6 days) join the original five flowers.
 
 Sell flowers to Mae, fish to Finn, and bouquets to Mae or the daily customer. A bouquet consumes exactly three flowers and sells for their combined value × 1.25 (rounded). A matching daily customer order adds 50 coins. Orders renew every morning.
 
@@ -49,7 +49,7 @@ Theo, the builder beside the cottage, expands the garden through 3 → 6 → 9 �
 
 The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `docs/ASSET_CREDITS.md` for exact sources/licenses.
 
-Lily sells fertilizer for 15 coins: one bag advances a crop by one growth day, once per planting. Shops support a chosen quantity or all of one item. Bouquet previews show ingredients, remaining inventory and the extra sale value. Settings control synthesized original background music, effects/ambience and master volume; audio starts only after a user gesture and mutes when the tab is hidden.
+Lily sells basic/good/premium fertilizer for 15/40/75 coins, advancing growth by 1/2/3 days, capped at maturity, once per planting. Shops offer sell-one or sell-all for each item. Bouquet previews show ingredients, remaining inventory and the extra sale value. Settings control synthesized original background music, effects/ambience and master volume; audio starts only after a user gesture and mutes when the tab is hidden.
 
 The world combines detailed PBR surfaces with downloaded stylized NPCs, vegetation and terrain. It is not a photorealistic scanned environment. Physical iPad/Safari performance still needs device testing.
 
@@ -102,4 +102,14 @@ The fishing pier has a clear rock-free approach. The rest log faces the campfire
 
 ## Save compatibility
 
-Version-1 saves migrate to version 2 under the same storage key. Existing 12/20-plot gardens, inventory, coins, art and historical bouquet sale values are retained. New games start with three plots. Named development fixtures (for example `?qa=farm-refresh`) have independent saves.
+Version-1 and version-2 saves migrate to version 3 under the same storage key. Existing 12/20-plot gardens, inventory, coins, art and historical bouquet sale values are retained. New games start with three plots. Named development fixtures (for example `?qa=farm-refresh`) have independent saves.
+
+## Village revision (2026-09-29)
+
+- Six fish: carp 40, goldfish 60, rare fish 150, trout 80, perch 30, catfish 55. All can be grilled for a rounded 50% premium. Catching may yield a tin can (3 coins) or old boot (5 coins), sold to Rowan at the western general-goods cart. Junk cannot be grilled and does not count as caught fish. Foraging collection is reserved for a later system.
+- Finn sells two rod upgrades, costing 350 then 900. Rare-fish odds are 4% / 8% / 14%, junk odds 30% / 25% / 20%; remaining probability is distributed among five common fish. The fishing panel shows current odds and rod.
+- Home pots are limited to six, grouped at both sides of the porch, preserving the central doorway. Theo offers a rug (200), bookshelf (450), and side-yard bench (800), purchased sequentially.
+- All unsold artwork (up to 24) appears in distinct atelier gallery slots. Paintings face inward; small models sit on shelves. Selling removes the corresponding work. Workbench/easel and interaction/collision positions have been moved away from the display wall.
+- Shops have different physical details: Lily's pitched potting-shed roof and seed shelf, Mae's striped flower canopy/trellis facing the village, Finn's blue ice counter/tackle, and Rowan's canvas cart and crates.
+- Forest canopies use spacing checks. Distant hills start beyond the forest band so they do not intersect tree trunks. Warm Kenney lantern models and ceiling lights improve nighttime navigation. The western stone water basin and cart also use the free Kenney Fantasy Town Kit (CC0).
+- Three additional transparent pixel-art atlases provide fifteen new icons: three fertilizers, two flowers, two seeds, three rods, three fish and two junk items. Exact prompts and frame coordinates are retained in `public/icons/pixelart/`.

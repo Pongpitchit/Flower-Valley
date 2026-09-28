@@ -1,5 +1,6 @@
+import { villageProp } from "./villageProps";
 import { buildForest } from "./forest";
-import { buildActivityFeedback, plotMarker } from "./feedback";
+import { buildActivityFeedback } from "./feedback";
 import "aframe";
 import { loadNpcModel } from "./npcModels";
 import { addBreeze, buildAtmosphere, greetingBubble } from "./atmosphere";
@@ -65,7 +66,9 @@ export function createFlower(id: string, age = 1) {
     leaf.rotation.z = (i % 2 ? 1 : -1) * 0.5;
   }
   if (age >= 0.99) {
-    if (id === "lavender") {
+    if (id === "hydrangea") {
+      for(let i=0;i<22;i++) {const a=i*2.4,r=.06+Math.sqrt(i/22)*.23;part(geometries.sphere,petalMat,Math.cos(a)*r,h+Math.sin(i*1.7)*.1,Math.sin(a)*r,.085,.065,.085);}
+    } else if (id === "lavender") {
       for (let i = 0; i < 12; i++)
         part(
           geometries.sphere,
@@ -250,33 +253,34 @@ if (!window.AFRAME.components["flower-world"])
       // Low rolling hills create a continuous horizon.
       for (let i = 0; i < 20; i++) {
         const a = (i / 20) * Math.PI * 2,
-          r = 72 + random() * 25;
+          r = 120 + random() * 18;
         this.mesh(
           geometries.sphere,
           mat(["#4e6d47", "#607a50", "#6f875d"][i % 3]),
           Math.sin(a) * r,
           -1,
           Math.cos(a) * r,
-          18 + random() * 16,
-          10 + random() * 12,
-          16 + random() * 12,
+          24 + random() * 8,
+          16 + random() * 14,
+          22 + random() * 6,
         );
       }
       this.buildLake();
       this.buildHouse();
       this.loadModels();
       this.buildStall(-17, 14, "SEEDS & LITTLE THINGS", "#a7b291");
-      this.buildStall(-8, 26, "FLOWER MARKET", "#be9192");
+      this.buildStall(-8, 26, "FLOWER MARKET", "#be9192", false, true);
+      this.buildGeneralStore();
       this.buildStall(15, -18, "FINN'S FISH MARKET", "#8fa9a6", true);
       this.buildWorkshop();
       for (const [id, x] of [
-        ["cat", 16.55],
-        ["dog", 17.35],
+        ["cat", 16.95],
+        ["dog", 17.75],
       ] as const) {
         loadPaintModel(id)
           .then((model) => {
             model.scale.setScalar(0.2);
-            model.position.set(x, 1.08, 27);
+            model.position.set(x, 1.08, 24.7);
             model.rotation.y = Math.PI;
             this.world.add(model);
           })
@@ -290,6 +294,7 @@ if (!window.AFRAME.components["flower-world"])
       this.npc(14, 23, "Oliver", "#b99c6f", "workshop");
       this.npc(-5, 20, "Emma", "#c6a46b", "customer");
       this.npc(7, 8, "Theo", "#9d5f47", "upgrades");
+      this.npc(-22, 22, "Rowan", "#688777", "general");
       this.targets.push(
         {
           id: "sleep",
@@ -336,16 +341,16 @@ if (!window.AFRAME.components["flower-world"])
           kind: "painting",
           name: "มุมวาดภาพ",
           hint: "สร้างภาพด้วยสีของคุณ",
-          x: 13,
-          z: 27,
+          x: 12.3,
+          z: 24.7,
         },
         {
           id: "sculpture",
           kind: "sculpture",
           name: "โต๊ะระบายสีโมเดล",
           hint: "เลือกสัตว์ตัวโปรดแล้วระบายสี",
-          x: 17,
-          z: 27,
+          x: 17.4,
+          z: 24.7,
         },
       );
       this.box(this.m.wood, -5, 0.75, 25, 1.8, 0.15, 1);
@@ -425,6 +430,7 @@ if (!window.AFRAME.components["flower-world"])
         [7, 23],
         [-18, 9],
         [19, 20],
+        [-12,2], [8.4,9], [15,26], [13,2], [5,-16], [-22,21],
       ])
         this.lamp(x, z);
       this.flush();
@@ -690,9 +696,9 @@ if (!window.AFRAME.components["flower-world"])
       this.water = new T.Mesh(
         waterGeo,
         new T.MeshStandardMaterial({
-          color: "#719d96",
-          roughness: 0.18,
-          metalness: 0.45,
+          color: "#648f99",
+          roughness: 0.28,
+          metalness: 0.22,
           transparent: true,
           opacity: 0.56,
           depthWrite: false,
@@ -759,16 +765,32 @@ if (!window.AFRAME.components["flower-world"])
       title: string,
       color: string,
       fishShop = false,
+      reverse = false,
     ) {
       const m = this.m;
       this.box(m.stone, x, 0.08, z, 5.1, 0.15, 3.6);
       this.box(m.wood, x, 1, z, 4.4, 0.25, 1.2);
-      this.box(m.wood, x, 0.5, z + 0.5, 4.4, 0.8, 0.15);
+      this.box(m.wood, x, 0.5, z + (reverse ? -0.5 : 0.5), 4.4, 0.8, 0.15);
       for (const dx of [-2.2, 2.2])
         for (const dz of [-1.2, 1.2])
           this.box(m.darkWood, x + dx, 1.5, z + dz, 0.12, 3, 0.12);
       this.box(mat(color), x, 2.8, z, 4.9, 0.15, 3.1);
-      this.sign(title, x, 2.25, z + 1.26, 3.7);
+      if(reverse) {
+        // Flower market: striped canopy and flowering trellis facing the town.
+        for(let i=0;i<9;i++) this.box(mat(i%2?"#f0dfcd":color),x-2.2+i*.55,2.89,z,.54,.04,3.1);
+        for(const dx of [-2.2,2.2]) for(let j=0;j<5;j++) { const f=createFlower(j%2?"cosmos":"rose"); f.scale.setScalar(.4);f.position.set(x+dx,.4+j*.4,z-1.2);this.mergeGroup(f); }
+      } else if(!fishShop) {
+        // Lily's potting shed: pitched roof, shelving and seed packets.
+        for(const side of [-1,1]) {const roof=this.box(this.m.tiles,x+side*1.2,3.08,z,2.65,.13,3.5);roof.rotation.z=-side*.25;}
+        this.box(m.wood,x,1.8,z-.85,3.8,.12,.6);
+        for(let i=0;i<7;i++)this.box(mat(["#e3c99b","#c2cca2","#dbb2af"][i%3]),x-1.55+i*.5,2.03,z-.85,.32,.4,.16);
+      } else {
+        // Fishmonger: weathered blue counter, hanging tackle and ice trays.
+        this.box(mat("#587e87",{map:m.wood.map}),x,.65,z+.57,4.35,.75,.12);
+        for(let i=0;i<3;i++) {this.box(m.darkWood,x+1.4+i*.2,2,z-.5,.035,1.7,.035);}
+      }
+      const shopSign=this.sign(title, x, 2.25, z + (reverse ? -1.26 : 1.26), 3.7);
+      if(reverse) shopSign.rotation.y=Math.PI;
       colliders.push({ x, z, w: 4.4, d: 1.2 });
       if (fishShop) {
         const ice = mat("#d3e7e5", { roughness: 0.32 });
@@ -976,6 +998,7 @@ if (!window.AFRAME.components["flower-world"])
             Oliver: "มาสร้างอะไรสนุก ๆ กันเถอะ",
             Emma: "เดินชมสวนด้วยกันไหมคะ?",
             Theo: "อยากปรับบ้านหรือสวนตรงไหนดีครับ?",
+            Rowan: "ของเล็ก ๆ ก็มีค่า เอามาให้ผมดูได้นะ",
           } as Record<string, string>
         )[name],
       );
@@ -1031,14 +1054,27 @@ if (!window.AFRAME.components["flower-world"])
           bridge.onError("โหลดโมเดล " + name + " ไม่สำเร็จ ลองโหลดหน้าใหม่"),
         );
     },
-    lamp(this: any, x: number, z: number) {
-      this.box(this.m.metal, x, 1.25, z, 0.07, 2.5, 0.07);
-      this.box(this.m.warm, x, 2.5, z, 0.25, 0.35, 0.25);
-      this.box(this.m.metal, x, 2.7, z, 0.4, 0.05, 0.4);
-      const light = new T.PointLight("#ffdba3", 0, 7, 2);
-      light.position.set(x, 2.3, z);
-      this.world.add(light);
-      this.lamps.push(light);
+    buildGeneralStore(this:any) {
+      const m=this.m,x=-22,z=24;
+      villageProp(this,"cart",x-2.3,0,z,1.25,Math.PI/2);
+      villageProp(this,"fountain-round",-26,0,19,0.65);
+      colliders.push({x:-26,z:19,w:4.65,d:4.65},{x:x-2.3,z,w:3.5,d:1.8});
+      this.box(m.wood,x,.65,z,3,.22,1.2);
+      for(const dx of [-1.25,1.25]) {this.mesh(geometries.cylinder,m.darkWood,x+dx,.42,z,.38,.7,.38);this.box(m.darkWood,x+dx,1.7,z,.12,3.2,.12);}
+      const roof=this.box(mat("#c5a778"),x,2.9,z,3.5,.12,2.5);roof.rotation.x=.15;
+      for(let i=0;i<3;i++) {this.box(mat(["#8d9d83","#a67954","#beac82"][i]),x-1+i,.98,z,.65,.5,.55);}
+      const sign=this.sign("ROWAN'S FINDS",x,2.3,z-1.25,2.8);sign.rotation.y=Math.PI;
+      colliders.push({x,z,w:3,d:1.2});
+    },
+    lamp(this:any,x:number,z:number) {
+      const indoors=(x===13 && z===2) || (x===15 && z===26);
+      if(indoors) {
+        this.box(this.m.metal,x,3.15,z,.04,.5,.04);
+        this.mesh(geometries.cone,this.m.darkWood,x,2.86,z,.35,.25,.35);
+      } else villageProp(this,"lantern",x,0,z,2.9);
+      const bulb=new T.Mesh(new T.SphereGeometry(.085,8,6),new T.MeshBasicMaterial({color:"#ffd495"}));
+      bulb.position.set(x,indoors?2.72:2.6,z);this.world.add(bulb);
+      const light=new T.PointLight("#ffd39a",0,11,2);light.position.set(x,2.52,z);this.world.add(light);this.lamps.push(light);
     },
     refresh(this: any, s: GameState) {
       const sig = JSON.stringify(s.farm);
@@ -1047,11 +1083,6 @@ if (!window.AFRAME.components["flower-world"])
         this.disposeGroup(this.flowerGroup);
         s.farm.forEach((p, i) => {
           const { x, z } = plotPosition(i);
-          const ready = p.seed && p.age >= flower(p.seed).days;
-          const status = !p.seed ? "ว่าง" : ready ? "เก็บได้" : p.watered ? "ชุ่มน้ำ" : "ต้องการน้ำ";
-          const border = mat(!p.seed ? "#bcaa88" : ready ? "#efc85a" : p.watered ? "#60989c" : "#df9860", {map:this.m.wood.map});
-          const marker = plotMarker(status, !p.seed ? "#d0b890" : ready ? "#f5cb55" : p.watered ? "#69b8bf" : "#ed9652");
-          marker.position.set(x, .32, z + .8); this.flowerGroup.add(marker);
           this.box(
             p.watered ? mat("#514837", { map: this.m.soil.map }) : this.m.soil,
             x,
@@ -1064,7 +1095,7 @@ if (!window.AFRAME.components["flower-world"])
           );
           for (const dx of [-1, 1])
             this.box(
-              border,
+              this.m.wood,
               x + dx,
               0.18,
               z,
@@ -1075,7 +1106,7 @@ if (!window.AFRAME.components["flower-world"])
             );
           for (const dz of [-1, 1])
             this.box(
-              border,
+              this.m.wood,
               x,
               0.18,
               z + dz,
@@ -1097,49 +1128,60 @@ if (!window.AFRAME.components["flower-world"])
           }
         });
       }
-      if (this.lastDecor !== s.decorations) {
-        this.lastDecor = s.decorations;
+      if (this.lastDecor !== `${s.decorations}:${s.upgrades.homeLevel}`) {
+        this.lastDecor = `${s.decorations}:${s.upgrades.homeLevel}`;
         this.disposeGroup(this.decorGroup);
         for (let i = 0; i < s.decorations; i++) {
-          const x = 9.8 + i * 1.3;
+          const x = i%2 ? 16.1 : 9.9, z=7.1+Math.floor(i/2)*.85;
           this.mesh(
             geometries.cylinder,
             mat("#ab775b"),
             x,
             0.28,
-            8.5,
+            z,
             0.25,
             0.55,
             0.25,
             this.decorGroup,
           );
           const f = createFlower(FLOWERS[i % 5].id);
-          f.position.set(x, 0.55, 8.5);
+          f.position.set(x, 0.55, z);
           this.decorGroup.add(f);
+        }
+        if(s.upgrades.homeLevel>=1) this.box(mat("#8f6572"),12.3,.38,1.2,2.4,.035,2,this.decorGroup);
+        if(s.upgrades.homeLevel>=2) {
+          for(const y of [.45,1,1.55]) this.box(this.m.wood,10.5,y,-.12,2,.08,.45,this.decorGroup);
+          for(let i=0;i<9;i++)this.box(mat(["#809570","#a16c62","#cdaf71"][i%3]),9.65+i*.2,1.24,-.12,.14,.37,.3,this.decorGroup);
+        }
+        if(s.upgrades.homeLevel>=3) {
+          this.box(this.m.wood,19,.5,4,1.5,.16,.65,this.decorGroup);
+          this.box(this.m.wood,19,.9,3.73,1.5,.8,.12,this.decorGroup);
+          for(const x of [18.45,19.55])this.box(this.m.darkWood,x,.24,4,.12,.48,.55,this.decorGroup);
         }
       }
       const artSig = s.artworks.map((a) => a.id).join();
       if (artSig !== this.lastArt) {
         this.lastArt = artSig;
         this.disposeGroup(this.artGroup);
-        s.artworks.slice(-6).forEach((a, i) => {
+        s.artworks.forEach((a, i) => {
+          const gx=12.4+(i%6)*1.04, gy=.75+Math.floor(i/6)*.68;
           if (a.kind === "painting") {
             const tex = new T.TextureLoader().load(a.image!);
             tex.colorSpace = T.SRGBColorSpace;
             const m = new T.Mesh(
-              new T.PlaneGeometry(1.4, 1.4),
+              new T.PlaneGeometry(.9, .59),
               new T.MeshBasicMaterial({ map: tex }),
             );
-            m.position.set(
-              12.3 + (i % 3) * 2,
-              1.7 + Math.floor(i / 3) * 1.5,
-              29.38,
-            );
+            m.geometry.userData.owned=true;
+            m.material.userData.artworkMap=true;
+            m.position.set(gx,gy+.22,29.32);
+            m.rotation.y=Math.PI;
+            this.box(this.m.darkWood,gx,gy+.22,29.37,1,.68,.04,this.artGroup);
             this.artGroup.add(m);
           } else if (a.kind === "model" && a.modelId) {
             const slot = new T.Group();
-            slot.position.set(12.3 + (i % 4) * 1.55, 0.62, 28.2);
-            slot.scale.setScalar(0.5);
+            slot.position.set(gx, gy-.04, 28.93);
+            slot.scale.setScalar(0.26);
             slot.rotation.y = Math.PI;
             this.artGroup.add(slot);
             loadPaintModel(a.modelId, a.colors)
@@ -1168,8 +1210,9 @@ if (!window.AFRAME.components["flower-world"])
               o.scale.setScalar(p.scale * (p.type === "box" ? 1 : 0.5));
               g.add(o);
             });
-            g.scale.setScalar(0.3);
-            g.position.set(12 + (i % 4) * 1.5, 0.3, 28.2);
+            const bounds=new T.Box3().setFromObject(g),size=bounds.getSize(new T.Vector3()),center=bounds.getCenter(new T.Vector3());
+            const scale=.52/Math.max(size.x,size.y,size.z,.01);g.scale.setScalar(scale);
+            g.position.set(gx-center.x*scale,gy-.04-bounds.min.y*scale,28.93-center.z*scale);
             this.artGroup.add(g);
           }
         });
@@ -1180,7 +1223,7 @@ if (!window.AFRAME.components["flower-world"])
       g.traverse((o: any) => {
         if (o.geometry?.userData.owned) o.geometry.dispose();
         if ((o.isMesh || o.isSprite) && !keep.has(o.material)) {
-          o.material.map?.isCanvasTexture && o.material.map.dispose();
+          (o.material.map?.isCanvasTexture || o.material.userData.artworkMap) && o.material.map?.dispose();
           o.material.dispose();
         }
       });
@@ -1246,13 +1289,13 @@ if (!window.AFRAME.components["flower-world"])
       const night = hours < 6 || hours >= 20;
       const sunset = hours >= 17 && hours < 20;
       this.sun.intensity =
-        (night ? 0.1 : 0.4 + daylight * 1.6) * (s.weather === "rain" ? 0.4 : 1);
+        (night ? 0.25 : 0.4 + daylight * 1.6) * (s.weather === "rain" ? 0.4 : 1);
       this.hemisphere.intensity = night
-        ? 0.45
+        ? 0.7
         : s.weather === "rain"
           ? 1.1
           : 1.45;
-      this.sun.color.set(sunset ? "#ffc18b" : "#fff1d6");
+      this.sun.color.set(night ? "#b1c9ee" : sunset ? "#ffc18b" : "#fff1d6");
       this.sun.position.set(
         Math.cos(((hours - 6) / 14) * Math.PI) * 35,
         Math.max(5, daylight * 45),
@@ -1285,7 +1328,7 @@ if (!window.AFRAME.components["flower-world"])
       this.flowerGroup.children.forEach((o: any, i: number) => {
         if (o.isGroup) o.rotation.z = Math.sin(time * 0.0015 + i) * 0.035;
       });
-      this.lamps.forEach((l: any) => (l.intensity = night || sunset ? 5 : 0));
+      this.lamps.forEach((l: any) => (l.intensity = night ? 12 : sunset ? 5 : 0));
       this.rain.visible = s.weather === "rain";
       if (this.rain.visible) {
         const p = this.rain.geometry.attributes.position;
@@ -1397,9 +1440,9 @@ if (!window.AFRAME.components["flower-world"])
               ? p.age >= flower(p.seed).days
                 ? "เก็บดอกไม้"
                 : p.watered
-                  ? "ดินชุ่มแล้ว · Q ดูแปลง"
-                  : "รดน้ำ"
-              : "ปลูกเมล็ดที่เลือก · Q เปลี่ยนเมล็ด",
+                  ? "ดูการเติบโต"
+                  : "ดูแปลง · Space รดน้ำ"
+              : "เลือกเมล็ดพันธุ์",
             ...plotPosition(i),
           })),
           ...this.npcs
@@ -1461,6 +1504,7 @@ if (!window.AFRAME.components["flower-world"])
       }
     },
     remove(this: any) {
+      this.removed=true;
       this.feedback?.dispose();
       this.world?.traverse((o: any) => {
         o.geometry?.dispose();

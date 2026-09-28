@@ -2909,8 +2909,11 @@ kbd {
         width: 100%
     }
 }/* Farming tools and transaction previews stay readable on small screens. */
-.farm-tool {position:fixed;bottom:140px;left:24px;display:flex;align-items:center;gap:10px;background:#f9f3e8ef;color:#344c3e;border-radius:16px;padding:8px 14px;z-index:12;white-space:nowrap;box-shadow:0 4px 24px #243a3022}
 .recipe-summary {background:#e7edde;border:1px solid #cedac1;padding:14px 18px;border-radius:12px;margin:14px 0;color:#40553d}
 .recipe-summary p {margin:5px 0}
 .sale-row {flex-wrap:wrap;gap:10px}.sale-row>span {flex:1;min-width:140px}.sale-row label {display:flex;align-items:center;gap:8px;font-size:12px}.sale-row input {width:70px;padding:8px}
-@media(max-width:600px){.farm-tool{bottom:180px;left:50%;transform:translateX(-50%);max-width:94vw;font-size:12px;gap:5px}.farm-tool button{font-size:11px;padding:8px}.sale-row button{flex:1}.sale-row>span{min-width:60%}}
+
+.fertilizer-shop {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:12px 0}
+.fertilizer-shop button {display:flex;flex-direction:column;text-align:center;gap:6px;padding:14px 8px}
+.fertilizer-shop span,.fertilizer-shop small{font-size:11px}
+@media(max-width:600px){.sale-row button{flex:1}.sale-row>span{min-width:65%}.fertilizer-shop{gap:5px}.fertilizer-shop button{font-size:11px;padding:10px 4px}}

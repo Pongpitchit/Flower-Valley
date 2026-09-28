@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ItemIcon } from "./ItemIcon";
-import { FISH } from "../game/data";
-import { dispatch } from "../game/engine";
+import { FISH, TRASH, RODS } from "../game/data";
+import { dispatch, useGame } from "../game/engine";
 export function Fishing({ notify }: { notify: (s: string) => void }) {
+  const {upgrades} = useGame();
+  const rod=RODS[upgrades.rodLevel];
   const [phase, setPhase] = useState<
       "idle" | "waiting" | "playing" | "won" | "lost"
     >("idle"),
@@ -92,7 +94,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
         <ItemIcon
           id={
             phase === "won"
-              ? (FISH.find((f) => result.includes(f.name))?.id ?? "carp")
+              ? ([...FISH,...TRASH].find((f) => result.includes(f.name))?.id ?? "carp")
               : "goldfish"
           }
           size={110}
@@ -114,11 +116,12 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
         {phase === "playing"
           ? "กดตามลำดับ A / D ให้ครบก่อนหมดเวลา กดผิดปลาจะหนี"
           : phase === "won"
-            ? "ปลาอยู่ในกระเป๋าแล้ว ฟินน์รับซื้ออยู่ฝั่งตะวันออก"
+            ? "ของอยู่ในกระเป๋าแล้ว · ฟินน์รับซื้อปลา · โรวันรับซื้อขยะ"
             : phase === "waiting"
               ? "มองผิวน้ำ แล้วรอจังหวะดี ๆ"
               : "Space หย่อนเบ็ด / ตกอีกครั้ง · A / D ดึงปลา · ใช้พลังงาน 10"}
       </p>
+      <p className="subtle"><ItemIcon id={"rod:"+upgrades.rodLevel} /> {rod.name} · ปลาหายาก {Math.round(rod.rare*100)}% · ขยะ {Math.round(rod.trash*100)}%</p>
       {phase === "playing" && (
         <>
           <div className="fish-time">

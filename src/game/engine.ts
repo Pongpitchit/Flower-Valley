@@ -1,6 +1,7 @@
-import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, FERTILIZER_PRICE, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
+import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
 import { useSyncExternalStore } from "react";
 import {
+  FERTILIZERS, RODS, TRASH, catchTable,
   FLOWERS,
   FISH,
   GRILLED_FISH,
@@ -35,7 +36,7 @@ export type Artwork = {
 };
 export type Bouquet = { id: string; flowers: FlowerId[]; price: number };
 export type GameState = {
-  version: 2;
+  version: 3;
   artDay: ArtDay;
   day: number;
   time: number;
@@ -47,7 +48,7 @@ export type GameState = {
   farm: Plot[];
   bouquets: Bouquet[];
   artworks: Artwork[];
-  upgrades: { farmLevel: number; energyLevel: number; wateringLevel: number };
+  upgrades: { farmLevel: number; energyLevel: number; wateringLevel: number; rodLevel: number; homeLevel: number };
   decorations: number;
   restAt: number;
   order: { flower: FlowerId; fulfilled: boolean };
@@ -63,7 +64,7 @@ export const SAVE_KEY =
     ? "-qa" + (new URLSearchParams(location.search).get("qa") ? "-" + new URLSearchParams(location.search).get("qa") : "")
     : "");
 export const initialState = (rng = Math.random): GameState => ({
-  version: 2,
+  version: 3,
   artDay: rollArtDay(rng),
   day: 1,
   time: 480,
@@ -79,7 +80,7 @@ export const initialState = (rng = Math.random): GameState => ({
   })),
   bouquets: [],
   artworks: [],
-  upgrades: { farmLevel: 0, energyLevel: 0, wateringLevel: 0 },
+  upgrades: { farmLevel: 0, energyLevel: 0, wateringLevel: 0, rodLevel: 0, homeLevel: 0 },
   decorations: 0,
   restAt: -999,
   order: { flower: "daisy", fulfilled: false },
@@ -92,7 +93,7 @@ const finite = (v: unknown, min: number, max: number) =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 export function validateSave(v: any): v is GameState {
   return (
-    v?.version === 2 &&
+    v?.version === 3 &&
     ["calm", "inspired"].includes(v.artDay?.mood) &&
     v.artDay.limit === (v.artDay.mood === "inspired" ? 2 : 1) &&
     Number.isInteger(v.artDay.used) && finite(v.artDay.used, 0, v.artDay.limit) &&
@@ -105,6 +106,8 @@ export function validateSave(v: any): v is GameState {
     typeof v.started === "boolean" &&
     Number.isInteger(v.upgrades?.farmLevel) && finite(v.upgrades?.farmLevel, 0, 5) &&
     Number.isInteger(v.upgrades?.wateringLevel) && finite(v.upgrades?.wateringLevel, 0, 2) &&
+    Number.isInteger(v.upgrades?.rodLevel) && finite(v.upgrades.rodLevel,0,2) &&
+    Number.isInteger(v.upgrades?.homeLevel) && finite(v.upgrades.homeLevel,0,3) &&
     finite(v.upgrades?.energyLevel, 0, 3) &&
     v.maxEnergy === 100 + v.upgrades.energyLevel * 20 &&
     Array.isArray(v.farm) &&
@@ -120,9 +123,9 @@ export function validateSave(v: any): v is GameState {
     !Array.isArray(v.inventory) &&
     Object.entries(v.inventory).every(
       ([k, n]) =>
-        (k === "fertilizer" || validId(k) ||
+        (FERTILIZERS.some(f=>f.id===k) || validId(k) ||
           (k.startsWith("seed:") && validId(k.slice(5))) ||
-          [...FISH, ...GRILLED_FISH].some((f) => f.id === k)) &&
+          [...FISH, ...GRILLED_FISH, ...TRASH].some((f) => f.id === k)) &&
         finite(n, 0, 1e6) &&
         Number.isInteger(n),
     ) &&
@@ -262,16 +265,20 @@ export function transition(
     return ok(`รดน้ำ ${plots.length} แปลงแล้ว −3 พลังงาน`);
   }
   if (a.type === "buyFertilizer") {
-    if (!spend(FERTILIZER_PRICE)) return fail("เงินไม่พอ");
-    add("fertilizer", 1);
-    return ok("ได้รับปุ๋ย 1 ถุง เร่งเติบโต 1 วัน");
+    const fertilizer = FERTILIZERS.find(f=>f.id===(a.id ?? "fertilizer"));
+    if (!fertilizer) return fail("ไม่พบปุ๋ยชนิดนี้");
+    if (!spend(fertilizer.price)) return fail("เงินไม่พอ");
+    add(fertilizer.id, 1);
+    return ok(`ได้รับ${fertilizer.name} เร่งโต ${fertilizer.days} วัน`);
   }
   if (a.type === "fertilize") {
     const p = s.farm[a.index ?? -1];
     if (!p?.seed || p.fertilized || p.age >= flower(p.seed).days) return fail("ใส่ปุ๋ยได้ครั้งเดียวต่อการปลูก ก่อนโตเต็มที่");
-    if (!(s.inventory.fertilizer > 0)) return fail("ซื้อปุ๋ยจากลิลลี่ก่อน");
-    add("fertilizer", -1); p.age++; p.fertilized = true;
-    return ok("ใส่ปุ๋ยแล้ว เติบโตเพิ่ม 1 วัน");
+    const fertilizer = FERTILIZERS.find(f=>f.id===(a.id ?? "fertilizer"));
+    if (!fertilizer || !(s.inventory[fertilizer.id] > 0)) return fail("ซื้อปุ๋ยจากลิลลี่ก่อน");
+    const growth = Math.min(fertilizer.days, flower(p.seed).days-p.age);
+    add(fertilizer.id, -1); p.age += growth; p.fertilized = true;
+    return ok(`ใส่${fertilizer.name}แล้ว เติบโตเพิ่ม ${growth} วัน`);
   }
   if (a.type === "upgradeWatering") {
     const cost = WATERING_COSTS[s.upgrades.wateringLevel];
@@ -295,7 +302,7 @@ export function transition(
   }
   if (a.type === "sell") {
     const f = FLOWERS.find((f) => f.id === a.id),
-      fish = [...FISH, ...GRILLED_FISH].find((f) => f.id === a.id);
+      fish = [...FISH, ...GRILLED_FISH, ...TRASH].find((f) => f.id === a.id);
     if ((!f && !fish) || !a.id || !(s.inventory[a.id] > 0))
       return fail("ไม่มีสินค้านี้ในกระเป๋า");
     const count = a.amount ?? 1;
@@ -386,11 +393,28 @@ export function transition(
     return ok("หย่อนเบ็ดแล้ว รอปลากินเหยื่อ…");
   }
   if (a.type === "catch") {
-    const roll = rng(),
-      f = FISH[roll < 0.65 ? 0 : roll < 0.93 ? 1 : 2];
-    add(f.id, 1);
-    s.stats.fish++;
-    return ok(`จับ${f.name}ได้!`);
+    let roll = rng();
+    const table = catchTable(s.upgrades.rodLevel);
+    let id = table[table.length-1].id;
+    for (const entry of table) { roll -= entry.chance; if (roll < 0) { id=entry.id; break; } }
+    const item=[...FISH,...TRASH].find(f=>f.id===id)!;
+    add(id,1);
+    if(FISH.some(f=>f.id===id)) s.stats.fish++;
+    return ok(TRASH.some(f=>f.id===id) ? `ตกได้${item.name} นำไปขายให้โรวันได้` : `จับ${item.name}ได้!`);
+  }
+  if (a.type === "upgradeRod") {
+    const rod=RODS[s.upgrades.rodLevel+1];
+    if(!rod) return fail("เบ็ดระดับสูงสุดแล้ว");
+    if(!spend(rod.price)) return fail("เงินไม่พอ");
+    s.upgrades.rodLevel++;
+    return ok(`ได้รับ${rod.name} โอกาสปลาหายาก ${Math.round(rod.rare*100)}%`);
+  }
+  if (a.type === "upgradeHome") {
+    const cost=HOME_COSTS[s.upgrades.homeLevel];
+    if(!cost) return fail("ตกแต่งบ้านครบแล้ว");
+    if(!spend(cost)) return fail("เงินไม่พอ");
+    s.upgrades.homeLevel++;
+    return ok("ติดตั้งของแต่งบ้านแล้ว ทางเข้ายังเดินได้สะดวก");
   }
   if (a.type === "upgradeEnergy") {
     if (s.upgrades.energyLevel >= 3) return fail("อัปเกรดพลังงานเต็มแล้ว");
@@ -478,9 +502,12 @@ function nextDay(s: GameState, rng: () => number, rested = true) {
 }
 // Preserve existing farms, inventory, artwork and historical sale values.
 export function migrateSave(value: any): unknown {
-  if (value?.version !== 1) return value;
-  if (![12, 20].includes(value.farm?.length) || value.farm.length !== 12 + value.upgrades?.farmLevel * 8) return null;
-  return { ...value, version: 2, artDay: { mood: "calm", limit: 1, used: 0 }, upgrades: { ...value.upgrades, farmLevel: value.farm.length === 20 ? 5 : 3, wateringLevel: 0 } };
+  if (value?.version === 1) {
+    if (![12,20].includes(value.farm?.length) || value.farm.length !== 12 + value.upgrades?.farmLevel * 8) return null;
+    value={...value,version:2,artDay:{mood:"calm",limit:1,used:0},upgrades:{...value.upgrades,farmLevel:value.farm.length===20?5:3,wateringLevel:0}};
+  }
+  if (value?.version === 2) return {...value,version:3,upgrades:{...value.upgrades,rodLevel:0,homeLevel:0}};
+  return value;
 }
 let loadMessage = "";
 function load(): GameState {
@@ -530,3 +557,12 @@ export function updatePosition(x: number, z: number, yaw: number) {
   state.position = { x, z, yaw };
 }
 export const getLoadMessage = () => loadMessage;
+
+// Deliberately available only for isolated development saves, never normal play.
+export function setQAState(next: GameState) {
+  if (!import.meta.env.DEV || typeof location === 'undefined' || !new URLSearchParams(location.search).has('qa') || !validateSave(next)) return false;
+  state = structuredClone(next);
+  listeners.forEach(fn=>fn());
+  save();
+  return true;
+}

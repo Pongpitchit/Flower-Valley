@@ -55,6 +55,8 @@ export const FLOWERS = [
     days: 5,
     description: "ช่อดอกสีม่วงที่พลิ้วไหวในสายลม เติบโตช้าแต่มีมูลค่าสูง",
   },
+  { id:"cosmos", name:"คอสมอส", en:"Cosmos", icon:"🌸", color:"#eb89b7", seed:20, sell:75, days:3, description:"กลีบสีชมพูโปร่งเบา โตไวและเพิ่มสีสันให้ช่อดอกไม้" },
+  { id:"hydrangea", name:"ไฮเดรนเยีย", en:"Hydrangea", icon:"💠", color:"#7e9edc", seed:90, sell:320, days:6, description:"ช่อสีฟ้ากลมแน่น ใช้เวลาดูแลนาน แต่เหมาะกับปุ๋ยและช่อมูลค่าสูง" },
 ] as const;
 export type FlowerId = (typeof FLOWERS)[number]["id"];
 export const flower = (id: string) => FLOWERS.find((f) => f.id === id)!;
@@ -62,11 +64,23 @@ export const FISH = [
   { id: "carp", name: "ปลาคาร์ป", price: 40, icon: "🐟" },
   { id: "goldfish", name: "ปลาทอง", price: 60, icon: "🐠" },
   { id: "rare", name: "ปลาหายาก", price: 150, icon: "🐡" },
+  {id:"trout",name:"ปลาเทราต์",price:80,icon:"🐟"},
+  {id:"perch",name:"ปลาเพิร์ช",price:30,icon:"🐟"},
+  {id:"catfish",name:"ปลาดุก",price:55,icon:"🐟"},
 ];
+export const TRASH = [{id:"tin-can",name:"กระป๋องเก่า",price:3,icon:"🥫"},{id:"old-boot",name:"รองเท้าเก่า",price:5,icon:"🥾"}];
+export const FERTILIZERS = [{id:"fertilizer",name:"ปุ๋ยพื้นฐาน",price:15,days:1},{id:"fertilizer:good",name:"ปุ๋ยชั้นดี",price:40,days:2},{id:"fertilizer:premium",name:"ปุ๋ยพรีเมียม",price:75,days:3}];
+export const RODS = [{name:"เบ็ดไม้",price:0,rare:.04,trash:.30},{name:"เบ็ดชั้นดี",price:350,rare:.08,trash:.25},{name:"เบ็ดนักตกปลา",price:900,rare:.14,trash:.20}];
+export function catchTable(level: number) {
+  const rod = RODS[level];
+  const common = [{id:"carp",weight:25},{id:"goldfish",weight:10},{id:"trout",weight:10},{id:"perch",weight:12},{id:"catfish",weight:9}];
+  return [...TRASH.map(f => ({id:f.id,chance:rod.trash/2})),...common.map(f=>({id:f.id,chance:(1-rod.trash-rod.rare)*f.weight/66})),{id:"rare",chance:rod.rare}];
+}
 export const GRILL_MINUTES = 10;
 export const GRILL_ENERGY = 5;
 export const GRILLED_FISH = FISH.map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5) }));
 export const ZONES = [
+  {id:"general",name:"ร้านของจิปาถะของโรวัน",en:"ROWAN’S FINDS",x:-22,z:22,icon:"🎒"},
   {id:'grill',name:'กองไฟย่างปลา',en:'THE CAMPFIRE',x:7,z:-12,icon:'🔥'},
   {id:'upgrades',name:'ธีโอ ช่างประจำหมู่บ้าน',en:'THEO THE BUILDER',x:7,z:8,icon:'🔨'},
   {
@@ -139,8 +153,8 @@ export const plotPosition = (i: number) => ({
   z: -4 + Math.floor(i / 4) * 2.5,
 });
 export const itemName = (id: string) =>
-  id === "fertilizer" ? "ปุ๋ยเร่งโต" : id.startsWith("seed:")
+  id.startsWith("rod:") ? (RODS[Number(id.slice(4))]?.name ?? id) : FERTILIZERS.some(f=>f.id===id) ? FERTILIZERS.find(f=>f.id===id)!.name : id.startsWith("seed:")
     ? `เมล็ด${flower(id.slice(5))?.name ?? id}`
     : (FLOWERS.find((f) => f.id === id)?.name ??
-      [...FISH, ...GRILLED_FISH].find((f) => f.id === id)?.name ??
+      [...FISH, ...GRILLED_FISH, ...TRASH].find((f) => f.id === id)?.name ??
       id);
