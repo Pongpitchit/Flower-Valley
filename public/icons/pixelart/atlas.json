@@ -213,6 +213,41 @@
       "y": 512,
       "width": 512,
       "height": 512
+    },
+    "food:bread": {
+      "image": "food.png",
+      "x": 0,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "food:soup": {
+      "image": "food.png",
+      "x": 512,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "food:omurice": {
+      "image": "food.png",
+      "x": 1024,
+      "y": 0,
+      "width": 512,
+      "height": 512
+    },
+    "picnic-basket": {
+      "image": "food.png",
+      "x": 0,
+      "y": 512,
+      "width": 512,
+      "height": 512
+    },
+    "cutlery": {
+      "image": "food.png",
+      "x": 512,
+      "y": 512,
+      "width": 512,
+      "height": 512
     }
   }
 }

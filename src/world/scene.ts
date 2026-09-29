@@ -35,92 +35,68 @@ export function createFlower(id: string, age = 1) {
     stemMat = mat("#497140"),
     leafMat = mat("#608a46"),
     petalMat = mat(f.color, { roughness: 0.65, side: T.DoubleSide });
-  const h = id === "sunflower" ? 1.15 : id === "lavender" ? 0.72 : 0.6;
-  function part(
-    geo: any,
-    m: any,
-    x: number,
-    y: number,
-    z: number,
-    sx: number,
-    sy: number,
-    sz: number,
-  ) {
-    const o = new T.Mesh(geo, m);
-    o.position.set(x, y, z);
-    o.scale.set(sx, sy, sz);
-    g.add(o);
-    return o;
-  }
-  part(geometries.cylinder, stemMat, 0, h / 2, 0, 0.018, h, 0.018);
-  for (let i = 0; i < 3; i++) {
-    const leaf = part(
-      geometries.sphere,
-      leafMat,
-      (i % 2 ? 1 : -1) * 0.1,
-      h * (0.2 + i * 0.18),
-      0,
-      0.15,
-      0.035,
-      0.07,
-    );
-    leaf.rotation.z = (i % 2 ? 1 : -1) * 0.5;
-  }
-  if (age >= 0.99) {
-    if (id === "rose") {
-      for(let layer=0;layer<4;layer++) {
-        const count=9-layer*2,r=.16-layer*.038;
-        for(let i=0;i<count;i++) {
-          const a=i/count*Math.PI*2+layer*.7;
-          const petal=part(geometries.sphere,petalMat,Math.cos(a)*r,h+layer*.035,Math.sin(a)*r,.09-layer*.012,.075,.028);
-          petal.rotation.y=-a;petal.rotation.z=.25;
-        }
-      }
-      part(geometries.sphere,petalMat,0,h+.12,0,.04,.06,.04);
-    } else if (id === "hydrangea") {
-      for(let i=0;i<22;i++) {const a=i*2.4,r=.06+Math.sqrt(i/22)*.23;part(geometries.sphere,petalMat,Math.cos(a)*r,h+Math.sin(i*1.7)*.1,Math.sin(a)*r,.085,.065,.085);}
-    } else if (id === "lavender") {
-      for (let i = 0; i < 12; i++)
-        part(
-          geometries.sphere,
-          petalMat,
-          Math.sin(i * 2.4) * 0.05,
-          h - 0.04 + i * 0.025,
-          Math.cos(i * 2.4) * 0.05,
-          0.045,
-          0.06,
-          0.045,
-        );
-    } else {
-      const n = id === "rose" ? 14 : id === "tulip" ? 6 : 10;
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2;
-        const r = id === "rose" ? 0.08 : id === "tulip" ? 0.07 : 0.13;
-        const p = part(
-          geometries.sphere,
-          petalMat,
-          Math.cos(a) * r,
-          h,
-          Math.sin(a) * r,
-          id === "tulip" ? 0.06 : 0.11,
-          id === "tulip" ? 0.13 : 0.04,
-          0.055,
-        );
-        p.rotation.y = -a;
-        p.rotation.z = id === "rose" ? i * 0.2 : 0;
-      }
-      part(
-        geometries.sphere,
-        mat(id === "sunflower" ? "#68442c" : "#ddb851"),
-        0,
-        h + 0.025,
-        0,
-        0.065,
-        0.04,
-        0.065,
-      );
+  const h = {daisy:.48,cosmos:.86,rose:.7,tulip:.62,sunflower:1.2,lavender:.8,hydrangea:.66}[id] ?? .6;
+  const part=(geo:any,m:any,x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{
+    const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o;
+  };
+  part(geometries.cylinder,stemMat,0,h/2,0,.012,h,.012);
+  if(id==="cosmos") {
+    for(let side of [-1,1])for(let i=0;i<9;i++){
+      const leaf=part(geometries.sphere,leafMat,side*(.045+i*.017),h*.4+i*.012,Math.sin(i)*.035,.075,.009,.009);leaf.rotation.z=side*.45;
     }
-  } else part(geometries.sphere, leafMat, 0, h, 0, 0.05, 0.09, 0.05);
+  } else {
+    for(let i=0;i<(id==="rose"?5:3);i++){
+      const side=i%2?1:-1;
+      const leaf=part(geometries.sphere,leafMat,side*.1,h*(.18+i*.12),0,id==="tulip"?.065:.14,id==="tulip"?.19:.015,id==="rose"?.06:.05);
+      leaf.rotation.z=side*.4;
+    }
+  }
+  // Curved, thin petal surfaces instead of round balls.
+  const petal=(length:number,width:number,cup:number,notch=false)=>{
+    const positions:number[]=[],uv:number[]=[],indices:number[]=[];
+    for(let row=0;row<=8;row++)for(let col=0;col<=6;col++){
+      const t=row/8,u=col/6*2-1;
+      const breadth=width*Math.pow(Math.sin(Math.PI*t*.95),.65);
+      positions.push(u*breadth,cup*t*t+.018*u*u*Math.sin(t*Math.PI),length*t-(notch?.016*Math.cos(u*3*Math.PI)*t*t:0));uv.push(col/6,t);
+      if(row<8 && col<6){const a=row*7+col;indices.push(a,a+7,a+1,a+1,a+7,a+8);}
+    }
+    const geo=new T.BufferGeometry();geo.setAttribute("position",new T.Float32BufferAttribute(positions,3));geo.setAttribute("uv",new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();return geo;
+  };
+  if(age<.99)part(geometries.sphere,leafMat,0,h,0,.045,.08,.045);
+  else if(id==="rose") {
+    // Overlapping bowl-shaped petals with rounded rims and a tight spiral center.
+    for(let layer=0;layer<5;layer++){
+      const count=7-layer, radius=.19-layer*.034;
+      const pos:number[]=[],uv:number[]=[],idx:number[]=[];
+      for(let row=0;row<=10;row++)for(let col=0;col<=10;col++){
+        const t=row/10,u=col/10*2-1,angle=u*.95;
+        const r=radius*(.35+.85*Math.sin(t*Math.PI*.65));
+        const y=t*(.14+layer*.02)-.055*u*u*t;
+        pos.push(Math.sin(angle)*r,y,Math.cos(angle)*r);uv.push(col/10,t);
+        if(row<10&&col<10){const a=row*11+col;idx.push(a,a+11,a+1,a+1,a+11,a+12);}
+      }
+      const geo=new T.BufferGeometry();geo.setAttribute("position",new T.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new T.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
+      const shade=mat(new T.Color(f.color).multiplyScalar(1-layer*.065),{side:T.DoubleSide,roughness:.65});
+      for(let i=0;i<count;i++){const o=part(geo,shade,0,h+layer*.012,0,1,1,1);o.rotation.y=i/count*Math.PI*2+layer*.7;}
+    }
+    for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const sepal=part(geometries.cone,leafMat,Math.sin(a)*.04,h-.035,Math.cos(a)*.04,.025,.13,.025);sepal.rotation.z=.7;}
+  } else if(id==="daisy" || id==="cosmos" || id==="sunflower") {
+    const count=id==="cosmos"?8:id==="daisy"?24:30;
+    const geo=petal(id==="sunflower"?.31:id==="cosmos"?.3:.22,id==="cosmos"?.105:id==="daisy"?.024:.036,id==="cosmos"?.035:-.025,id==="cosmos");
+    for(let i=0;i<count;i++){const o=part(geo,petalMat,0,h,0,1,1,1);o.rotation.y=i/count*Math.PI*2;}
+    const center=mat(id==="sunflower"?"#543823":"#e7ad28");
+    const r=id==="sunflower"?.125:id==="cosmos"?.056:.063;
+    part(geometries.sphere,center,0,h+.013,0,r,.032,r);
+    for(let i=0;i<20;i++){const a=i*2.4,d=Math.sqrt(i/20)*r;part(geometries.sphere,center,Math.cos(a)*d,h+.039,Math.sin(a)*d,.009,.009,.009);}
+  } else if(id==="tulip") {
+    const geo=petal(.3,.11,.03);
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;const o=part(geo,petalMat,Math.sin(a)*.06,h-.07,Math.cos(a)*.06,1,1,1);o.rotation.set(-1.05,a,0,"YXZ");}
+  } else if(id==="lavender") {
+    for(let spike=0;spike<3;spike++)for(let i=0;i<20;i++){const a=i*2.4;part(geometries.sphere,petalMat,(spike-1)*.09+Math.cos(a)*.025,h-.08+i*.017,Math.sin(a)*.025,.027,.037,.026);}
+  } else if(id==="hydrangea") {
+    const geo=petal(.055,.022,.008);
+    for(let i=0;i<32;i++){const a=i*2.4,r=Math.sqrt(i/32)*.24,x=Math.cos(a)*r,z=Math.sin(a)*r,y=h+Math.sqrt(Math.max(0,.24*.24-r*r))*.65;for(let j=0;j<4;j++){const o=part(geo,petalMat,x,y,z,1,1,1);o.rotation.y=j*Math.PI/2;}}
+  }
   const merged = new T.Group(),
     buckets = new Map<any, any[]>();
   g.updateMatrixWorld(true);
@@ -290,6 +266,8 @@ if (!window.AFRAME.components["flower-world"])
       this.buildStall(-17, 14, "SEEDS & LITTLE THINGS", "#a7b291");
       this.buildStall(-8, 26, "FLOWER MARKET", "#be9192", false, true);
       this.buildGeneralStore();
+      this.buildStall(-10,35,"NORA’S KITCHEN", "#d7a45b",false,true,true);
+      this.npc(-10,33,"Nora","#b07749","food");
       this.buildStall(15, -18, "FINN'S FISH MARKET", "#8fa9a6", true);
       this.buildWorkshop();
       for (const [id, x] of [
@@ -450,12 +428,12 @@ if (!window.AFRAME.components["flower-world"])
       }
       for (const [x, z] of [
         [-2, 18],
-        [2, 8],
+        [3.1, 9],
         [-2, -7],
-        [7, 23],
+        [7, 25.5],
         [-18, 9],
         [19, 20],
-        [-18.3,1], [8.4,9], [15,26], [13,2], [5,-16], [-21.1,18.6],
+        [-18.3,1], [8.4,9], [15,26], [13,2], [5,-18.6], [-21.1,18.6],
       ])
         this.lamp(x, z);
       this.flush();
@@ -791,6 +769,7 @@ if (!window.AFRAME.components["flower-world"])
       color: string,
       fishShop = false,
       reverse = false,
+      foodShop = false,
     ) {
       const m = this.m;
       this.box(m.stone, x, 0.08, z, 5.1, 0.15, 3.6);
@@ -800,7 +779,9 @@ if (!window.AFRAME.components["flower-world"])
         for (const dz of [-1.2, 1.2])
           this.box(m.darkWood, x + dx, 1.5, z + dz, 0.12, 3, 0.12);
       this.box(mat(color), x, 2.8, z, 4.9, 0.15, 3.1);
-      if(reverse) {
+      if(foodShop) {
+        for(let i=0;i<9;i++) this.box(mat(i%2?"#fff0cd":color),x-2.2+i*.55,2.89,z,.54,.04,3.1);
+      } else if(reverse) {
         // Flower market: striped canopy and flowering trellis facing the town.
         for(let i=0;i<9;i++) this.box(mat(i%2?"#f0dfcd":color),x-2.2+i*.55,2.89,z,.54,.04,3.1);
         for(const dx of [-2.2,2.2]) for(let j=0;j<5;j++) { const f=createFlower(j%2?"cosmos":"rose"); f.scale.setScalar(.4);f.position.set(x+dx,.4+j*.4,z-1.2);this.mergeGroup(f); }
@@ -817,6 +798,14 @@ if (!window.AFRAME.components["flower-world"])
       const shopSign=this.sign(title, x, 2.25, z + (reverse ? -1.26 : 1.26), 3.7);
       if(reverse) shopSign.rotation.y=Math.PI;
       colliders.push({ x, z, w: 4.4, d: 1.2 });
+      if(foodShop) {
+        for(let i=0;i<3;i++) {
+          const tray=new T.Mesh(new T.CylinderGeometry(.43,.38,.09,24),mat("#f5e6cc"));tray.position.set(x-1.35+i*1.35,1.18,z);this.mergeGroup(tray);
+          const food=new T.Mesh(i===1?new T.CylinderGeometry(.3,.21,.24,24):new T.SphereGeometry(.3,16,10),mat(i===1?"#b86f32":i===0?"#c68a43":"#f0bf39"));food.position.set(x-1.35+i*1.35,1.33,z);if(i!==1)food.scale.set(1.2,.6,.85);this.mergeGroup(food);
+          if(i===1) {const soup=new T.Mesh(new T.CircleGeometry(.27,24),mat("#e7b95b"));soup.rotation.x=-Math.PI/2;soup.position.set(x,1.46,z);this.mergeGroup(soup);}
+        }
+        return;
+      }
       if (fishShop) {
         const ice = mat("#d3e7e5", { roughness: 0.32 });
         for (let i = 0; i < 3; i++) {
@@ -1023,6 +1012,7 @@ if (!window.AFRAME.components["flower-world"])
             Oliver: "มาสร้างอะไรสนุก ๆ กันเถอะ",
             Emma: "เดินชมสวนด้วยกันไหมคะ?",
             Theo: "อยากปรับบ้านหรือสวนตรงไหนดีครับ?",
+            Nora: "แวะเติมพลังด้วยอาหารอุ่น ๆ ไหมคะ?",
             Rowan: "ของเล็ก ๆ ก็มีค่า เอามาให้ผมดูได้นะ",
           } as Record<string, string>
         )[name],
@@ -1096,7 +1086,7 @@ if (!window.AFRAME.components["flower-world"])
       if(indoors) {
         this.box(this.m.metal,x,3.15,z,.04,.5,.04);
         this.mesh(geometries.cone,this.m.darkWood,x,2.86,z,.35,.25,.35);
-      } else villageProp(this,"lantern",x,0,z,2.9);
+      } else { villageProp(this,"lantern",x,0,z,2.9);colliders.push({x,z,w:.4,d:.4}); }
       const bulb=new T.Mesh(new T.SphereGeometry(.085,8,6),new T.MeshBasicMaterial({color:"#ffd495"}));
       bulb.position.set(x,indoors?2.72:2.6,z);this.world.add(bulb);
       const light=new T.PointLight("#ffd39a",0,11,2);light.position.set(x,2.52,z);this.world.add(light);this.lamps.push(light);

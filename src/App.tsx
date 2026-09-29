@@ -32,7 +32,7 @@ import { Grilling } from "./components/Grilling";
 import { ItemIcon } from "./components/ItemIcon";
 import { SleepTransition } from "./components/SleepTransition";
 import {
-  FERTILIZERS, RODS, TRASH,
+  FOODS, FERTILIZERS, RODS, TRASH,
   FLOWERS,
   FISH,
   GRILLED_FISH,
@@ -299,6 +299,8 @@ export default function App() {
   function content() {
     if (!modal) return null;
     switch (modal.kind) {
+      case "food":
+        return <><p className="dialogue">“อาหารอุ่น ๆ ช่วยเติมแรงให้วันของคุณ” — โนรา</p><p className="recipe-summary">พลังงาน {s.energy}/{s.maxEnergy} · ซื้อเก็บในกระเป๋า กินเมื่อไรก็ได้</p><div className="shop-grid">{FOODS.map(f=><article className="product food-product" key={f.id}><ItemIcon id={f.id} size={100}/><h3>{f.name}</h3><strong>+{f.energy} พลังงาน</strong><p>มี {s.inventory[f.id]||0} ชิ้น</p><button disabled={s.money<f.price} onClick={()=>act({type:"buyFood",id:f.id})}>{s.money<f.price?`ขาด ${f.price-s.money} เหรียญ`:`ซื้อ · ${f.price} ◉`}</button><button className="secondary" disabled={!s.inventory[f.id] || s.energy>=s.maxEnergy} onClick={()=>act({type:"eatFood",id:f.id})}>{s.energy>=s.maxEnergy?"พลังงานเต็ม":"กินตอนนี้"}</button></article>)}</div></>;
       case "seed":
         return (
           <>
@@ -441,6 +443,7 @@ export default function App() {
                       <ItemIcon id={id} /> {itemName(id)}
                     </span>
                     <b>× {n}</b>
+                    {FOODS.some(f=>f.id===id) && <button disabled={s.energy>=s.maxEnergy} onClick={()=>act({type:"eatFood",id})}>กิน · +{FOODS.find(f=>f.id===id)!.energy} พลังงาน</button>}
                   </div>
                 ))}
               {!Object.values(s.inventory).some((n) => n > 0) && (
@@ -679,7 +682,7 @@ export default function App() {
               “ผมธีโอ ช่างประจำหมู่บ้านครับ
               มาช่วยทำให้บ้านและสวนของคุณน่าอยู่ขึ้นกัน” — ธีโอ
             </p>
-            <div className="upgrade-grid">
+            <p className="upgrade-help">เลือกสิ่งที่อยากปรับปรุง · ปุ่มสีเข้มซื้อได้ · ปุ่มจางต้องเก็บเงินเพิ่มหรืออัปเกรดครบแล้ว</p><div className="upgrade-grid">
               <article>
                 <Shovel />
                 <h3>พื้นที่แห่งการเติบโต</h3>
@@ -691,7 +694,7 @@ export default function App() {
                   {s.upgrades.farmLevel >= 5 ? "ขยายสวนเต็มแล้ว" : `ขยายสวน · ${FARM_COSTS[s.upgrades.farmLevel]} ◉`}
                 </button>
               </article>
-              <article><ItemIcon id="watering-can" /><h3>บัวรดน้ำอัปเกรด</h3><p>รดได้ {[1,4,8][s.upgrades.wateringLevel]} แปลง · ระดับแรกทั้งแถว ระดับสูงสุดสองแถว · ใช้พลังงาน 3</p><button disabled={s.upgrades.wateringLevel >= 2 || s.money < WATERING_COSTS[s.upgrades.wateringLevel]} onClick={() => act({type:"upgradeWatering"})}>{s.upgrades.wateringLevel >= 2 ? "ระดับสูงสุดแล้ว" : `อัปเกรด · ${WATERING_COSTS[s.upgrades.wateringLevel]} ◉`}</button></article>
+              <article><ItemIcon id="watering-can" /><h3>บัวรดน้ำอัปเกรด</h3><p>ปัจจุบัน: {[1,4,8][s.upgrades.wateringLevel]} แปลงต่อครั้ง · ใช้พลังงาน 3{s.upgrades.wateringLevel<2 && <> · ถัดไป: {[4,8][s.upgrades.wateringLevel]} แปลง</>}</p><button disabled={s.upgrades.wateringLevel >= 2 || s.money < WATERING_COSTS[s.upgrades.wateringLevel]} onClick={() => act({type:"upgradeWatering"})}>{s.upgrades.wateringLevel >= 2 ? "ระดับสูงสุดแล้ว" : `อัปเกรด · ${WATERING_COSTS[s.upgrades.wateringLevel]} ◉`}</button></article>
               <article>
                 <Zap />
                 <h3>พลังสำหรับวันใหม่</h3>
@@ -708,7 +711,7 @@ export default function App() {
                     : `อัปเกรด · ${300 * (s.upgrades.energyLevel + 1)} ◉`}
                 </button>
               </article>
-              <article><h3>สีหลังคาและผนังบ้าน</h3><p>ซื้อครั้งเดียว สลับรูปแบบที่มีได้ฟรี</p>{HOME_STYLES.map(style=><button key={style.id} disabled={s.home.style===style.id || (!s.home.ownedStyles.includes(style.id) && s.money<style.price)} onClick={()=>act({type:"homeStyle",id:style.id})}>{style.name} · {s.home.style===style.id?"ใช้อยู่":s.home.ownedStyles.includes(style.id)?"เลือกใช้":`${style.price} ◉`}</button>)}</article>
+              <article className="home-style-card"><h3>สีหลังคาและผนังบ้าน</h3><p>ซื้อครั้งเดียว สลับรูปแบบที่มีได้ฟรี</p>{HOME_STYLES.map(style=><button key={style.id} style={{borderLeft:`6px solid ${style.wall}`}} disabled={s.home.style===style.id || (!s.home.ownedStyles.includes(style.id) && s.money<style.price)} onClick={()=>act({type:"homeStyle",id:style.id})}>{style.name} · {s.home.style===style.id?"ใช้อยู่":s.home.ownedStyles.includes(style.id)?"เลือกใช้":`${style.price} ◉`}</button>)}</article>
               <article><h3>สวนดอกไม้หลังบ้าน</h3><p>สวนประดับสำเร็จรูป ไม่ต้องปลูกหรือรดน้ำ และเก็บเกี่ยวไม่ได้</p><button disabled={s.home.garden || s.money<650} onClick={()=>act({type:"homeGarden"})}>{s.home.garden?"จัดสวนแล้ว":"จัดสวน · 650 ◉"}</button></article>
               <PondPanel s={s} act={act}/>
               <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["แปลงดอกไม้ข้างบ้าน","ซุ้มไม้ในสวนข้างบ้าน","มุมพักผ่อนด้านข้างบ้าน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
@@ -975,6 +978,7 @@ export default function App() {
     fishing: "ตกปลาที่ Mirror Lake",
     sleep: "พักผ่อนที่บ้าน",
     rest: "มุมสงบใต้ร่มไม้",
+    food: "ครัวอุ่นใจของโนรา",
     upgrades: "ธีโอ · ช่างประจำหมู่บ้าน",
     grill: "ย่างปลาข้างกองไฟ",
     workshop: "The little atelier",

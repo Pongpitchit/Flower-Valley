@@ -1,3 +1,8 @@
+export const FOODS = [
+ {id:"food:bread",name:"ขนมปังอบ",energy:20,price:35},
+ {id:"food:soup",name:"ซุปผัก",energy:30,price:55},
+ {id:"food:omurice",name:"ข้าวห่อไข่",energy:40,price:75},
+];
 export const FLOWERS = [
   {
     id: "daisy",
@@ -63,7 +68,7 @@ export const flower = (id: string) => FLOWERS.find((f) => f.id === id)!;
 export const FISH = [
   { id: "carp", name: "ปลาคาร์ป", price: 40, icon: "🐟" },
   { id: "goldfish", name: "ปลาทอง", price: 60, icon: "🐠" },
-  { id: "rare", name: "ปลาหายาก", price: 150, icon: "🐡" },
+  { id: "rare", name: "ปลาคาร์ปโคอิหายาก", price: 150, icon: "🐡" },
   {id:"trout",name:"ปลาเทราต์",price:80,icon:"🐟"},
   {id:"perch",name:"ปลาเพิร์ช",price:30,icon:"🐟"},
   {id:"catfish",name:"ปลาดุก",price:55,icon:"🐟"},
@@ -80,6 +85,7 @@ export const GRILL_MINUTES = 10;
 export const GRILL_ENERGY = 5;
 export const GRILLED_FISH = FISH.map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5) }));
 export const ZONES = [
+  {id:"food",name:"ครัวอุ่นใจของโนรา",en:"NORA’S KITCHEN",x:-10,z:33,icon:"🍲"},
   {id:"general",name:"ร้านของจิปาถะของโรวัน",en:"ROWAN’S FINDS",x:-22,z:22,icon:"🎒"},
   {id:'grill',name:'กองไฟย่างปลา',en:'THE CAMPFIRE',x:7,z:-12,icon:'🔥'},
   {id:'upgrades',name:'ธีโอ ช่างประจำหมู่บ้าน',en:'THEO THE BUILDER',x:7,z:8,icon:'🔨'},
@@ -156,5 +162,5 @@ export const itemName = (id: string) =>
   id.startsWith("rod:") ? (RODS[Number(id.slice(4))]?.name ?? id) : FERTILIZERS.some(f=>f.id===id) ? FERTILIZERS.find(f=>f.id===id)!.name : id.startsWith("seed:")
     ? `เมล็ด${flower(id.slice(5))?.name ?? id}`
     : (FLOWERS.find((f) => f.id === id)?.name ??
-      [...FISH, ...GRILLED_FISH, ...TRASH].find((f) => f.id === id)?.name ??
+      [...FISH, ...GRILLED_FISH, ...TRASH, ...FOODS].find((f) => f.id === id)?.name ??
       id);

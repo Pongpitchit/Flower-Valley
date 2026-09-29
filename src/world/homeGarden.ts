@@ -55,7 +55,7 @@ export function refreshHomeGarden(w:any,s:GameState,makeFlower:(id:string)=>any)
     s.home.fish.forEach(id=>{
       const index=species.indexOf(id),f=createLakeFish(w,index);
       f.scale.setScalar(.7);f.userData.species=id;
-      if(index>=3)f.traverse((o:any)=>{if(o.isMesh && o.material.color.getHexString()!=='131e22')o.material.color.set(['#789a9b','#8f9959','#626b74'][index-3]);});
+
       group.add(f);w.pondFish.push(f);
     });
   } else w.pondWater=null;

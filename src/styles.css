@@ -2919,3 +2919,16 @@ kbd {
 @media(max-width:600px){.sale-row button{flex:1}.sale-row>span{min-width:65%}.fertilizer-shop{gap:5px}.fertilizer-shop button{font-size:11px;padding:10px 4px}}
 
 .modal-notice { position: sticky; top: 0; z-index: 5; display:flex; gap:8px; padding:12px 16px; margin-bottom:12px; border-radius:10px; background:#e1edcd; color:#30492e; box-shadow:0 3px 14px #18362422; }
+
+/* Upgrade cards: compact, evenly spaced actions, readable states. */
+.modal-upgrades .upgrade-grid { grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:16px; }
+.modal-upgrades .upgrade-grid article {display:flex;flex-direction:column;gap:12px;padding:20px;background:#f4f5eb;}
+.modal-upgrades .upgrade-grid h3,.modal-upgrades .upgrade-grid p {margin:0;min-height:0;}
+.modal-upgrades .upgrade-grid p {font-size:13px;line-height:1.65;color:#64725c;}
+.modal-upgrades .upgrade-grid svg {margin:0;width:24px;height:24px;}
+.modal-upgrades .upgrade-grid button {margin:0;min-height:42px;font-size:12px;white-space:normal;}
+.modal-upgrades .upgrade-grid button:disabled {opacity:1;background:#e2e6d7;color:#65705b;border:1px solid #cdd4c0;cursor:not-allowed;}
+.upgrade-help {font-size:12px;color:#64725c;line-height:1.6;}
+.food-product {display:flex;flex-direction:column;gap:10px;padding:20px;}
+.food-product h3,.food-product p {margin:0;}
+@media(max-width:680px){.modal-upgrades .upgrade-grid{grid-template-columns:1fr;}}

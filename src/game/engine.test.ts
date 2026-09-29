@@ -7,7 +7,7 @@ import {
   validParts,
   type GameState,
 } from "./engine";
-import { FLOWERS, FISH, GRILLED_FISH } from "./data";
+import { FLOWERS, FISH, GRILLED_FISH, FOODS } from "./data";
 import { canMove, colliders } from "../world/bridge";
 const apply = (s: GameState, type: string, args = {}) =>
   transition(s, { type, ...args }, () => 0.8);
@@ -572,5 +572,23 @@ describe('activity energy and painting recovery',()=>{
   it('accepts and preserves 200 energy saves',()=>{
     const s=initialState();s.upgrades.energyLevel=5;s.maxEnergy=200;s.energy=200;
     expect(validateSave(s)).toBe(true);expect(apply(s,'upgradeEnergy').state).toBe(s);
+  });
+});
+
+describe("Food shop",()=>{
+  for(const food of FOODS)it(`buys and eats ${food.id}, persists and caps restoration`,()=>{
+    const s=initialState(()=>.1);s.money=1000;s.energy=0;
+    const bought=apply(s,"buyFood",{id:food.id});
+    expect(bought.ok).toBe(true);expect(bought.state.money).toBe(1000-food.price);
+    expect(validateSave(JSON.parse(JSON.stringify(bought.state)))).toBe(true);
+    const ate=apply(bought.state,"eatFood",{id:food.id});
+    expect(ate.state.energy).toBe(food.energy);expect(ate.state.inventory[food.id]).toBe(0);
+    expect(apply(ate.state,"eatFood",{id:food.id}).ok).toBe(false);
+    bought.state.energy=99;expect(apply(bought.state,"eatFood",{id:food.id}).state.energy).toBe(100);
+    bought.state.energy=100;const full=apply(bought.state,"eatFood",{id:food.id});expect(full.ok).toBe(false);expect(full.state.inventory[food.id]).toBe(1);
+  });
+  it("rejects invalid and unaffordable purchases without changing inventory",()=>{
+    const s=initialState(()=>.1);s.money=0;
+    for(const id of [FOODS[0].id,"food:unknown"]){const result=apply(s,"buyFood",{id});expect(result.ok).toBe(false);expect(result.state).toEqual(s);}
   });
 });

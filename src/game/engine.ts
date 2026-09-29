@@ -2,7 +2,7 @@ import { HOME_STYLES } from "./home";
 import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
 import { useSyncExternalStore } from "react";
 import {
-  FERTILIZERS, RODS, TRASH, catchTable,
+  FOODS, FERTILIZERS, RODS, TRASH, catchTable,
   FLOWERS,
   FISH,
   GRILLED_FISH,
@@ -131,7 +131,7 @@ export function validateSave(v: any): v is GameState {
       ([k, n]) =>
         (FERTILIZERS.some(f=>f.id===k) || validId(k) ||
           (k.startsWith("seed:") && validId(k.slice(5))) ||
-          [...FISH, ...GRILLED_FISH, ...TRASH].some((f) => f.id === k)) &&
+          [...FISH, ...GRILLED_FISH, ...TRASH, ...FOODS].some((f) => f.id === k)) &&
         finite(n, 0, 1e6) &&
         Number.isInteger(n),
     ) &&
@@ -237,6 +237,20 @@ export function transition(
   if (a.type === "start") {
     s.started = true;
     return ok("ยินดีต้อนรับสู่ Flower Valley");
+  }
+  if(a.type === "buyFood") {
+    const food=FOODS.find(f=>f.id===a.id);
+    if(!food)return fail("ไม่พบอาหาร");
+    if(!spend(food.price))return fail("เงินไม่พอ");
+    add(food.id,1);return ok(`ซื้อ${food.name}แล้ว กินได้จากกระเป๋า`);
+  }
+  if(a.type === "eatFood") {
+    const food=FOODS.find(f=>f.id===a.id);
+    if(!food || !(s.inventory[food.id]>0))return fail("ไม่มีอาหารชนิดนี้");
+    if(s.energy>=s.maxEnergy)return fail("พลังงานเต็มแล้ว เก็บอาหารไว้ก่อน");
+    const gained=Math.min(food.energy,s.maxEnergy-s.energy);
+    s.inventory[food.id]--;s.energy+=gained;
+    return ok(`กิน${food.name} +${gained} พลังงาน`);
   }
   if (a.type === "buy") {
     const f = FLOWERS.find((f) => f.id === a.id);

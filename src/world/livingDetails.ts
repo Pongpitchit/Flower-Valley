@@ -1,3 +1,4 @@
+import { speciesFish } from "./speciesFish";
 import { attachFishModel } from "./fishModels";
 import { addBreeze } from "./atmosphere";
 import { FLOWERS } from "../game/data";
@@ -199,6 +200,8 @@ export function addNpcFace(w: any, g: any, name: string, skin: any) {
 }
 
 export function createLakeFish(w: any, index: number) {
+  index=((index%6)+6)%6;
+  if([1,2,5].includes(index))return speciesFish(w,index);
   const T = window.AFRAME.THREE,
     fish = new T.Group();
   const palette = [
