@@ -30,7 +30,8 @@ export function buildingMaterials(T: any) {
 export function buildHome(w: any, makeFlower: (id: string) => any) {
   const T = window.AFRAME.THREE,
     m = w.m;
-  const wall = m.plaster,
+  w.homeWall = m.plaster.clone();
+  const wall = w.homeWall,
     wood = m.wood,
     dark = m.darkWood,
     stone = m.masonry;
@@ -381,6 +382,7 @@ function gableRoof(
   geometry.computeVertexNormals();
   const material = w.m.tiles.clone();
   material.side = T.DoubleSide;
+  if (wall === w.homeWall) w.homeRoof = material;
   const roof = new T.Mesh(geometry, material);
   roof.castShadow = true;
   roof.receiveShadow = true;
@@ -402,7 +404,7 @@ function gableRoof(
       ),
     );
     g.computeVertexNormals();
-    const m = wall.clone();
+    const m = wall === w.homeWall ? wall : wall.clone();
     m.side = T.DoubleSide;
     const triangle = new T.Mesh(g, m);
     triangle.castShadow = true;
@@ -426,7 +428,7 @@ function gableRoof(
   for (let i = 0; i < Math.ceil(depth / 0.4); i++) {
     const cap = new T.Mesh(
       new T.CylinderGeometry(0.12, 0.12, 0.41, 12, 1, false, 0, Math.PI),
-      w.m.tiles,
+      wall === w.homeWall ? material : w.m.tiles,
     );
     cap.rotation.z = Math.PI / 2;
     cap.rotation.y = Math.PI / 2;

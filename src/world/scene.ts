@@ -1,3 +1,4 @@
+import { landscapeMaterial, refreshHomeGarden, animateHomePond } from "./homeGarden";
 import { villageProp } from "./villageProps";
 import { buildForest } from "./forest";
 import { buildActivityFeedback } from "./feedback";
@@ -250,13 +251,14 @@ if (!window.AFRAME.components["flower-world"])
       this.box(this.m.path, 8, 0.012, 23, 18, 0.05, 3);
       this.box(this.m.path, 8, 0.012, 6, 18, 0.05, 3);
       this.box(this.m.path, 8, 0.012, -16, 16, 0.05, 2.5);
-      // Low rolling hills create a continuous horizon.
+      // CC0 rocky terrain gives the distant hills a natural surface.
+      const mountainMaterial=landscapeMaterial(T);
       for (let i = 0; i < 20; i++) {
         const a = (i / 20) * Math.PI * 2,
           r = 120 + random() * 18;
         this.mesh(
           geometries.sphere,
-          mat(["#4e6d47", "#607a50", "#6f875d"][i % 3]),
+          mountainMaterial,
           Math.sin(a) * r,
           -1,
           Math.cos(a) * r,
@@ -371,6 +373,7 @@ if (!window.AFRAME.components["flower-world"])
           z = (random() - 0.5) * 86;
         if (
           Math.abs(x) < 2.3 ||
+          (x>20.8 && x<27.2 && z>-.8 && z<4.8) ||
           (x > 4.8 && x < 9.2 && z > -13.5 && z < -7) ||
           (x > 11.5 && x < 18.5 && z > -20.5 && z < -14.5) ||
           (Math.abs(z - 15) < 2 && x < 1 && x > -21) ||
@@ -430,7 +433,7 @@ if (!window.AFRAME.components["flower-world"])
         [7, 23],
         [-18, 9],
         [19, 20],
-        [-12,2], [8.4,9], [15,26], [13,2], [5,-16], [-22,21],
+        [-18.3,1], [8.4,9], [15,26], [13,2], [5,-16], [-21.1,18.6],
       ])
         this.lamp(x, z);
       this.flush();
@@ -1056,9 +1059,9 @@ if (!window.AFRAME.components["flower-world"])
     },
     buildGeneralStore(this:any) {
       const m=this.m,x=-22,z=24;
-      villageProp(this,"cart",x-2.3,0,z,1.25,Math.PI/2);
+      villageProp(this,"cart",-21.8,0,20.1,1.1,Math.PI*.18);
       villageProp(this,"fountain-round",-26,0,19,0.65);
-      colliders.push({x:-26,z:19,w:4.65,d:4.65},{x:x-2.3,z,w:3.5,d:1.8});
+      colliders.push({x:-26,z:19,w:4.65,d:4.65},{x:-21.8,z:20.1,w:2.4,d:2.7});
       this.box(m.wood,x,.65,z,3,.22,1.2);
       for(const dx of [-1.25,1.25]) {this.mesh(geometries.cylinder,m.darkWood,x+dx,.42,z,.38,.7,.38);this.box(m.darkWood,x+dx,1.7,z,.12,3.2,.12);}
       const roof=this.box(mat("#c5a778"),x,2.9,z,3.5,.12,2.5);roof.rotation.x=.15;
@@ -1077,6 +1080,7 @@ if (!window.AFRAME.components["flower-world"])
       const light=new T.PointLight("#ffd39a",0,11,2);light.position.set(x,2.52,z);this.world.add(light);this.lamps.push(light);
     },
     refresh(this: any, s: GameState) {
+      refreshHomeGarden(this,s,createFlower);
       const sig = JSON.stringify(s.farm);
       if (sig !== this.lastFarm) {
         this.lastFarm = sig;
@@ -1131,8 +1135,9 @@ if (!window.AFRAME.components["flower-world"])
       if (this.lastDecor !== `${s.decorations}:${s.upgrades.homeLevel}`) {
         this.lastDecor = `${s.decorations}:${s.upgrades.homeLevel}`;
         this.disposeGroup(this.decorGroup);
-        for (let i = 0; i < s.decorations; i++) {
-          const x = i%2 ? 16.1 : 9.9, z=7.1+Math.floor(i/2)*.85;
+        // Six fixed lawn slots: three on each side, with the doorway clear.
+        const potSlots = [[9.2,9.35],[16.8,9.35],[9.2,10.3],[16.8,10.3],[9.2,11.25],[16.8,11.25]];
+        for (const [i, [x, z]] of potSlots.slice(0, s.decorations).entries()) {
           this.mesh(
             geometries.cylinder,
             mat("#ab775b"),
@@ -1148,15 +1153,23 @@ if (!window.AFRAME.components["flower-world"])
           f.position.set(x, 0.55, z);
           this.decorGroup.add(f);
         }
-        if(s.upgrades.homeLevel>=1) this.box(mat("#8f6572"),12.3,.38,1.2,2.4,.035,2,this.decorGroup);
+        // Purchased decor lives entirely in the side yard (house ends at x=17).
+        if(s.upgrades.homeLevel>=1) {
+          for(const z of [-.3,4.5]) {
+            this.box(this.m.wood,20,.25,z,2.6,.5,.7,this.decorGroup);
+            this.box(this.m.soil,20,.52,z,2.4,.06,.55,this.decorGroup);
+            for(let i=0;i<4;i++) {const f=createFlower(FLOWERS[(i+2)%FLOWERS.length].id);f.scale.setScalar(.65);f.position.set(19.1+i*.6,.54,z);this.decorGroup.add(f);}
+          }
+        }
         if(s.upgrades.homeLevel>=2) {
-          for(const y of [.45,1,1.55]) this.box(this.m.wood,10.5,y,-.12,2,.08,.45,this.decorGroup);
-          for(let i=0;i<9;i++)this.box(mat(["#809570","#a16c62","#cdaf71"][i%3]),9.65+i*.2,1.24,-.12,.14,.37,.3,this.decorGroup);
+          for(const x of [18.6,21.4])for(const z of [.4,3.8])this.box(this.m.darkWood,x,1.45,z,.12,2.9,.12,this.decorGroup);
+          for(let i=0;i<7;i++)this.box(this.m.wood,18.4+i*.53,2.9,2.1,.16,.13,4,this.decorGroup);
+          for(const z of [.4,3.8])this.box(this.m.darkWood,20,2.8,z,3.4,.14,.16,this.decorGroup);
         }
         if(s.upgrades.homeLevel>=3) {
-          this.box(this.m.wood,19,.5,4,1.5,.16,.65,this.decorGroup);
-          this.box(this.m.wood,19,.9,3.73,1.5,.8,.12,this.decorGroup);
-          for(const x of [18.45,19.55])this.box(this.m.darkWood,x,.24,4,.12,.48,.55,this.decorGroup);
+          this.box(this.m.wood,20,.5,2.6,1.8,.16,.65,this.decorGroup);
+          this.box(this.m.wood,20,.9,2.33,1.8,.8,.12,this.decorGroup);
+          for(const x of [19.3,20.7])this.box(this.m.darkWood,x,.24,2.6,.12,.48,.55,this.decorGroup);
         }
       }
       const artSig = s.artworks.map((a) => a.id).join();
@@ -1366,6 +1379,7 @@ if (!window.AFRAME.components["flower-world"])
         f.userData.tail.rotation.y = Math.sin(time * 0.007 + i) * 0.32;
         f.rotation.y = -a;
       });
+      animateHomePond(this,motionTime);
       this.campfireUpdate?.(motionTime);
       this.npcs.forEach((n: any, i: number) => {
         const open = hours >= 7 && hours < 20;

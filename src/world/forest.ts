@@ -8,7 +8,7 @@ export function buildForest(w: any, random: () => number) {
   for(let i=0;i<76;i++) {
     let x:number,z:number;
     if(i<48) { const a=i/48*Math.PI*2; x=Math.sin(a)*(41+random()*12);z=Math.cos(a)*(42+random()*12); }
-    else { x=(random()-.5)*76;z=(random()-.5)*75; if(Math.abs(x)<22 && z>-24 && z<32)continue; if(x*x/220+(z+31)**2/130<1.5)continue; }
+    else { x=(random()-.5)*76;z=(random()-.5)*75; if(Math.abs(x)<22 && z>-24 && z<32)continue; if(x>17 && x<28 && z>-8 && z<10)continue; if(x*x/220+(z+31)**2/130<1.5)continue; }
     const height=7+random()*4, radius=height*(i%3===2?.26:.43);
     if(planted.some(p=>Math.hypot(x-p.x,z-p.z)<radius+p.radius+.8))continue;
     planted.push({x,z,radius});

@@ -1,0 +1,5 @@
+Rocky Terrain by Amal Kumar / Poly Haven
+https://polyhaven.com/a/rocky_terrain
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
+Downloaded 2026-09-29: 1K diffuse and OpenGL normal JPG maps.
+Used for mountains and decorative pond rocks.

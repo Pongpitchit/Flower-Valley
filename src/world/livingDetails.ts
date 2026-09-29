@@ -30,6 +30,8 @@ export function buildMeadows(
         z = cz + Math.sin(angle) * rz * radius;
       if (
         !canMove(x, z) ||
+        (x>20.8 && x<27.2 && z>-.8 && z<4.8) ||
+        (x>8.5 && x<17.5 && z>-8 && z<-.8) ||
         Math.abs(x) < 2.8 ||
         (x > 4.8 && x < 9.2 && z > -13.5 && z < -7) ||
         (x > -18 && x < -4 && z > -7 && z < 8) ||

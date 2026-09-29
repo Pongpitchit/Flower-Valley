@@ -1,3 +1,4 @@
+import { HOME_STYLES } from "./game/home";
 import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, moodName } from "./game/balance";
 import { SaleRow } from "./components/SaleRow";
 import { useEffect, useRef, useState } from "react";
@@ -675,6 +676,8 @@ export default function App() {
             </button>
           </div>
         );
+      case "pond":
+        return <PondPanel s={s} act={act}/>;
       case "upgrades":
         return (
           <>
@@ -711,16 +714,19 @@ export default function App() {
                     : `อัปเกรด · ${300 * (s.upgrades.energyLevel + 1)} ◉`}
                 </button>
               </article>
-              <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["พรมทอในห้องนอน","ชั้นหนังสือข้างเตียง","มุมพักผ่อนด้านข้างบ้าน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
+              <article><h3>สีหลังคาและผนังบ้าน</h3><p>ซื้อครั้งเดียว สลับรูปแบบที่มีได้ฟรี</p>{HOME_STYLES.map(style=><button key={style.id} disabled={s.home.style===style.id || (!s.home.ownedStyles.includes(style.id) && s.money<style.price)} onClick={()=>act({type:"homeStyle",id:style.id})}>{style.name} · {s.home.style===style.id?"ใช้อยู่":s.home.ownedStyles.includes(style.id)?"เลือกใช้":`${style.price} ◉`}</button>)}</article>
+              <article><h3>สวนดอกไม้หลังบ้าน</h3><p>สวนประดับสำเร็จรูป ไม่ต้องปลูกหรือรดน้ำ และเก็บเกี่ยวไม่ได้</p><button disabled={s.home.garden || s.money<650} onClick={()=>act({type:"homeGarden"})}>{s.home.garden?"จัดสวนแล้ว":"จัดสวน · 650 ◉"}</button></article>
+              <PondPanel s={s} act={act}/>
+              <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["แปลงดอกไม้ข้างบ้าน","ซุ้มไม้ในสวนข้างบ้าน","มุมพักผ่อนด้านข้างบ้าน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
               <article>
                 <Flower2 />
                 <h3>แต่งทางเข้าบ้าน</h3>
-                <p>กระถางข้างระเบียง {s.decorations}/6 ใบ · เว้นทางเข้าตรงกลาง</p>
+                <p>กระถางบนสนามหน้าบ้าน {s.decorations}/6 ใบ · ฝั่งละ 3 ใบ เว้นทางเข้าตรงกลาง</p>
                 <button
                   disabled={s.decorations >= 6 || s.money < 100}
                   onClick={() => act({ type: "decorate" })}
                 >
-                  เพิ่มกระถาง · 100 ◉
+                  {s.decorations >= 6 ? "ครบ 6 กระถางแล้ว" : "เพิ่มกระถาง · 100 ◉"}
                 </button>
               </article>
             </div>
@@ -1358,3 +1364,5 @@ function TouchControls({
     </div>
   );
 }
+
+function PondPanel({s,act}:{s:import("./game/engine").GameState;act:(action:import("./game/engine").Action)=>unknown}) { return (<article><h3>บ่อปลาประดับข้างบ้าน</h3><p>เลี้ยงได้ 6 ตัว นำกลับเข้ากระเป๋าได้ · ในบ่อ {s.home.fish.length}/6</p><button disabled={s.home.pond || s.money<850} onClick={()=>act({type:"homePond"})}>{s.home.pond?"สร้างบ่อแล้ว":"สร้างบ่อ · 850 ◉"}</button>{s.home.pond && FISH.map(f=><div key={f.id}><ItemIcon id={f.id}/><span>{f.name} · กระเป๋า {s.inventory[f.id]||0} · ในบ่อ {s.home.fish.filter(id=>id===f.id).length}</span><button disabled={!s.inventory[f.id] || s.home.fish.length>=6} onClick={()=>act({type:"pondAdd",id:f.id})}>ปล่อยลงบ่อ</button><button disabled={!s.home.fish.includes(f.id)} onClick={()=>act({type:"pondRemove",id:f.id})}>นำกลับ 1 ตัว</button></div>)}</article>); }

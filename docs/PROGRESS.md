@@ -66,3 +66,22 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Moved QA controls to src/dev/qa.tsx and project records to docs/. Updated imports and documentation.
 - Removed the unused Playwright test dependency and its two dependent packages. Existing tests use Vitest; browser verification uses the app browser.
 - Enabled TypeScript unused-import/parameter checks. Build now uses tsc --noEmit to avoid root-level cache output.
+
+## Gameplay and village revision (2026-09-29)
+
+- Added daily mood-based art quotas, a three-plot starting garden with expansion upgrades, watering upgrades, three fertilizer grades, additional flowers/fish, fishing rods, junk catches and Rowan's buying service. Shops sell one item or all of that type; E opens seed selection and Space waters. Removed floating plot status labels.
+- Added transparent pixel-art expansion atlases, distinct shop displays, free Kenney village props, nighttime lighting and an atelier display for unsold art. Asset provenance and generation prompts are stored with the assets.
+- Follow-up catch balance: fish total 90%, junk 10%, with no empty outcome. Rare fish remain 4% / 8% / 14% of all successful catches according to rod level, included within the 90% fish total.
+- Moved the garden lantern outside the western fence, clear of all 20 plots. Angled Rowan's cart beside its lantern and adjusted its collision bounds and QA approach point.
+- Moved all six purchased pots onto the front lawn, leaving the central entrance clear. House upgrades now add outdoor flower boxes, a side-yard pergola and a bench; excluded trees from this side yard.
+- Browser verified the fully upgraded side yard, clear cottage entrance with six pots, and accessible Rowan interaction after moving the cart. The complete garden/nighttime layout was not visually rechecked in this follow-up. Earlier checks covered seed selection, Space watering, rod purchases and junk sales.
+- Validation: 48 rule tests pass, including deterministic catch distributions for all three rods. Production build passes with the existing large-bundle warning.
+
+## House palettes, backyard and pond (2026-09-29)
+
+- Added four house color palettes; the three optional palettes cost 300 once and can then be switched freely. Materials are isolated to the player's house, including roof caps and gables.
+- Added a 650-coin ornamental backyard with 48 flowers and a central walk. It has no farming/harvesting interaction. Added an 850-coin stone-edged pond beside the house, clear of the pergola and entrance.
+- Pond stores six raw fish, with animated species colors and one-at-a-time inventory transfers through Theo or the pond's E interaction. Junk/cooked fish, over-capacity transfers and missing inventory are rejected atomically.
+- Downloaded and applied Poly Haven Rocky Terrain CC0 1K diffuse/normal maps to the existing mountain geometry and custom pond rocks. Cleared random grass/flowers from the pond footprint and ornamental beds.
+- Save version 4 migrates versions 1–3 and validates purchased palettes, garden/pond flags and fish contents. Added four rule tests; all 52 pass.
+- Browser verified purchases (5000→3200), sage house/back garden appearance, textured hills, clear pond surface, swimming carp, direct pond E menu, fish transfer (inventory 3→2→3) and persistence through development reloads. Production build passes; existing large-bundle warning remains.

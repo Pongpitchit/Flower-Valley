@@ -107,9 +107,19 @@ Version-1 and version-2 saves migrate to version 3 under the same storage key. E
 ## Village revision (2026-09-29)
 
 - Six fish: carp 40, goldfish 60, rare fish 150, trout 80, perch 30, catfish 55. All can be grilled for a rounded 50% premium. Catching may yield a tin can (3 coins) or old boot (5 coins), sold to Rowan at the western general-goods cart. Junk cannot be grilled and does not count as caught fish. Foraging collection is reserved for a later system.
-- Finn sells two rod upgrades, costing 350 then 900. Rare-fish odds are 4% / 8% / 14%, junk odds 30% / 25% / 20%; remaining probability is distributed among five common fish. The fishing panel shows current odds and rod.
-- Home pots are limited to six, grouped at both sides of the porch, preserving the central doorway. Theo offers a rug (200), bookshelf (450), and side-yard bench (800), purchased sequentially.
+- Finn sells two rod upgrades, costing 350 then 900. Rare-fish odds are 4% / 8% / 14%, junk odds stay at 10% for every rod (all fish together total 90%); remaining probability is distributed among five common fish. The fishing panel shows current odds and rod.
+- Home pots are limited to six, grouped on the lawn beyond both sides of the front step, preserving the central doorway. Theo offers side-yard flower beds (200), a timber pergola (450), and a bench (800), purchased sequentially.
 - All unsold artwork (up to 24) appears in distinct atelier gallery slots. Paintings face inward; small models sit on shelves. Selling removes the corresponding work. Workbench/easel and interaction/collision positions have been moved away from the display wall.
 - Shops have different physical details: Lily's pitched potting-shed roof and seed shelf, Mae's striped flower canopy/trellis facing the village, Finn's blue ice counter/tackle, and Rowan's canvas cart and crates.
 - Forest canopies use spacing checks. Distant hills start beyond the forest band so they do not intersect tree trunks. Warm Kenney lantern models and ceiling lights improve nighttime navigation. The western stone water basin and cart also use the free Kenney Fantasy Town Kit (CC0).
 - Three additional transparent pixel-art atlases provide fifteen new icons: three fertilizers, two flowers, two seeds, three rods, three fish and two junk items. Exact prompts and frame coordinates are retained in `public/icons/pixelart/`.
+
+Follow-up layout: the garden lantern is outside the west fence, clear of all twenty plots. Rowan’s cart is angled beside the relocated lantern, clear of the service point. Purchased home upgrades are entirely outside the house; pots are on the lawn beyond the porch.
+
+### Home, backyard and ornamental pond
+
+Talk to Theo to buy permanent house palettes (300 coins each, free switching after purchase), a ready-made backyard flower garden (650), or a side-yard pond (850). The original house palette remains free. The garden is decorative: no planting, watering or harvesting. Existing six front pots and side-yard upgrades remain available.
+
+The pond holds up to six raw fish. Press E at its southern edge to transfer fish from inventory or return them one at a time. Fish remain saved and swim visibly in the pond; grilled fish and junk cannot be stocked. Saves migrate from versions 1–3 to version 4 without resetting progress.
+
+Mountains and pond rocks use the locally downloaded 1K diffuse/OpenGL normal maps of **Rocky Terrain**, Amal Kumar / Poly Haven, CC0: https://polyhaven.com/a/rocky_terrain. Attribution and license are in `public/textures/landscape/LICENSE.txt`. No paid assets or new HDRI sky were added.

@@ -260,7 +260,7 @@ describe("Fishing and art", () => {
   it("charges for a cast and adds all three fish rarities with correct sale prices", () => {
     for (const [rng, id, price] of [
       [0.4, "carp", 40],
-      [0.6, "goldfish", 60],
+      [0.5, "goldfish", 60],
       [0.98, "rare", 150],
     ] as const) {
       let s = apply(initialState(() => 0.1), "cast").state;
@@ -507,8 +507,47 @@ describe('Village expansion rules',()=>{
         const r=transition(s,{type:'catch'},()=>(i+.5)/1000);const id=Object.keys(r.state.inventory)[0];counts[id]=(counts[id]||0)+1;
         if(id==='tin-can'||id==='old-boot')expect(r.state.stats.fish).toBe(0);
       }
-      expect(counts.rare).toBe([40,80,140][level]);expect(counts['tin-can']+counts['old-boot']).toBe([300,250,200][level]);expect(Object.keys(counts)).toHaveLength(8);
+      expect(counts.rare).toBe([40,80,140][level]);expect(counts['tin-can']+counts['old-boot']).toBe(100);expect(Object.keys(counts)).toHaveLength(8);
     }
     for(const [id,price] of [['tin-can',3],['old-boot',5]] as const){const s=initialState();s.inventory[id]=4;expect(apply(s,'sell',{id,amount:4}).state.money).toBe(500+price*4);expect(apply(s,'grill',{id}).state).toBe(s);}
+  });
+});
+
+describe('home customization and ornamental pond',()=>{
+  it('migrates v3 without losing inventory and rejects invalid pond saves',()=>{
+    const old:any=initialState();old.version=3;delete old.home;old.inventory.carp=2;
+    const s=migrateSave(old) as GameState;
+    expect(validateSave(s)).toBe(true);expect(s.inventory.carp).toBe(2);
+    expect(s.home.fish).toEqual([]);
+    expect(validateSave({...s,home:{...s.home,fish:['carp']}})).toBe(false);
+  });
+  it('charges for a style once and preserves unrelated progress',()=>{
+    const s=initialState();s.money=1000;
+    const chosen=apply(s,'homeStyle',{id:'sage'}).state;
+    expect(chosen.money).toBe(700);
+    const original=apply(chosen,'homeStyle',{id:'original'}).state;
+    expect(apply(original,'homeStyle',{id:'sage'}).state.money).toBe(700);
+    expect(apply(s,'homeStyle',{id:'invalid'}).state).toBe(s);
+  });
+  it('buys each garden upgrade once and fails atomically when unaffordable',()=>{
+    const s=initialState();expect(apply(s,'homeGarden').state).toBe(s);
+    s.money=2000;const garden=apply(s,'homeGarden').state;
+    expect(garden.money).toBe(1350);expect(garden.home.garden).toBe(true);
+    expect(apply(garden,'homeGarden').state).toBe(garden);
+    const pond=apply(garden,'homePond').state;expect(pond.money).toBe(500);
+    expect(apply(pond,'homePond').state).toBe(pond);
+  });
+  it('conserves fish across transfers, capacity, invalid items and reloads',()=>{
+    let s=initialState();s.money=2000;s.inventory.carp=7;s.inventory['grilled:carp']=1;
+    expect(apply(s,'pondAdd',{id:'carp'}).state).toBe(s);
+    s=apply(s,'homePond').state;
+    expect(apply(s,'pondAdd',{id:'grilled:carp'}).state).toBe(s);
+    for(let i=0;i<6;i++)s=apply(s,'pondAdd',{id:'carp'}).state;
+    expect(s.inventory.carp).toBe(1);expect(s.home.fish.length).toBe(6);
+    expect(apply(s,'pondAdd',{id:'carp'}).state).toBe(s);
+    s=JSON.parse(JSON.stringify(s));expect(validateSave(s)).toBe(true);
+    s=apply(s,'pondRemove',{id:'carp'}).state;
+    expect(s.inventory.carp+s.home.fish.length).toBe(7);
+    expect(apply(s,'pondRemove',{id:'rare'}).state).toBe(s);
   });
 });

@@ -1,3 +1,4 @@
+import { HOME_STYLES } from "./home";
 import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
 import { useSyncExternalStore } from "react";
 import {
@@ -36,7 +37,7 @@ export type Artwork = {
 };
 export type Bouquet = { id: string; flowers: FlowerId[]; price: number };
 export type GameState = {
-  version: 3;
+  version: 4;
   artDay: ArtDay;
   day: number;
   time: number;
@@ -49,6 +50,7 @@ export type GameState = {
   bouquets: Bouquet[];
   artworks: Artwork[];
   upgrades: { farmLevel: number; energyLevel: number; wateringLevel: number; rodLevel: number; homeLevel: number };
+  home: { style: string; ownedStyles: string[]; garden: boolean; pond: boolean; fish: string[] };
   decorations: number;
   restAt: number;
   order: { flower: FlowerId; fulfilled: boolean };
@@ -64,7 +66,7 @@ export const SAVE_KEY =
     ? "-qa" + (new URLSearchParams(location.search).get("qa") ? "-" + new URLSearchParams(location.search).get("qa") : "")
     : "");
 export const initialState = (rng = Math.random): GameState => ({
-  version: 3,
+  version: 4,
   artDay: rollArtDay(rng),
   day: 1,
   time: 480,
@@ -81,6 +83,7 @@ export const initialState = (rng = Math.random): GameState => ({
   bouquets: [],
   artworks: [],
   upgrades: { farmLevel: 0, energyLevel: 0, wateringLevel: 0, rodLevel: 0, homeLevel: 0 },
+  home: {style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]},
   decorations: 0,
   restAt: -999,
   order: { flower: "daisy", fulfilled: false },
@@ -93,7 +96,10 @@ const finite = (v: unknown, min: number, max: number) =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 export function validateSave(v: any): v is GameState {
   return (
-    v?.version === 3 &&
+    v?.version === 4 &&
+    v.home && typeof v.home.garden === "boolean" && typeof v.home.pond === "boolean" &&
+    HOME_STYLES.some(x=>x.id===v.home.style) && Array.isArray(v.home.ownedStyles) && v.home.ownedStyles.includes(v.home.style) && v.home.ownedStyles.every((id:string)=>HOME_STYLES.some(x=>x.id===id)) &&
+    Array.isArray(v.home.fish) && v.home.fish.length<=6 && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
     ["calm", "inspired"].includes(v.artDay?.mood) &&
     v.artDay.limit === (v.artDay.mood === "inspired" ? 2 : 1) &&
     Number.isInteger(v.artDay.used) && finite(v.artDay.used, 0, v.artDay.limit) &&
@@ -409,6 +415,36 @@ export function transition(
     s.upgrades.rodLevel++;
     return ok(`ได้รับ${rod.name} โอกาสปลาหายาก ${Math.round(rod.rare*100)}%`);
   }
+  if (a.type === "homeStyle") {
+    const style=HOME_STYLES.find(x=>x.id===a.id);
+    if(!style) return fail("ไม่พบรูปแบบบ้าน");
+    if(!s.home.ownedStyles.includes(style.id)) {
+      if(!spend(style.price)) return fail("เงินไม่พอ");
+      s.home.ownedStyles.push(style.id);
+    }
+    s.home.style=style.id;
+    return ok("เปลี่ยนสีหลังคาและผนังแล้ว");
+  }
+  if(a.type === "homeGarden" || a.type === "homePond") {
+    const key=a.type === "homeGarden" ? "garden" : "pond";
+    if(s.home[key]) return fail("ติดตั้งแล้ว");
+    if(!spend(key === "garden" ? 650 : 850)) return fail("เงินไม่พอ");
+    s.home[key]=true;
+    return ok(key === "garden" ? "จัดสวนดอกไม้หลังบ้านแล้ว ไม่ต้องรดน้ำ" : "สร้างบ่อปลาแล้ว เลือกปลามาเลี้ยงได้");
+  }
+  if(a.type === "pondAdd" || a.type === "pondRemove") {
+    if(!s.home.pond || !FISH.some(f=>f.id===a.id)) return fail("ต้องมีบ่อและเลือกปลาสด");
+    const id=a.id!;
+    if(a.type === "pondAdd") {
+      if(s.home.fish.length>=6 || !(s.inventory[id]>0)) return fail("บ่อเต็มหรือไม่มีปลาในกระเป๋า");
+      s.inventory[id]--; s.home.fish.push(id);
+    } else {
+      const index=s.home.fish.indexOf(id);
+      if(index<0) return fail("ไม่มีปลาชนิดนี้ในบ่อ");
+      s.home.fish.splice(index,1); add(id,1);
+    }
+    return ok(a.type === "pondAdd" ? "ปล่อยปลาลงบ่อแล้ว" : "นำปลากลับเข้ากระเป๋าแล้ว");
+  }
   if (a.type === "upgradeHome") {
     const cost=HOME_COSTS[s.upgrades.homeLevel];
     if(!cost) return fail("ตกแต่งบ้านครบแล้ว");
@@ -435,10 +471,10 @@ export function transition(
     return ok(`เพิ่มแปลงปลูก ${extra} แปลงแล้ว`);
   }
   if (a.type === "decorate") {
-    if (s.decorations >= 6) return fail("ของตกแต่งครบแล้ว");
+    if (s.decorations >= 6) return fail("ครบ 6 กระถางแล้ว — ฝั่งละ 3 ใบ");
     if (!spend(100)) return fail("ต้องใช้ 100 เหรียญ");
     s.decorations++;
-    return ok("เพิ่มกระถางดอกไม้ที่ทางเข้าบ้านแล้ว");
+    return ok(`เพิ่มกระถางบนสนามหน้าบ้านแล้ว (${s.decorations}/6)`);
   }
   if (a.type === "art") {
     if (s.artDay.used >= s.artDay.limit) return fail("วันนี้สร้างงานครบแล้ว พักหาแรงบันดาลใจแล้วกลับมาพรุ่งนี้");
@@ -506,7 +542,8 @@ export function migrateSave(value: any): unknown {
     if (![12,20].includes(value.farm?.length) || value.farm.length !== 12 + value.upgrades?.farmLevel * 8) return null;
     value={...value,version:2,artDay:{mood:"calm",limit:1,used:0},upgrades:{...value.upgrades,farmLevel:value.farm.length===20?5:3,wateringLevel:0}};
   }
-  if (value?.version === 2) return {...value,version:3,upgrades:{...value.upgrades,rodLevel:0,homeLevel:0}};
+  if (value?.version === 2) value={...value,version:3,upgrades:{...value.upgrades,rodLevel:0,homeLevel:0}};
+  if(value?.version === 3) return {...value,version:4,home:{style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]}};
   return value;
 }
 let loadMessage = "";

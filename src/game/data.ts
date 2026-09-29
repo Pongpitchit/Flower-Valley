@@ -70,7 +70,7 @@ export const FISH = [
 ];
 export const TRASH = [{id:"tin-can",name:"กระป๋องเก่า",price:3,icon:"🥫"},{id:"old-boot",name:"รองเท้าเก่า",price:5,icon:"🥾"}];
 export const FERTILIZERS = [{id:"fertilizer",name:"ปุ๋ยพื้นฐาน",price:15,days:1},{id:"fertilizer:good",name:"ปุ๋ยชั้นดี",price:40,days:2},{id:"fertilizer:premium",name:"ปุ๋ยพรีเมียม",price:75,days:3}];
-export const RODS = [{name:"เบ็ดไม้",price:0,rare:.04,trash:.30},{name:"เบ็ดชั้นดี",price:350,rare:.08,trash:.25},{name:"เบ็ดนักตกปลา",price:900,rare:.14,trash:.20}];
+export const RODS = [{name:"เบ็ดไม้",price:0,rare:.04,trash:.10},{name:"เบ็ดชั้นดี",price:350,rare:.08,trash:.10},{name:"เบ็ดนักตกปลา",price:900,rare:.14,trash:.10}];
 export function catchTable(level: number) {
   const rod = RODS[level];
   const common = [{id:"carp",weight:25},{id:"goldfish",weight:10},{id:"trout",weight:10},{id:"perch",weight:12},{id:"catfish",weight:9}];
