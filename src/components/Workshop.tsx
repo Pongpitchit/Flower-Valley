@@ -1,4 +1,4 @@
-import { useGame } from "../game/engine";
+import { useGame, SAVE_KEY } from "../game/engine";
 import { ART_PRICES, moodName } from "../game/balance";
 import { useEffect, useRef, useState } from "react";
 import { Save, RotateCcw } from "lucide-react";
@@ -19,7 +19,7 @@ export function Painting({
 }: {
   finish: (art: Omit<Artwork, "id" | "price">) => boolean;
 }) {
-  const {artDay,energy} = useGame();
+  const {artDay} = useGame();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [color, setColor] = useState(palette[0]),
     [size, setSize] = useState(10),
@@ -33,8 +33,14 @@ export function Painting({
     ctx.fillStyle = "#f5edda";
     ctx.fillRect(0, 0, c.width, c.height);
     setDirty(false);
+    localStorage.removeItem(SAVE_KEY+"-painting-draft");
   };
-  useEffect(clear, []);
+  useEffect(()=>{
+    const draft=localStorage.getItem(SAVE_KEY+"-painting-draft");
+    clear();
+    if(draft){const image=new Image();image.onload=()=>{if(canvas.current){canvas.current.getContext("2d")!.drawImage(image,0,0);setDirty(true);localStorage.setItem(SAVE_KEY+"-painting-draft",draft);}};image.src=draft;}
+  }, []);
+  const keepDraft=()=>{drawing.current=false;try {localStorage.setItem(SAVE_KEY+"-painting-draft",canvas.current!.toDataURL("image/png"));}catch{/* Export remains available if storage is full. */}};
   const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     return {
@@ -59,7 +65,7 @@ export function Painting({
   return (
     <>
       <p className="subtle">
-        ลากพู่กันบนผืนผ้าใบ สร้างสีสันในแบบของคุณ • ใช้พลังงาน 15
+        วาดได้แม้พลังงานน้อย บันทึกใช้สูงสุด 15 พลังงาน · ส่งออก PNG ได้เสมอ
       </p>
       <div className="paint-layout">
         <canvas
@@ -80,8 +86,8 @@ export function Painting({
             setDirty(true);
           }}
           onPointerMove={draw}
-          onPointerUp={() => (drawing.current = false)}
-          onPointerCancel={() => (drawing.current = false)}
+          onPointerUp={keepDraft}
+          onPointerCancel={keepDraft}
         />
         <div className="paint-tools">
           <div className="palette">
@@ -110,7 +116,10 @@ export function Painting({
           </button>
         </div>
       </div>
-      <p className="recipe-summary">วันนี้{moodName(artDay)} · เหลือ {artDay.limit-artDay.used}/{artDay.limit} ชิ้น · ขายภาพ {ART_PRICES.painting} ◉ · ใช้พลังงาน 15</p>
+      <p className="recipe-summary">วันนี้{moodName(artDay)} · เหลือ {artDay.limit-artDay.used}/{artDay.limit} ชิ้น · ขายภาพ {ART_PRICES.painting} ◉ · ใช้พลังงานสูงสุด 15 (พลังงานหมดก็ยังบันทึกได้)</p>
+      <button className="secondary" onClick={()=>{
+        const a=document.createElement("a");a.href=canvas.current!.toDataURL("image/png");a.download=(name.trim()||"Flower Valley")+".png";a.click();
+      }}>ส่งออกภาพ PNG</button>
       <div className="form-row">
         <input
           aria-label="ชื่อภาพ"
@@ -119,7 +128,7 @@ export function Painting({
           onChange={(e) => setName(e.target.value)}
         />
         <button
-          disabled={!dirty || !name.trim() || artDay.used >= artDay.limit || energy < 15}
+          disabled={!dirty || !name.trim() || artDay.used >= artDay.limit}
           onClick={() => {
             if (
               finish({

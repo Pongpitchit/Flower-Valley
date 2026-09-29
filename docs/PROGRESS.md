@@ -85,3 +85,13 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Downloaded and applied Poly Haven Rocky Terrain CC0 1K diffuse/normal maps to the existing mountain geometry and custom pond rocks. Cleared random grass/flowers from the pond footprint and ornamental beds.
 - Save version 4 migrates versions 1–3 and validates purchased palettes, garden/pond flags and fish contents. Added four rule tests; all 52 pass.
 - Browser verified purchases (5000→3200), sage house/back garden appearance, textured hills, clear pond surface, swimming carp, direct pond E menu, fish transfer (inventory 3→2→3) and persistence through development reloads. Production build passes; existing large-bundle warning remains.
+
+## Activity and visual fixes (2026-09-30)
+
+- Removed sprint energy drain and the zero-energy speed restriction. Raised energy upgrades/validation/UI to five levels and 200 maximum energy.
+- Watering upgrades now cover four plots in the selected row, then eight across two rows, including when targeting a middle plot. Updated rule tests.
+- Painting saves at zero energy without going negative; daily quota remains enforced. Added PNG export in editor/gallery and local canvas draft recovery. Browser verified close/reopen draft recovery, export button execution and saving with energy 0 (artworks 0→1, quota 1→0).
+- Moved action notices into a sticky region inside open modals; success text remains in front of the shop/editor.
+- Downloaded three Quaternius CC0 fish OBJ/MTL models and license. Added normalized forward orientation and swimming deformation; corrected pond/lake tangent headings. Browser visually verified the imported pond fish with head facing its path and no console errors.
+- Rebuilt rose heads as layered petals, grass as seven curved narrow blades per tuft, and distant mountains with irregular ridges using existing free terrain maps. Browser visually inspected the revised landscape.
+- Validation: 55 tests pass; production build passes with the existing bundle-size warning. No paid assets added.

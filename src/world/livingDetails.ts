@@ -1,3 +1,4 @@
+import { attachFishModel } from "./fishModels";
 import { addBreeze } from "./atmosphere";
 import { FLOWERS } from "../game/data";
 import { canMove } from "./bridge";
@@ -256,5 +257,6 @@ export function createLakeFish(w: any, index: number) {
     fish,
   );
   fish.userData.tail = tail;
+  attachFishModel(w,fish,index);
   return fish;
 }

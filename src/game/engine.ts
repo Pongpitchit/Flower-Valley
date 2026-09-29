@@ -107,14 +107,14 @@ export function validateSave(v: any): v is GameState {
     finite(v.time, 360, 1440) &&
     ["sunny", "rain"].includes(v.weather) &&
     finite(v.money, 0, 1e12) &&
-    finite(v.maxEnergy, 100, 160) &&
+    finite(v.maxEnergy, 100, 200) &&
     finite(v.energy, 0, v.maxEnergy) &&
     typeof v.started === "boolean" &&
     Number.isInteger(v.upgrades?.farmLevel) && finite(v.upgrades?.farmLevel, 0, 5) &&
     Number.isInteger(v.upgrades?.wateringLevel) && finite(v.upgrades?.wateringLevel, 0, 2) &&
     Number.isInteger(v.upgrades?.rodLevel) && finite(v.upgrades.rodLevel,0,2) &&
     Number.isInteger(v.upgrades?.homeLevel) && finite(v.upgrades.homeLevel,0,3) &&
-    finite(v.upgrades?.energyLevel, 0, 3) &&
+    finite(v.upgrades?.energyLevel, 0, 5) &&
     v.maxEnergy === 100 + v.upgrades.energyLevel * 20 &&
     Array.isArray(v.farm) &&
     v.farm.length === FARM_SIZES[v.upgrades.farmLevel as 0] &&
@@ -262,9 +262,9 @@ export function transition(
   if (a.type === "water") {
     const index = a.index ?? -1, p = s.farm[index];
     if (!p?.seed) return fail("แปลงนี้ยังว่าง");
-    const count = [1, 3, 4][s.upgrades.wateringLevel];
+    const count = [1, 4, 8][s.upgrades.wateringLevel];
     const row = Math.floor(index / 4);
-    const plots = s.farm.filter((p, i) => i >= index && i < index + count && Math.floor(i / 4) === row && p.seed && !p.watered && p.age < flower(p.seed).days);
+    const plots = s.farm.filter((p, i) => (s.upgrades.wateringLevel === 0 ? i === index : Math.floor(i / 4) >= row && Math.floor(i / 4) < row + count / 4) && p.seed && !p.watered && p.age < flower(p.seed).days);
     if (!plots.length) return fail("ไม่มีแปลงที่ต้องการน้ำในระยะนี้");
     if (!energy(3)) return fail("พลังงานไม่พอ");
     plots.forEach(p => p.watered = true);
@@ -391,7 +391,6 @@ export function transition(
     return ok("");
   }
   if (a.type === "run") {
-    if (!energy(1)) return fail("เหนื่อยแล้ว");
     return ok("");
   }
   if (a.type === "cast") {
@@ -453,7 +452,7 @@ export function transition(
     return ok("ติดตั้งของแต่งบ้านแล้ว ทางเข้ายังเดินได้สะดวก");
   }
   if (a.type === "upgradeEnergy") {
-    if (s.upgrades.energyLevel >= 3) return fail("อัปเกรดพลังงานเต็มแล้ว");
+    if (s.upgrades.energyLevel >= 5) return fail("อัปเกรดพลังงานเต็มแล้ว");
     const cost = 300 * (s.upgrades.energyLevel + 1);
     if (!spend(cost)) return fail("เงินไม่พอ");
     s.upgrades.energyLevel++;
@@ -499,7 +498,8 @@ export function transition(
       return fail("เลือกโมเดลและระบายสีก่อนบันทึก");
     if (!["painting", "sculpture", "model"].includes(a.art.kind))
       return fail("รูปแบบผลงานไม่ถูกต้อง");
-    if (!energy(15)) return fail("ต้องใช้พลังงาน 15 หน่วย");
+    if (a.art.kind === "painting") s.energy = Math.max(0, s.energy - 15);
+    else if (!energy(15)) return fail("ต้องใช้พลังงาน 15 หน่วย");
     s.artworks.push({
       ...a.art,
       id: crypto.randomUUID(),

@@ -194,12 +194,12 @@ describe("Energy and time", () => {
       energy: 60,
     });
   });
-  it("running costs one energy without going negative", () => {
+  it("running is free even with zero energy", () => {
     const s = initialState(() => 0.1);
     s.energy = 1;
     const r = apply(s, "run");
-    expect(r.state.energy).toBe(0);
-    expect(apply(r.state, "run").ok).toBe(false);
+    expect(r.state.energy).toBe(1);
+    expect(apply({...r.state,energy:0}, "run").ok).toBe(true);
   });
 });
 describe("Bouquets, orders and upgrades", () => {
@@ -247,9 +247,9 @@ describe("Bouquets, orders and upgrades", () => {
     for (let i=0;i<4;i++) s=apply(s,"upgradeFarm").state;
     expect(s.farm.length).toBe(20);
     expect(apply(s, "upgradeFarm").ok).toBe(false);
-    for (let i = 0; i < 3; i++) s = apply(s, "upgradeEnergy").state;
-    expect(s.maxEnergy).toBe(160);
-    expect(s.money).toBe(6000);
+    for (let i = 0; i < 5; i++) s = apply(s, "upgradeEnergy").state;
+    expect(s.maxEnergy).toBe(200);
+    expect(s.money).toBe(3300);
     expect(apply(s, "upgradeEnergy").ok).toBe(false);
     for (let i = 0; i < 6; i++) s = apply(s, "decorate").state;
     expect(apply(s, "decorate").ok).toBe(false);
@@ -469,7 +469,7 @@ describe('Daily creativity, farm progression and bulk trade', () => {
   it('watering upgrades water only eligible plots in the same row for three energy',()=>{
     let s=initialState();s.money=2000;s=apply(s,'upgradeFarm').state;s=apply(s,'upgradeWatering').state;
     s.farm=s.farm.map(()=>({seed:'daisy',age:0,watered:false}));s.farm[1].watered=true;
-    const r=apply(s,'water',{index:0});expect(r.state.energy).toBe(97);expect(r.state.farm.slice(0,3).every(p=>p.watered)).toBe(true);expect(r.state.farm[3].watered).toBe(false);
+    const r=apply(s,'water',{index:0});expect(r.state.energy).toBe(97);expect(r.state.farm.slice(0,3).every(p=>p.watered)).toBe(true);expect(r.state.farm[3].watered).toBe(true);
     expect(apply(r.state,'water',{index:0}).state).toBe(r.state);
     const edge=apply(r.state,'water',{index:3}).state;expect(edge.farm[3].watered).toBe(true);expect(edge.farm[4].watered).toBe(false);
     s.energy=2;expect(apply(s,'water',{index:0}).state).toBe(s);
@@ -549,5 +549,28 @@ describe('home customization and ornamental pond',()=>{
     s=apply(s,'pondRemove',{id:'carp'}).state;
     expect(s.inventory.carp+s.home.fish.length).toBe(7);
     expect(apply(s,'pondRemove',{id:'rare'}).state).toBe(s);
+  });
+});
+
+describe('activity energy and painting recovery',()=>{
+  it('saves paintings at zero energy without negative energy or bypassing daily quota',()=>{
+    const s=initialState(()=>0.9);s.energy=0;
+    const art={kind:'painting' as const,name:'Evening',image:'data:image/png;base64,YQ=='};
+    const saved=apply(s,'art',{art});expect(saved.ok).toBe(true);expect(saved.state.energy).toBe(0);
+    expect(saved.state.artworks).toHaveLength(1);expect(validateSave(saved.state)).toBe(true);
+    expect(apply(saved.state,'art',{art}).ok).toBe(false);
+  });
+  it('waters four plots from the middle of a row and eight at the highest level',()=>{
+    const s=initialState();s.upgrades.farmLevel=3;s.upgrades.wateringLevel=1;
+    s.farm=Array.from({length:12},()=>({seed:'daisy',age:0,watered:false}));
+    const first=apply(s,'water',{index:2}).state;
+    expect(first.farm.slice(0,4).every(p=>p.watered)).toBe(true);expect(first.farm[4].watered).toBe(false);
+    s.upgrades.wateringLevel=2;
+    const second=apply(s,'water',{index:2}).state;
+    expect(second.farm.filter(p=>p.watered)).toHaveLength(8);expect(second.energy).toBe(97);
+  });
+  it('accepts and preserves 200 energy saves',()=>{
+    const s=initialState();s.upgrades.energyLevel=5;s.maxEnergy=200;s.energy=200;
+    expect(validateSave(s)).toBe(true);expect(apply(s,'upgradeEnergy').state).toBe(s);
   });
 });

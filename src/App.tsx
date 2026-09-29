@@ -248,13 +248,7 @@ export default function App() {
         }
         const r = dispatch({ type: "tick", amount: 2 });
         if (r.message) notify(r.message);
-        if (
-          bridge.keys.has("ShiftLeft") &&
-          [...bridge.keys].some((k) =>
-            ["KeyW", "KeyA", "KeyS", "KeyD"].includes(k),
-          )
-        )
-          dispatch({ type: "run" });
+
       }
     }, 1000);
     const saver = setInterval(() => {
@@ -697,19 +691,19 @@ export default function App() {
                   {s.upgrades.farmLevel >= 5 ? "ขยายสวนเต็มแล้ว" : `ขยายสวน · ${FARM_COSTS[s.upgrades.farmLevel]} ◉`}
                 </button>
               </article>
-              <article><ItemIcon id="watering-can" /><h3>บัวรดน้ำอัปเกรด</h3><p>รดได้ {[1,3,4][s.upgrades.wateringLevel]} แปลงทางขวาในแถวเดียวกัน · ใช้พลังงาน 3</p><button disabled={s.upgrades.wateringLevel >= 2 || s.money < WATERING_COSTS[s.upgrades.wateringLevel]} onClick={() => act({type:"upgradeWatering"})}>{s.upgrades.wateringLevel >= 2 ? "ระดับสูงสุดแล้ว" : `อัปเกรด · ${WATERING_COSTS[s.upgrades.wateringLevel]} ◉`}</button></article>
+              <article><ItemIcon id="watering-can" /><h3>บัวรดน้ำอัปเกรด</h3><p>รดได้ {[1,4,8][s.upgrades.wateringLevel]} แปลง · ระดับแรกทั้งแถว ระดับสูงสุดสองแถว · ใช้พลังงาน 3</p><button disabled={s.upgrades.wateringLevel >= 2 || s.money < WATERING_COSTS[s.upgrades.wateringLevel]} onClick={() => act({type:"upgradeWatering"})}>{s.upgrades.wateringLevel >= 2 ? "ระดับสูงสุดแล้ว" : `อัปเกรด · ${WATERING_COSTS[s.upgrades.wateringLevel]} ◉`}</button></article>
               <article>
                 <Zap />
                 <h3>พลังสำหรับวันใหม่</h3>
-                <p>พลังงานสูงสุด +20 · ระดับ {s.upgrades.energyLevel}/3</p>
+                <p>พลังงานสูงสุด +20 · ระดับ {s.upgrades.energyLevel}/5</p>
                 <button
                   disabled={
-                    s.upgrades.energyLevel >= 3 ||
+                    s.upgrades.energyLevel >= 5 ||
                     s.money < 300 * (s.upgrades.energyLevel + 1)
                   }
                   onClick={() => act({ type: "upgradeEnergy" })}
                 >
-                  {s.upgrades.energyLevel >= 3
+                  {s.upgrades.energyLevel >= 5
                     ? "ระดับสูงสุดแล้ว"
                     : `อัปเกรด · ${300 * (s.upgrades.energyLevel + 1)} ◉`}
                 </button>
@@ -794,6 +788,7 @@ export default function App() {
                     </div>
                   )}
                   <h3>{a.name}</h3>
+                  {a.kind === "painting" && a.image && <a className="secondary" href={a.image} download={a.name+".png"}>ส่งออกภาพ PNG</a>}
                   <button onClick={() => act({ type: "sellArt", id: a.id })}>
                     ขายให้โอลิเวอร์ +{a.price} ◉
                   </button>
@@ -1199,7 +1194,7 @@ export default function App() {
           </div>
         </div>
       )}
-      {toast && (
+      {toast && !modal && (
         <div className="toast" role="status">
           <Leaf size={17} />
           {toast}
@@ -1212,6 +1207,7 @@ export default function App() {
           kind={modal.kind}
           onClose={close}
           money={s.money}
+          toast={toast}
         >
           {content()}
         </ModalFrame>
@@ -1229,12 +1225,14 @@ function ModalFrame({
   onClose,
   money,
   children,
+  toast,
 }: {
   title: string;
   kind: string;
   onClose: () => void;
   money: number;
   children: React.ReactNode;
+  toast: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1282,6 +1280,7 @@ function ModalFrame({
         aria-modal="true"
         aria-labelledby="modal-title"
       >
+        {toast && <div className="modal-notice" role="status"><Leaf size={17}/>{toast}</div>}
         <div className="modal-top">
           <span className="eyebrow">FLOWER VALLEY / {kind.toUpperCase()}</span>
           <button

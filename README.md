@@ -21,7 +21,7 @@ npm run preview
 
 ## Controls
 
-- WASD: walk. Shift + movement: run, costing one energy per active second.
+- WASD: walk. Shift + movement: run without spending energy, including at zero energy.
 - Click the world: capture the mouse. If pointer lock is unavailable, drag to look.
 - E: interact with a nearby object/NPC; on plots, open the original seed-selection/crop panel. Choose a seed and explicitly press Plant. Space waters the targeted plot (also works inside its panel); Q opens plot details. I: inventory. M: map. B: flower encyclopedia.
 - Escape: close a panel / pause / release mouse. Settings include quality and touch-control toggles.
@@ -123,3 +123,9 @@ Talk to Theo to buy permanent house palettes (300 coins each, free switching aft
 The pond holds up to six raw fish. Press E at its southern edge to transfer fish from inventory or return them one at a time. Fish remain saved and swim visibly in the pond; grilled fish and junk cannot be stocked. Saves migrate from versions 1–3 to version 4 without resetting progress.
 
 Mountains and pond rocks use the locally downloaded 1K diffuse/OpenGL normal maps of **Rocky Terrain**, Amal Kumar / Poly Haven, CC0: https://polyhaven.com/a/rocky_terrain. Attribution and license are in `public/textures/landscape/LICENSE.txt`. No paid assets or new HDRI sky were added.
+
+### Activity and visual fixes (2026-09-30)
+
+Energy upgrades now reach 200 (five +20 levels). Watering upgrades cover the entire selected four-plot row, then two rows/eight plots; each use still costs 3 energy. Painting can save at zero energy, consuming up to 15 available energy; daily art limits still apply. PNG export is available from the canvas and saved painting gallery. Canvas drafts persist locally between editor visits. Menus pause the world clock.
+
+Shop notifications appear inside the active modal. Roses use layered petals, grass uses narrow curved blade clusters, and mountains have irregular ridges. Pond and lake fish face their direction of travel and use three downloaded Quaternius CC0 models: https://quaternius.com/packs/animatedfish.html. Original OBJ/MTL files and the license are in public/models/fish; runtime shader deformation supplies swimming movement.

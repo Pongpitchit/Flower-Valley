@@ -1,0 +1,15 @@
+------------------------------------------------------
+Animated Fish Pack by Quaternius
+Consider supporting me on Patreon, even $1 helps me a lot!
+
+https://www.patreon.com/quaternius
+-------------------------------------------------------
+License:
+CC0 1.0 Universal (CC0 1.0) 
+Public Domain Dedication
+https://creativecommons.org/publicdomain/zero/1.0/
+Downloaded 2026-09-30 from the author's CC0 publication:
+https://opengameart.org/content/animated-fish
+https://quaternius.com/packs/animatedfish.html
+Only Fish1/2/3 OBJ + MTL are included. The game normalizes orientation/size
+and adds swimming deformation; the original skeletal animations are not used.

@@ -67,7 +67,17 @@ export function createFlower(id: string, age = 1) {
     leaf.rotation.z = (i % 2 ? 1 : -1) * 0.5;
   }
   if (age >= 0.99) {
-    if (id === "hydrangea") {
+    if (id === "rose") {
+      for(let layer=0;layer<4;layer++) {
+        const count=9-layer*2,r=.16-layer*.038;
+        for(let i=0;i<count;i++) {
+          const a=i/count*Math.PI*2+layer*.7;
+          const petal=part(geometries.sphere,petalMat,Math.cos(a)*r,h+layer*.035,Math.sin(a)*r,.09-layer*.012,.075,.028);
+          petal.rotation.y=-a;petal.rotation.z=.25;
+        }
+      }
+      part(geometries.sphere,petalMat,0,h+.12,0,.04,.06,.04);
+    } else if (id === "hydrangea") {
       for(let i=0;i<22;i++) {const a=i*2.4,r=.06+Math.sqrt(i/22)*.23;part(geometries.sphere,petalMat,Math.cos(a)*r,h+Math.sin(i*1.7)*.1,Math.sin(a)*r,.085,.065,.085);}
     } else if (id === "lavender") {
       for (let i = 0; i < 12; i++)
@@ -254,10 +264,17 @@ if (!window.AFRAME.components["flower-world"])
       // CC0 rocky terrain gives the distant hills a natural surface.
       const mountainMaterial=landscapeMaterial(T);
       for (let i = 0; i < 20; i++) {
+        const mountain = new T.SphereGeometry(1,32,20), vertices=mountain.attributes.position;
+        for(let j=0;j<vertices.count;j++) {
+          const x=vertices.getX(j),y=vertices.getY(j),z=vertices.getZ(j);
+          const ridge=1+.14*Math.sin(x*11+i)*Math.cos(z*9-i)+.08*Math.sin(z*19+x*7);
+          vertices.setXYZ(j,x,y>0?Math.pow(y,1.7)*ridge:y*.25,z);
+        }
+        mountain.computeVertexNormals();
         const a = (i / 20) * Math.PI * 2,
           r = 120 + random() * 18;
         this.mesh(
-          geometries.sphere,
+          mountain,
           mountainMaterial,
           Math.sin(a) * r,
           -1,
@@ -391,10 +408,15 @@ if (!window.AFRAME.components["flower-world"])
         grassMatrices.push(o.matrix.clone());
       }
       const blade = new T.BufferGeometry();
-      blade.setAttribute(
-        "position",
-        new T.Float32BufferAttribute([-0.5, 0, 0, 0.5, 0, 0, 0.15, 1, 0], 3),
-      );
+      const blades:number[]=[];
+      for(let i=0;i<7;i++) {
+        const a=i*2.4, bx=Math.cos(a)*.25,bz=Math.sin(a)*.25,h=.55+(i%3)*.18;
+        const dx=Math.cos(a)*.035,dz=Math.sin(a)*.035,tx=bx+Math.sin(a)*.17,tz=bz+Math.cos(a)*.17;
+        blades.push(bx-dx,0,bz-dz,bx+dx,0,bz+dz,tx+.018,h*.65,tz,
+          bx-dx,0,bz-dz,tx+.018,h*.65,tz,tx-.018,h*.65,tz,
+          tx-.018,h*.65,tz,tx+.018,h*.65,tz,tx+.06,h,tz+.03);
+      }
+      blade.setAttribute("position",new T.Float32BufferAttribute(blades,3));
       blade.computeVertexNormals();
       const grassMaterial = mat("#667d3b", { side: T.DoubleSide });
       addBreeze(grassMaterial, this.breezeClock, 0.16);
@@ -810,7 +832,7 @@ if (!window.AFRAME.components["flower-world"])
             fish.scale.setScalar(0.8);
             fish.rotation.y = 0.12 + j * 0.15;
             fish.position.set(tx, 1.39, z - 0.2 + j * 0.36);
-            this.mergeGroup(fish);
+            this.world.add(fish);
           }
         }
         return;
@@ -1234,10 +1256,11 @@ if (!window.AFRAME.components["flower-world"])
     disposeGroup(this: any, g: any) {
       const keep = new Set(Object.values(this.m));
       g.traverse((o: any) => {
+        o.userData.disposed = true;
         if (o.geometry?.userData.owned) o.geometry.dispose();
         if ((o.isMesh || o.isSprite) && !keep.has(o.material)) {
-          (o.material.map?.isCanvasTexture || o.material.userData.artworkMap) && o.material.map?.dispose();
-          o.material.dispose();
+          (o.material.map?.isCanvasTexture || o.material.userData?.artworkMap) && o.material.map?.dispose();
+          (Array.isArray(o.material) ? o.material : [o.material]).forEach((m:any)=>m.dispose());
         }
       });
       g.clear();
@@ -1279,7 +1302,7 @@ if (!window.AFRAME.components["flower-world"])
             dz /= len;
           }
           const speed =
-            (bridge.keys.has("ShiftLeft") && s.energy > 0 ? 5.3 : 3.1) * delta;
+            (bridge.keys.has("ShiftLeft") ? 5.3 : 3.1) * delta;
           const nx =
               this.pos.x +
               (dx * Math.cos(this.yaw) + dz * Math.sin(this.yaw)) * speed,
@@ -1377,7 +1400,7 @@ if (!window.AFRAME.components["flower-world"])
           -30 + Math.cos(a * 0.8) * 5,
         );
         f.userData.tail.rotation.y = Math.sin(time * 0.007 + i) * 0.32;
-        f.rotation.y = -a;
+        f.rotation.y = Math.atan2(4*Math.sin(a*.8),5*Math.cos(a));
       });
       animateHomePond(this,motionTime);
       this.campfireUpdate?.(motionTime);

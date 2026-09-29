@@ -64,7 +64,7 @@ export function animateHomePond(w:any,time:number){
   w.pondFish?.forEach((f:any,i:number)=>{
     const a=time*.00022+i*1.9,r=1+(i%3)*.3;
     f.position.set(24+Math.cos(a)*r,.39,2+Math.sin(a)*r*.65);
-    f.rotation.y=Math.atan2(Math.cos(a)*.65,Math.sin(a));
+    f.rotation.y=Math.atan2(-Math.cos(a)*.65,-Math.sin(a));
     f.userData.tail.rotation.y=Math.sin(time*.007+i)*.3;
   });
   if(w.pondWater)w.pondWater.position.y=.48+Math.sin(time*.001)*.008;
