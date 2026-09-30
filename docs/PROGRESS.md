@@ -95,3 +95,11 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Downloaded three Quaternius CC0 fish OBJ/MTL models and license. Added normalized forward orientation and swimming deformation; corrected pond/lake tangent headings. Browser visually verified the imported pond fish with head facing its path and no console errors.
 - Rebuilt rose heads as layered petals, grass as seven curved narrow blades per tuft, and distant mountains with irregular ridges using existing free terrain maps. Browser visually inspected the revised landscape.
 - Validation: 55 tests pass; production build passes with the existing bundle-size warning. No paid assets added.
+
+## Food shop and species revision (2026-09-30)
+
+- Added Nora’s Kitchen with three inventory foods: bread +20/35 coins, soup +30/55, omurice +40/75. Eating caps at maximum energy and cannot consume food at full energy. Generated transparent pixel art atlas and recorded its prompt.
+- Compact two-column upgrade cards with spaced buttons and clearer disabled states. Moved path lamps to verges and added pole collision.
+- Original species geometry for orange fancy goldfish, white/red koi (rare), and dark whiskered catfish; other fish retain the existing free CC0 mesh.
+- Per latest user correction, restored all non-rose flower geometry from 52083a3. Only roses retain the new overlapping rounded petals.
+- Verified food purchase/eating in browser (500→465 coins, energy 0→20, bread 1→0), food icons, fish display and upgrade layout. 59 tests passed; production build passed (existing bundle-size warning).

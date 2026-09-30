@@ -35,35 +35,39 @@ export function createFlower(id: string, age = 1) {
     stemMat = mat("#497140"),
     leafMat = mat("#608a46"),
     petalMat = mat(f.color, { roughness: 0.65, side: T.DoubleSide });
-  const h = {daisy:.48,cosmos:.86,rose:.7,tulip:.62,sunflower:1.2,lavender:.8,hydrangea:.66}[id] ?? .6;
-  const part=(geo:any,m:any,x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{
-    const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);g.add(o);return o;
-  };
-  part(geometries.cylinder,stemMat,0,h/2,0,.012,h,.012);
-  if(id==="cosmos") {
-    for(let side of [-1,1])for(let i=0;i<9;i++){
-      const leaf=part(geometries.sphere,leafMat,side*(.045+i*.017),h*.4+i*.012,Math.sin(i)*.035,.075,.009,.009);leaf.rotation.z=side*.45;
-    }
-  } else {
-    for(let i=0;i<(id==="rose"?5:3);i++){
-      const side=i%2?1:-1;
-      const leaf=part(geometries.sphere,leafMat,side*.1,h*(.18+i*.12),0,id==="tulip"?.065:.14,id==="tulip"?.19:.015,id==="rose"?.06:.05);
-      leaf.rotation.z=side*.4;
-    }
+  const h = id === "sunflower" ? 1.15 : id === "lavender" ? 0.72 : 0.6;
+  function part(
+    geo: any,
+    m: any,
+    x: number,
+    y: number,
+    z: number,
+    sx: number,
+    sy: number,
+    sz: number,
+  ) {
+    const o = new T.Mesh(geo, m);
+    o.position.set(x, y, z);
+    o.scale.set(sx, sy, sz);
+    g.add(o);
+    return o;
   }
-  // Curved, thin petal surfaces instead of round balls.
-  const petal=(length:number,width:number,cup:number,notch=false)=>{
-    const positions:number[]=[],uv:number[]=[],indices:number[]=[];
-    for(let row=0;row<=8;row++)for(let col=0;col<=6;col++){
-      const t=row/8,u=col/6*2-1;
-      const breadth=width*Math.pow(Math.sin(Math.PI*t*.95),.65);
-      positions.push(u*breadth,cup*t*t+.018*u*u*Math.sin(t*Math.PI),length*t-(notch?.016*Math.cos(u*3*Math.PI)*t*t:0));uv.push(col/6,t);
-      if(row<8 && col<6){const a=row*7+col;indices.push(a,a+7,a+1,a+1,a+7,a+8);}
-    }
-    const geo=new T.BufferGeometry();geo.setAttribute("position",new T.Float32BufferAttribute(positions,3));geo.setAttribute("uv",new T.Float32BufferAttribute(uv,2));geo.setIndex(indices);geo.computeVertexNormals();return geo;
-  };
-  if(age<.99)part(geometries.sphere,leafMat,0,h,0,.045,.08,.045);
-  else if(id==="rose") {
+  part(geometries.cylinder, stemMat, 0, h / 2, 0, 0.018, h, 0.018);
+  for (let i = 0; i < 3; i++) {
+    const leaf = part(
+      geometries.sphere,
+      leafMat,
+      (i % 2 ? 1 : -1) * 0.1,
+      h * (0.2 + i * 0.18),
+      0,
+      0.15,
+      0.035,
+      0.07,
+    );
+    leaf.rotation.z = (i % 2 ? 1 : -1) * 0.5;
+  }
+  if (age >= 0.99) {
+    if (id === "rose") {
     // Overlapping bowl-shaped petals with rounded rims and a tight spiral center.
     for(let layer=0;layer<5;layer++){
       const count=7-layer, radius=.19-layer*.034;
@@ -80,23 +84,50 @@ export function createFlower(id: string, age = 1) {
       for(let i=0;i<count;i++){const o=part(geo,shade,0,h+layer*.012,0,1,1,1);o.rotation.y=i/count*Math.PI*2+layer*.7;}
     }
     for(let i=0;i<5;i++){const a=i*Math.PI*2/5;const sepal=part(geometries.cone,leafMat,Math.sin(a)*.04,h-.035,Math.cos(a)*.04,.025,.13,.025);sepal.rotation.z=.7;}
-  } else if(id==="daisy" || id==="cosmos" || id==="sunflower") {
-    const count=id==="cosmos"?8:id==="daisy"?24:30;
-    const geo=petal(id==="sunflower"?.31:id==="cosmos"?.3:.22,id==="cosmos"?.105:id==="daisy"?.024:.036,id==="cosmos"?.035:-.025,id==="cosmos");
-    for(let i=0;i<count;i++){const o=part(geo,petalMat,0,h,0,1,1,1);o.rotation.y=i/count*Math.PI*2;}
-    const center=mat(id==="sunflower"?"#543823":"#e7ad28");
-    const r=id==="sunflower"?.125:id==="cosmos"?.056:.063;
-    part(geometries.sphere,center,0,h+.013,0,r,.032,r);
-    for(let i=0;i<20;i++){const a=i*2.4,d=Math.sqrt(i/20)*r;part(geometries.sphere,center,Math.cos(a)*d,h+.039,Math.sin(a)*d,.009,.009,.009);}
-  } else if(id==="tulip") {
-    const geo=petal(.3,.11,.03);
-    for(let i=0;i<6;i++){const a=i*Math.PI/3;const o=part(geo,petalMat,Math.sin(a)*.06,h-.07,Math.cos(a)*.06,1,1,1);o.rotation.set(-1.05,a,0,"YXZ");}
-  } else if(id==="lavender") {
-    for(let spike=0;spike<3;spike++)for(let i=0;i<20;i++){const a=i*2.4;part(geometries.sphere,petalMat,(spike-1)*.09+Math.cos(a)*.025,h-.08+i*.017,Math.sin(a)*.025,.027,.037,.026);}
-  } else if(id==="hydrangea") {
-    const geo=petal(.055,.022,.008);
-    for(let i=0;i<32;i++){const a=i*2.4,r=Math.sqrt(i/32)*.24,x=Math.cos(a)*r,z=Math.sin(a)*r,y=h+Math.sqrt(Math.max(0,.24*.24-r*r))*.65;for(let j=0;j<4;j++){const o=part(geo,petalMat,x,y,z,1,1,1);o.rotation.y=j*Math.PI/2;}}
-  }
+    } else if (id === "hydrangea") {
+      for(let i=0;i<22;i++) {const a=i*2.4,r=.06+Math.sqrt(i/22)*.23;part(geometries.sphere,petalMat,Math.cos(a)*r,h+Math.sin(i*1.7)*.1,Math.sin(a)*r,.085,.065,.085);}
+    } else if (id === "lavender") {
+      for (let i = 0; i < 12; i++)
+        part(
+          geometries.sphere,
+          petalMat,
+          Math.sin(i * 2.4) * 0.05,
+          h - 0.04 + i * 0.025,
+          Math.cos(i * 2.4) * 0.05,
+          0.045,
+          0.06,
+          0.045,
+        );
+    } else {
+      const n = id === "rose" ? 14 : id === "tulip" ? 6 : 10;
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2;
+        const r = id === "rose" ? 0.08 : id === "tulip" ? 0.07 : 0.13;
+        const p = part(
+          geometries.sphere,
+          petalMat,
+          Math.cos(a) * r,
+          h,
+          Math.sin(a) * r,
+          id === "tulip" ? 0.06 : 0.11,
+          id === "tulip" ? 0.13 : 0.04,
+          0.055,
+        );
+        p.rotation.y = -a;
+        p.rotation.z = id === "rose" ? i * 0.2 : 0;
+      }
+      part(
+        geometries.sphere,
+        mat(id === "sunflower" ? "#68442c" : "#ddb851"),
+        0,
+        h + 0.025,
+        0,
+        0.065,
+        0.04,
+        0.065,
+      );
+    }
+  } else part(geometries.sphere, leafMat, 0, h, 0, 0.05, 0.09, 0.05);
   const merged = new T.Group(),
     buckets = new Map<any, any[]>();
   g.updateMatrixWorld(true);
