@@ -42,7 +42,7 @@ Theo, the builder beside the cottage, expands the garden through 3 → 6 → 9 �
 
 - **Painting:** draw on a canvas with a brush, pick colors, name and save the image.
 - **Paint a model:** choose a pictured cat, dog, rabbit, tortoise or guinea pig. Pick a color and tap the model or a named color region. Drag to orbit. Undo, restore original colors, rotate and zoom are available. There are no position/rotation/scale sliders to build an animal from scratch.
-- Saving artwork costs 15 energy. Paintings sell for 80 coins and painted animal models for 110. A daily mood roll provides one creative slot (60%) or two (40%), shared between painting and models. Saving consumes a slot; selling never refunds it. Mood/quota persist across reloads and reset on the next day. The gallery shows a thumbnail and the actual colored model appears inside the atelier.
+- Saving artwork costs 15 energy. Paintings sell for 80 coins and painted animal models for 110. A daily mood roll allows one artwork sale (60%) or two (40%), shared between paintings and models. Creating artwork does not consume the daily allowance; only successful sales do. The studio stores up to 24 unsold works. Mood/quota persist across reloads and reset on the next day. The gallery shows a thumbnail and the actual colored model appears inside the atelier.
 - Previously saved primitive sculptures remain loadable, visible and sellable. The older sculpture editor is replaced by the simpler model-painting workflow.
 
 ## Visuals and assets
@@ -126,6 +126,6 @@ Mountains and pond rocks use the locally downloaded 1K diffuse/OpenGL normal map
 
 ### Activity and visual fixes (2026-09-30)
 
-Energy upgrades now reach 200 (five +20 levels). Watering upgrades cover the entire selected four-plot row, then two rows/eight plots; each use still costs 3 energy. Painting can save at zero energy, consuming up to 15 available energy; daily art limits still apply. PNG export is available from the canvas and saved painting gallery. Canvas drafts persist locally between editor visits. Menus pause the world clock.
+Energy upgrades now reach 200 (five +20 levels). Watering upgrades cover the entire selected four-plot row, then two rows/eight plots; each use still costs 3 energy. Painting can save at zero energy, consuming up to 15 available energy; only daily artwork sales are limited. PNG export is available from the canvas and saved painting gallery. Canvas drafts persist locally between editor visits. Menus pause the world clock.
 
 Shop notifications appear inside the active modal. Roses use layered petals, grass uses narrow curved blade clusters, and mountains have irregular ridges. Pond and lake fish face their direction of travel and use three downloaded Quaternius CC0 models: https://quaternius.com/packs/animatedfish.html. Original OBJ/MTL files and the license are in public/models/fish; runtime shader deformation supplies swimming movement.

@@ -455,7 +455,7 @@ export function ModelPainting({
         </label>
         <button
           disabled={
-            artDay.used >= artDay.limit || energy < 15 || loading ||
+            energy < 15 || loading ||
             !!error ||
             !Object.keys(colors).length ||
             !name.trim() ||
@@ -468,7 +468,7 @@ export function ModelPainting({
         </button>
       </div>
       <p className="model-save-note">
-        ผลงานจะแสดงในสตูดิโอ เก็บไว้ชม หรือขายได้ {ART_PRICES.model} เหรียญ · วันนี้{moodName(artDay)} เหลือ {artDay.limit-artDay.used}/{artDay.limit} ชิ้น
+        ผลงานจะแสดงในสตูดิโอ เก็บไว้ชม หรือขายได้ {ART_PRICES.model} เหรียญ · วันนี้{moodName(artDay)} ขายได้อีก {artDay.limit-artDay.used}/{artDay.limit} ชิ้น · สร้างได้หลายชิ้น
       </p>
     </div>
   );

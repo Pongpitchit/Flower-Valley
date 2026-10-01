@@ -37,7 +37,7 @@ export type Artwork = {
 };
 export type Bouquet = { id: string; flowers: FlowerId[]; price: number };
 export type GameState = {
-  version: 4;
+  version: 5;
   artDay: ArtDay;
   day: number;
   time: number;
@@ -66,7 +66,7 @@ export const SAVE_KEY =
     ? "-qa" + (new URLSearchParams(location.search).get("qa") ? "-" + new URLSearchParams(location.search).get("qa") : "")
     : "");
 export const initialState = (rng = Math.random): GameState => ({
-  version: 4,
+  version: 5,
   artDay: rollArtDay(rng),
   day: 1,
   time: 480,
@@ -96,7 +96,7 @@ const finite = (v: unknown, min: number, max: number) =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 export function validateSave(v: any): v is GameState {
   return (
-    v?.version === 4 &&
+    v?.version === 5 &&
     v.home && typeof v.home.garden === "boolean" && typeof v.home.pond === "boolean" &&
     HOME_STYLES.some(x=>x.id===v.home.style) && Array.isArray(v.home.ownedStyles) && v.home.ownedStyles.includes(v.home.style) && v.home.ownedStyles.every((id:string)=>HOME_STYLES.some(x=>x.id===id)) &&
     Array.isArray(v.home.fish) && v.home.fish.length<=6 && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
@@ -490,7 +490,6 @@ export function transition(
     return ok(`เพิ่มกระถางบนสนามหน้าบ้านแล้ว (${s.decorations}/6)`);
   }
   if (a.type === "art") {
-    if (s.artDay.used >= s.artDay.limit) return fail("วันนี้สร้างงานครบแล้ว พักหาแรงบันดาลใจแล้วกลับมาพรุ่งนี้");
     if (s.artworks.length >= 24) return fail("สตูดิโอเต็มแล้ว ขายผลงานก่อน");
     if (!a.art || !a.art.name.trim() || a.art.name.length > 80)
       return fail("ตั้งชื่อผลงานไม่เกิน 80 ตัวอักษร");
@@ -519,15 +518,16 @@ export function transition(
       id: crypto.randomUUID(),
       price: ART_PRICES[a.art.kind],
     });
-    s.artDay.used++;
     return ok("บันทึกผลงานในสตูดิโอแล้ว");
   }
   if (a.type === "sellArt") {
+    if (s.artDay.used >= s.artDay.limit) return fail("วันนี้ขายงานศิลปะครบแล้ว เก็บผลงานไว้ขายพรุ่งนี้ได้");
     const i = s.artworks.findIndex((x) => x.id === a.id);
     if (i < 0) return fail("ไม่พบผลงาน");
     const price = s.artworks[i].price;
     earn(price);
     s.artworks.splice(i, 1);
+    s.artDay.used++;
     return ok(`ขายงานศิลปะ +${price} เหรียญ`);
   }
   return fail("ไม่พบกิจกรรม");
@@ -557,7 +557,8 @@ export function migrateSave(value: any): unknown {
     value={...value,version:2,artDay:{mood:"calm",limit:1,used:0},upgrades:{...value.upgrades,farmLevel:value.farm.length===20?5:3,wateringLevel:0}};
   }
   if (value?.version === 2) value={...value,version:3,upgrades:{...value.upgrades,rodLevel:0,homeLevel:0}};
-  if(value?.version === 3) return {...value,version:4,home:{style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]}};
+  if(value?.version === 3) value= {...value,version:4,home:{style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]}};
+  if(value?.version === 4) value={...value,version:5,artDay:{...value.artDay,used:0}};
   return value;
 }
 let loadMessage = "";

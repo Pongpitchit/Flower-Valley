@@ -62,7 +62,7 @@ export function SleepTransition({
               ? "นอนดึกเกินไป พลังงานฟื้นเพียง 60%"
               : "พักเต็มอิ่ม พร้อมเริ่มต้นวันใหม่"}
           </p>
-          <p>วันนี้{moodName(s.artDay)} · สร้างงานศิลปะได้ {s.artDay.limit} ชิ้น</p>
+          <p>วันนี้{moodName(s.artDay)} · ขายงานศิลปะได้ {s.artDay.limit} ชิ้น</p>
           <strong>
             พลังงาน {s.energy} / {s.maxEnergy}
           </strong>

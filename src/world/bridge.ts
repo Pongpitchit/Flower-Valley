@@ -22,7 +22,7 @@ export const bridge = {
   onZone: (_: string) => {},
   onReady: () => {},
   onError: (_: string) => {},
-  teleport: null as null | { x: number; z: number; yaw?: number },
+  teleport: null as null | { x: number; z: number; yaw?: number; pitch?: number },
 };
 export type Collider = { x: number; z: number; w: number; d: number };
 export const colliders: Collider[] = [];

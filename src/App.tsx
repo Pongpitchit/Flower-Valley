@@ -735,7 +735,7 @@ export default function App() {
             <p className="dialogue">
               “ไม่ต้องสมบูรณ์แบบ แค่เป็นสิ่งที่คุณอยากสร้างก็พอ” — โอลิเวอร์
             </p>
-            <p className="recipe-summary">วันนี้{moodName(s.artDay)} · สร้างงานได้อีก {s.artDay.limit - s.artDay.used}/{s.artDay.limit} ชิ้น (วาดภาพและโมเดลใช้โควตาร่วมกัน)</p>
+            <p className="recipe-summary">วันนี้{moodName(s.artDay)} · ขายงานได้อีก {s.artDay.limit - s.artDay.used}/{s.artDay.limit} ชิ้น (ภาพวาดและโมเดลใช้โควตาขายร่วมกัน) · สร้างงานได้หลายชิ้น</p>
             <div className="workshop-choices">
               {[
                 ["painting", "🖌️", "วาดภาพ", "เลือกสีและวาดลงบนผ้าใบ"],
@@ -780,6 +780,7 @@ export default function App() {
             <p className="subtle">
               ผลงานล่าสุดจะแสดงอยู่ในสตูดิโอด้วย · {s.artworks.length}/24 ชิ้น
             </p>
+            <p className="recipe-summary">วันนี้ขายแล้ว {s.artDay.used}/{s.artDay.limit} ชิ้น · {s.artDay.used>=s.artDay.limit?"ขายเพิ่มได้พรุ่งนี้ ยังสร้างและเก็บผลงานได้":"เลือกผลงานที่ต้องการขาย"}</p>
             <div className="gallery">
               {s.artworks.map((a) => (
                 <article key={a.id}>
@@ -792,7 +793,7 @@ export default function App() {
                   )}
                   <h3>{a.name}</h3>
                   {a.kind === "painting" && a.image && <a className="secondary" href={a.image} download={a.name+".png"}>ส่งออกภาพ PNG</a>}
-                  <button onClick={() => act({ type: "sellArt", id: a.id })}>
+                  <button disabled={s.artDay.used>=s.artDay.limit} onClick={() => act({ type: "sellArt", id: a.id })}>
                     ขายให้โอลิเวอร์ +{a.price} ◉
                   </button>
                 </article>
@@ -1368,4 +1369,24 @@ function TouchControls({
   );
 }
 
-function PondPanel({s,act}:{s:import("./game/engine").GameState;act:(action:import("./game/engine").Action)=>unknown}) { return (<article><h3>บ่อปลาประดับข้างบ้าน</h3><p>เลี้ยงได้ 6 ตัว นำกลับเข้ากระเป๋าได้ · ในบ่อ {s.home.fish.length}/6</p><button disabled={s.home.pond || s.money<850} onClick={()=>act({type:"homePond"})}>{s.home.pond?"สร้างบ่อแล้ว":"สร้างบ่อ · 850 ◉"}</button>{s.home.pond && FISH.map(f=><div key={f.id}><ItemIcon id={f.id}/><span>{f.name} · กระเป๋า {s.inventory[f.id]||0} · ในบ่อ {s.home.fish.filter(id=>id===f.id).length}</span><button disabled={!s.inventory[f.id] || s.home.fish.length>=6} onClick={()=>act({type:"pondAdd",id:f.id})}>ปล่อยลงบ่อ</button><button disabled={!s.home.fish.includes(f.id)} onClick={()=>act({type:"pondRemove",id:f.id})}>นำกลับ 1 ตัว</button></div>)}</article>); }
+function PondPanel({s,act}:{s:import("./game/engine").GameState;act:(action:import("./game/engine").Action)=>unknown}) {
+  const full=s.home.fish.length>=6;
+  return <article className="pond-panel">
+    <div className="pond-heading"><h3>บ่อปลาประดับข้างบ้าน</h3><span className="pond-capacity">{s.home.fish.length} / 6 ตัว</span></div>
+    <p>เลือกปลาจากกระเป๋ามาเลี้ยง และนำกลับได้ทุกเมื่อ</p>
+    {!s.home.pond ? <button disabled={s.money<850} onClick={()=>act({type:"homePond"})}>สร้างบ่อ · 850 ◉</button> : <>
+      <p className="pond-hint">{full?"บ่อเต็มแล้ว · นำปลาออกก่อนเพิ่มตัวใหม่":"ปล่อยหรือนำกลับครั้งละ 1 ตัว"}</p>
+      <div className="pond-list">{FISH.map(f=>{
+        const owned=s.inventory[f.id]||0, stocked=s.home.fish.filter(id=>id===f.id).length;
+        return <div className="pond-row" key={f.id}>
+          <ItemIcon id={f.id} size={44}/>
+          <div className="pond-fish-info"><strong>{f.name}</strong><span>ในกระเป๋า {owned} · ในบ่อ {stocked}</span></div>
+          <div className="pond-actions">
+            <button aria-label={`ปล่อย${f.name}ลงบ่อ 1 ตัว`} disabled={!owned||full} onClick={()=>act({type:"pondAdd",id:f.id})}>{!owned?"ไม่มีในกระเป๋า":full?"บ่อเต็ม":"ปล่อยลงบ่อ"}</button>
+            <button className="secondary" aria-label={`นำ${f.name}กลับ 1 ตัว`} disabled={!stocked} onClick={()=>act({type:"pondRemove",id:f.id})}>นำกลับ</button>
+          </div>
+        </div>;
+      })}</div>
+    </>}
+  </article>;
+}

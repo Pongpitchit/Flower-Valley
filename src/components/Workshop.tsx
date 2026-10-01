@@ -116,7 +116,7 @@ export function Painting({
           </button>
         </div>
       </div>
-      <p className="recipe-summary">วันนี้{moodName(artDay)} · เหลือ {artDay.limit-artDay.used}/{artDay.limit} ชิ้น · ขายภาพ {ART_PRICES.painting} ◉ · ใช้พลังงานสูงสุด 15 (พลังงานหมดก็ยังบันทึกได้)</p>
+      <p className="recipe-summary">วันนี้{moodName(artDay)} · ขายได้อีก {artDay.limit-artDay.used}/{artDay.limit} ชิ้น · วาดได้หลายชิ้น · ขายภาพ {ART_PRICES.painting} ◉ · ใช้พลังงานสูงสุด 15 (พลังงานหมดก็ยังบันทึกได้)</p>
       <button className="secondary" onClick={()=>{
         const a=document.createElement("a");a.href=canvas.current!.toDataURL("image/png");a.download=(name.trim()||"Flower Valley")+".png";a.click();
       }}>ส่งออกภาพ PNG</button>
@@ -128,7 +128,7 @@ export function Painting({
           onChange={(e) => setName(e.target.value)}
         />
         <button
-          disabled={!dirty || !name.trim() || artDay.used >= artDay.limit}
+          disabled={!dirty || !name.trim()}
           onClick={() => {
             if (
               finish({

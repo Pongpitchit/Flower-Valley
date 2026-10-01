@@ -103,3 +103,16 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Original species geometry for orange fancy goldfish, white/red koi (rare), and dark whiskered catfish; other fish retain the existing free CC0 mesh.
 - Per latest user correction, restored all non-rose flower geometry from 52083a3. Only roses retain the new overlapping rounded petals.
 - Verified food purchase/eating in browser (500→465 coins, energy 0→20, bread 1→0), food icons, fish display and upgrade layout. 59 tests passed; production build passed (existing bundle-size warning).
+
+## Pond UI, sky and NPC movement (2026-10-01)
+
+- Pond management now uses separate item rows, inventory/pond counts, spaced actions, capacity badge and explicit empty/full states. Browser verified goldfish transfer in both directions.
+- Replaced faceted chimney smoke spheres with soft alpha sprites anchored to the chimney; inspected the sky above the home at night. Added original procedural sun/moon discs (including lunar markings), clock-driven positions and rain dimming; visually checked daytime and nighttime skies. No downloaded/paid assets.
+- NPC heading follows actual displacement before taking steps, including commute and return-to-stall movement. Nearby players no longer override heading while moving. Added cardinal-direction regression checks preventing backward displacement and checking turn-in-place behavior.
+- Validation: 64 tests passed. Browser checked pond layout, counts and sky rendering.
+
+## Daily artwork sales (2026-10-02)
+
+- Moved the one/two daily artwork allowance from creating to selling. Painting/model editors no longer disable saving based on the allowance; gallery buttons and messages show remaining sales. Existing energy and 24-work storage rules remain.
+- Save version 5 migrates legacy creation counts to zero sales while preserving artwork and daily mood. New sales counts persist through reload and reset the next morning.
+- Added coverage for repeated creation, exhausted sales, unsuccessful sales, next-day reset and legacy/new save migration. All 65 tests and production build pass (existing bundle-size warning).

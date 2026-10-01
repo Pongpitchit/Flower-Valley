@@ -111,20 +111,17 @@ export function buildAtmosphere(w: any) {
     group.add(glow);
     motes.push(glow);
   }
-  const smokeGeometry = new T.SphereGeometry(1, 10, 6),
-    smoke: any[] = [];
-  for (let i = 0; i < 7; i++) {
-    const puff = new T.Mesh(
-      smokeGeometry,
-      new T.MeshBasicMaterial({
-        color: "#d8d8cb",
-        transparent: true,
-        opacity: 0.12,
-        depthWrite: false,
-      }),
-    );
-    group.add(puff);
-    smoke.push(puff);
+  const smokeCanvas=document.createElement("canvas");smokeCanvas.width=smokeCanvas.height=64;
+  const ctx=smokeCanvas.getContext("2d")!;
+  const gradient=ctx.createRadialGradient(32,32,0,32,32,32);
+  gradient.addColorStop(0,"rgba(216,216,203,.65)");gradient.addColorStop(.45,"rgba(216,216,203,.3)");gradient.addColorStop(1,"rgba(216,216,203,0)");
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,64,64);
+  const smokeMap=new T.CanvasTexture(smokeCanvas);
+  smokeMap.colorSpace=T.SRGBColorSpace;
+  const smoke:any[]=[];
+  for(let i=0;i<7;i++){
+    const puff=new T.Sprite(new T.SpriteMaterial({map:smokeMap,transparent:true,opacity:.12,depthWrite:false}));
+    puff.name="Chimney smoke";group.add(puff);smoke.push(puff);
   }
   return (time: number, night: boolean, rain: boolean, low: boolean) => {
     const t = time * 0.001;
@@ -177,7 +174,7 @@ export function buildAtmosphere(w: any) {
         6.28 + phase * 2.2,
         0.4 + Math.sin(t * 0.3 + phase) * phase * 0.3,
       );
-      puff.scale.setScalar(0.13 + phase * 0.35);
+      puff.scale.setScalar(0.26 + phase * 0.7);
       puff.material.opacity = (1 - phase) * 0.14;
     });
   };

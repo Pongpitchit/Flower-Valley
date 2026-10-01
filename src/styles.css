@@ -2931,4 +2931,17 @@ kbd {
 .upgrade-help {font-size:12px;color:#64725c;line-height:1.6;}
 .food-product {display:flex;flex-direction:column;gap:10px;padding:20px;}
 .food-product h3,.food-product p {margin:0;}
+.pond-panel {min-width:0;}
+.pond-heading {display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.pond-heading h3 {margin:0;}
+.pond-capacity {padding:5px 10px;border-radius:20px;background:#e5ebda;white-space:nowrap;font-size:12px;}
+.pond-hint {font-size:12px;color:#65705b;}
+.pond-list {display:grid;gap:10px;margin-top:14px;}
+.pond-row {display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px 12px;padding:12px;border:1px solid #dce2d3;border-radius:12px;background:#fafbf5;}
+.pond-fish-info {display:flex;flex-direction:column;gap:4px;min-width:0;}
+.pond-fish-info strong {font-size:14px;overflow-wrap:anywhere;}
+.pond-fish-info span {font-size:12px;color:#687660;}
+.pond-actions {grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.pond-panel .pond-actions button {margin:0;min-height:42px;padding:8px;font-size:12px;white-space:normal;}
+.pond-panel .pond-actions button:disabled {opacity:1;background:#e8ebdf;color:#73806a;border:1px solid #d5dccb;}
 @media(max-width:680px){.modal-upgrades .upgrade-grid{grid-template-columns:1fr;}}

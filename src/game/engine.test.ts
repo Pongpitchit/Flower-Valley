@@ -418,18 +418,26 @@ describe("Ready-made model painting", () => {
 
 describe('Daily creativity, farm progression and bulk trade', () => {
   const art = {kind:'painting' as const,name:'Meadow',image:'data:image/png;base64,AAAA'};
-  it('rolls one or two daily slots, persists the quota, and resets only on a new day',()=>{
+  it('allows repeated creation but limits successful daily sales, persisting and resetting the count',()=>{
     for(const [rng,limit] of [[.8,1],[.1,2]]) {
       let s=initialState(()=>rng);
       expect(s.artDay.limit).toBe(limit);
-      for(let i=0;i<limit;i++)s=apply(s,'art',{art}).state;
-      const saved=JSON.parse(JSON.stringify(s));
-      expect(validateSave(saved)).toBe(true);
-      expect(apply(saved,'art',{art}).state).toBe(saved);
-      s=apply(s,'sellArt',{id:s.artworks[0].id}).state;
-      expect(apply(s,'art',{art}).ok).toBe(false);
-      s=day(s);expect(s.artDay.used).toBe(0);expect(apply(s,'art',{art}).ok).toBe(true);
+      for(let i=0;i<4;i++){const r=apply(s,'art',{art});expect(r.ok).toBe(true);s=r.state;}
+      expect(s.artDay.used).toBe(0);
+      expect(apply(s,'sellArt',{id:'missing'}).state).toBe(s);
+      for(let i=0;i<limit;i++){const r=apply(s,'sellArt',{id:s.artworks[0].id});expect(r.ok).toBe(true);s=r.state;}
+      const saved=JSON.parse(JSON.stringify(s));expect(validateSave(saved)).toBe(true);
+      expect(apply(saved,'sellArt',{id:saved.artworks[0].id}).state).toBe(saved);
+      expect(apply(saved,'art',{art}).ok).toBe(true);
+      s=day(s);expect(s.artDay.used).toBe(0);expect(apply(s,'sellArt',{id:s.artworks[0].id}).ok).toBe(true);
     }
+  });
+  it('migrates creation counters without consuming sales and keeps new sales on reload',()=>{
+    const old:any=initialState(()=>.8);old.version=4;old.artDay.used=1;
+    const migrated:any=migrateSave(old);expect(validateSave(migrated)).toBe(true);expect(migrated.artDay.used).toBe(0);
+    const made=apply(migrated,'art',{art}).state;
+    const sold=apply(made,'sellArt',{id:made.artworks[0].id}).state;
+    expect((migrateSave(JSON.parse(JSON.stringify(sold))) as GameState).artDay.used).toBe(1);
   });
   it('does not consume creativity or energy when artwork is invalid',()=>{
     const s=initialState(()=>.8);
@@ -477,11 +485,11 @@ describe('Daily creativity, farm progression and bulk trade', () => {
 });
 
 describe('Village expansion rules',()=>{
-  it('migrates the previous daily-mood save without losing its quota or fertilizer',()=>{
+  it('migrates the previous daily-mood save without losing fertilizer, resets legacy creation quota',()=>{
     const old:any=initialState(()=>.1);old.version=2;old.artDay.used=1;old.inventory.fertilizer=4;
     delete old.upgrades.rodLevel;delete old.upgrades.homeLevel;
     const upgraded=migrateSave(old) as GameState;
-    expect(validateSave(upgraded)).toBe(true);expect(upgraded.artDay.used).toBe(1);expect(upgraded.inventory.fertilizer).toBe(4);expect(upgraded.upgrades.rodLevel).toBe(0);
+    expect(validateSave(upgraded)).toBe(true);expect(upgraded.artDay.used).toBe(0);expect(upgraded.inventory.fertilizer).toBe(4);expect(upgraded.upgrades.rodLevel).toBe(0);
   });
   it('fertilizer tiers consume exactly one bag, cap at maturity and cannot stack',()=>{
     for(const [id,price,days] of [['fertilizer',15,1],['fertilizer:good',40,2],['fertilizer:premium',75,3]] as const){
@@ -553,12 +561,12 @@ describe('home customization and ornamental pond',()=>{
 });
 
 describe('activity energy and painting recovery',()=>{
-  it('saves paintings at zero energy without negative energy or bypassing daily quota',()=>{
+  it('saves paintings at zero energy without negative energy or consuming sales quota',()=>{
     const s=initialState(()=>0.9);s.energy=0;
     const art={kind:'painting' as const,name:'Evening',image:'data:image/png;base64,YQ=='};
     const saved=apply(s,'art',{art});expect(saved.ok).toBe(true);expect(saved.state.energy).toBe(0);
     expect(saved.state.artworks).toHaveLength(1);expect(validateSave(saved.state)).toBe(true);
-    expect(apply(saved.state,'art',{art}).ok).toBe(false);
+    expect(apply(saved.state,'art',{art}).ok).toBe(true);expect(saved.state.artDay.used).toBe(0);
   });
   it('waters four plots from the middle of a row and eight at the highest level',()=>{
     const s=initialState();s.upgrades.farmLevel=3;s.upgrades.wateringLevel=1;

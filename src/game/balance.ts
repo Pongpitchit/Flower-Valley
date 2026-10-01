@@ -4,6 +4,7 @@ export const FARM_COSTS = [120, 220, 360, 600, 900] as const;
 export const WATERING_COSTS = [250, 650] as const;
 export const HOME_COSTS = [200, 450, 800] as const;
 export const ART_PRICES = { painting: 80, model: 110, sculpture: 90 } as const;
+// used counts successful artwork sales today, not creations.
 export type ArtDay = { mood: 'calm' | 'inspired'; limit: 1 | 2; used: number };
 export function rollArtDay(rng = Math.random): ArtDay {
   const inspired = rng() < .4;

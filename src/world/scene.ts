@@ -1,3 +1,5 @@
+import { npcStep } from "./npcMotion";
+import { buildCelestial } from "./celestial";
 import { landscapeMaterial, refreshHomeGarden, animateHomePond } from "./homeGarden";
 import { villageProp } from "./villageProps";
 import { buildForest } from "./forest";
@@ -501,6 +503,7 @@ if (!window.AFRAME.components["flower-world"])
         }),
       );
       this.world.add(this.sky);
+      this.celestial=buildCelestial(this);
       new RGBELoader().load(
         "/textures/sky.hdr",
         (texture: any) => {
@@ -1299,6 +1302,7 @@ if (!window.AFRAME.components["flower-world"])
       if (bridge.teleport) {
         this.pos.set(bridge.teleport.x, 1.7, bridge.teleport.z);
         this.yaw = bridge.teleport.yaw ?? this.yaw;
+        this.pitch = bridge.teleport.pitch ?? 0;
         bridge.teleport = null;
       }
       const camera = this.el.sceneEl.camera;
@@ -1376,6 +1380,7 @@ if (!window.AFRAME.components["flower-world"])
       this.sky.material.uniforms.bottom.value.set(bottom);
       this.el.sceneEl.object3D.fog.color.set(bottom);
       this.stars.visible = night;
+      this.celestial.update(hours,s.weather === "rain");
       if (this.cloudSky) {
         this.cloudSky.visible = !night;
         this.cloudSky.material.opacity =
@@ -1445,22 +1450,12 @@ if (!window.AFRAME.components["flower-world"])
         const goalX = n.x + (roaming ? Math.sin(time * 0.0004 + i) * 0.8 : 0);
         const goalZ =
           n.z + (1 - t) * 4 + (roaming ? Math.cos(time * 0.0004 + i) * 0.5 : 0);
-        const walking = travel || roaming;
-        const blend = 1 - Math.exp(-delta * 3);
-        n.g.position.x += (goalX - n.g.position.x) * blend;
-        n.g.position.z += (goalZ - n.g.position.z) * blend;
-        n.g.position.y = walking
-          ? Math.abs(Math.sin(motionTime * 0.005 + i)) * 0.035
-          : 0;
-        n.g.scale.y = 1 + Math.sin(motionTime * 0.0017 + i) * 0.004;
-        const angle = near
-          ? Math.atan2(this.pos.x - n.g.position.x, this.pos.z - n.g.position.z)
-          : Math.sin(time * 0.00025 + i) * 0.4;
-        n.g.rotation.y +=
-          Math.atan2(
-            Math.sin(angle - n.g.rotation.y),
-            Math.cos(angle - n.g.rotation.y),
-          ) * blend;
+        const idleYaw=near?Math.atan2(this.pos.x-n.g.position.x,this.pos.z-n.g.position.z):n.g.rotation.y;
+        const step=npcStep(n.g.position.x,n.g.position.z,n.g.rotation.y,goalX,goalZ,idleYaw,delta);
+        n.g.position.x=step.x;n.g.position.z=step.z;n.g.rotation.y=step.yaw;
+        const walking=step.walking;
+        n.g.position.y=walking?Math.abs(Math.sin(motionTime*.005+i))*.025:0;
+        n.g.scale.y=1+Math.sin(motionTime*.0017+i)*.004;
         if (n.head) {
           n.head.rotation.x = Math.sin(motionTime * 0.0013 + i) * 0.035;
           n.head.rotation.z = Math.sin(motionTime * 0.0007 + i) * 0.025;
@@ -1564,6 +1559,7 @@ if (!window.AFRAME.components["flower-world"])
     remove(this: any) {
       this.removed=true;
       this.feedback?.dispose();
+      this.celestial?.dispose();
       this.world?.traverse((o: any) => {
         o.geometry?.dispose();
         if (o.material) {
