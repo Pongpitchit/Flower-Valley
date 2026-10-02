@@ -35,7 +35,7 @@ import {
   FOODS, FERTILIZERS, RODS, TRASH,
   FLOWERS,
   FISH,
-  GRILLED_FISH,
+  GRILLED_FISH, EDIBLES,
   flower,
   itemName,
   ZONES,
@@ -308,7 +308,7 @@ export default function App() {
               “สวนที่สวยงามเริ่มจากเมล็ดเล็ก ๆ เพียงเมล็ดเดียว”{" "}
               <span>— ลิลลี่</span>
             </p>
-            <div className="fertilizer-shop">{FERTILIZERS.map(f=><button className="secondary" key={f.id} disabled={s.money<f.price} onClick={()=>act({type:"buyFertilizer",id:f.id})}><ItemIcon id={f.id} size={56}/><b>{f.name}</b><span>เร่งโต {f.days} วัน · {f.price} ◉</span><small>มี {s.inventory[f.id] || 0} ถุง</small></button>)}</div>
+            <p className="subtle">ใส่ปุ๋ยได้ 1 ถุงต่อรอบปลูก · ระดับสูงคุ้มค่าต่อวันที่เร่งขึ้น · เลือกให้พอดีกับวันที่เหลือก่อนโตเต็มที่</p><div className="fertilizer-shop">{FERTILIZERS.map(f=><button className="secondary" key={f.id} disabled={s.money<f.price} onClick={()=>act({type:"buyFertilizer",id:f.id})}><ItemIcon id={f.id} size={56}/><b>{f.name}</b><span>เร่งโต {f.days} วัน · {f.price} ◉ ({f.price/f.days} ◉/วัน)</span><small>มี {s.inventory[f.id] || 0} ถุง</small></button>)}</div>
             <p className="subtle">ปุ๋ยใช้ได้ครั้งเดียวต่อการปลูก เลือกระดับให้เหมาะกับวันที่เหลือ</p>
             <div className="shop-grid">
               {FLOWERS.map((f) => (
@@ -443,7 +443,7 @@ export default function App() {
                       <ItemIcon id={id} /> {itemName(id)}
                     </span>
                     <b>× {n}</b>
-                    {FOODS.some(f=>f.id===id) && <button disabled={s.energy>=s.maxEnergy} onClick={()=>act({type:"eatFood",id})}>กิน · +{FOODS.find(f=>f.id===id)!.energy} พลังงาน</button>}
+                    {EDIBLES.some(f=>f.id===id) && <button disabled={s.energy>=s.maxEnergy} onClick={()=>act({type:"eatFood",id})}>กิน · +{EDIBLES.find(f=>f.id===id)!.energy} พลังงาน</button>}
                   </div>
                 ))}
               {!Object.values(s.inventory).some((n) => n > 0) && (

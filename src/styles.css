@@ -2945,3 +2945,6 @@ kbd {
 .pond-panel .pond-actions button {margin:0;min-height:42px;padding:8px;font-size:12px;white-space:normal;}
 .pond-panel .pond-actions button:disabled {opacity:1;background:#e8ebdf;color:#73806a;border:1px solid #d5dccb;}
 @media(max-width:680px){.modal-upgrades .upgrade-grid{grid-template-columns:1fr;}}
+
+.modal-grill .item-list>div {flex-wrap:wrap;gap:10px;}
+.modal-grill .item-list>div>span {flex:1 1 200px;min-width:0;}

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ItemIcon } from "./ItemIcon";
-import { FISH, TRASH, RODS } from "../game/data";
+import { FISH, TRASH, RODS, CAST_MINUTES } from "../game/data";
 import { dispatch, useGame } from "../game/engine";
 export function Fishing({ notify }: { notify: (s: string) => void }) {
   const {upgrades} = useGame();
@@ -121,7 +121,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
               ? "มองผิวน้ำ แล้วรอจังหวะดี ๆ"
               : "Space หย่อนเบ็ด / ตกอีกครั้ง · A / D ดึงปลา · ใช้พลังงาน 10"}
       </p>
-      <p className="subtle"><ItemIcon id={"rod:"+upgrades.rodLevel} /> {rod.name} · ปลาหายาก {Math.round(rod.rare*100)}% · ขยะ {Math.round(rod.trash*100)}%</p>
+      <p className="subtle"><ItemIcon id={"rod:"+upgrades.rodLevel} /> {rod.name} · ปลาหายาก {Math.round(rod.rare*100)}% · ขยะ {Math.round(rod.trash*100)}% · ลงเบ็ดครั้งละ {CAST_MINUTES} นาที / 10 พลังงาน</p><p className="subtle">โอกาสต่อครั้งที่ตกสำเร็จ สุ่มใหม่ทุกครั้ง เบ็ดดีเพิ่มโอกาสแต่ไม่ได้รับประกันว่าจะได้ทุกครั้ง</p>
       {phase === "playing" && (
         <>
           <div className="fish-time">

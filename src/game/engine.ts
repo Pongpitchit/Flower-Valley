@@ -2,7 +2,7 @@ import { HOME_STYLES } from "./home";
 import { FARM_SIZES, FARM_COSTS, WATERING_COSTS, HOME_COSTS, ART_PRICES, rollArtDay, type ArtDay } from "./balance";
 import { useSyncExternalStore } from "react";
 import {
-  FOODS, FERTILIZERS, RODS, TRASH, catchTable,
+  FOODS, EDIBLES, CAST_MINUTES, FERTILIZERS, RODS, TRASH, catchTable,
   FLOWERS,
   FISH,
   GRILLED_FISH,
@@ -245,7 +245,7 @@ export function transition(
     add(food.id,1);return ok(`ซื้อ${food.name}แล้ว กินได้จากกระเป๋า`);
   }
   if(a.type === "eatFood") {
-    const food=FOODS.find(f=>f.id===a.id);
+    const food=EDIBLES.find(f=>f.id===a.id);
     if(!food || !(s.inventory[food.id]>0))return fail("ไม่มีอาหารชนิดนี้");
     if(s.energy>=s.maxEnergy)return fail("พลังงานเต็มแล้ว เก็บอาหารไว้ก่อน");
     const gained=Math.min(food.energy,s.maxEnergy-s.energy);
@@ -408,8 +408,10 @@ export function transition(
     return ok("");
   }
   if (a.type === "cast") {
+    if(s.time + CAST_MINUTES >= 1440) return fail("ดึกเกินกว่าจะตกปลาเสร็จ กลับมาตกพรุ่งนี้นะ");
     if (!energy(10)) return fail("ต้องใช้พลังงาน 10 หน่วย");
-    return ok("หย่อนเบ็ดแล้ว รอปลากินเหยื่อ…");
+    s.time += CAST_MINUTES;
+    return ok(`หย่อนเบ็ดแล้ว ใช้เวลา ${CAST_MINUTES} นาที รอปลากินเหยื่อ…`);
   }
   if (a.type === "catch") {
     let roll = rng();

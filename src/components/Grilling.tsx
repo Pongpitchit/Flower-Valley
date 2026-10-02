@@ -22,7 +22,7 @@ export function Grilling({ notify }: { notify: (message: string) => void }) {
   }
   return (
     <>
-      <p className="dialogue">ค่อย ๆ ย่างปลาข้างกองไฟ แล้วนำไปขายให้ฟินน์</p>
+      <p className="dialogue">ค่อย ๆ ย่างปลาข้างกองไฟ นำไปขายให้ฟินน์ หรือกินฟื้นพลังงาน</p>
       <p className="subtle">
         ปลา 1 ตัว · −{GRILL_ENERGY} พลังงาน · {GRILL_MINUTES} นาทีในเกม ·
         ราคาขายเพิ่ม 50%
@@ -46,7 +46,7 @@ export function Grilling({ notify }: { notify: (message: string) => void }) {
               <small>
                 ปลาสด {s.inventory[fish.id] || 0} · ย่างแล้ว{" "}
                 {s.inventory["grilled:" + fish.id] || 0} · ขาย{" "}
-                {GRILLED_FISH[i].price} ◉
+                {GRILLED_FISH[i].price} ◉ · กิน +{GRILLED_FISH[i].energy} พลังงาน
               </small>
             </span>
             <button
@@ -60,6 +60,7 @@ export function Grilling({ notify }: { notify: (message: string) => void }) {
             >
               ย่าง 1 ตัว
             </button>
+            <button className="secondary" disabled={!!cooking || !s.inventory[GRILLED_FISH[i].id] || s.energy>=s.maxEnergy} onClick={()=>notify(dispatch({type:"eatFood",id:GRILLED_FISH[i].id}).message)}>กิน · +{GRILLED_FISH[i].energy}</button>
           </div>
         ))}
       </div>

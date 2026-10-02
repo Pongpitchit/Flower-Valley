@@ -1,7 +1,7 @@
 export const FOODS = [
  {id:"food:bread",name:"ขนมปังอบ",energy:20,price:35},
- {id:"food:soup",name:"ซุปผัก",energy:30,price:55},
- {id:"food:omurice",name:"ข้าวห่อไข่",energy:40,price:75},
+ {id:"food:soup",name:"ซุปผัก",energy:30,price:50},
+ {id:"food:omurice",name:"ข้าวห่อไข่",energy:40,price:65},
 ];
 export const FLOWERS = [
   {
@@ -74,16 +74,18 @@ export const FISH = [
   {id:"catfish",name:"ปลาดุก",price:55,icon:"🐟"},
 ];
 export const TRASH = [{id:"tin-can",name:"กระป๋องเก่า",price:3,icon:"🥫"},{id:"old-boot",name:"รองเท้าเก่า",price:5,icon:"🥾"}];
-export const FERTILIZERS = [{id:"fertilizer",name:"ปุ๋ยพื้นฐาน",price:15,days:1},{id:"fertilizer:good",name:"ปุ๋ยชั้นดี",price:40,days:2},{id:"fertilizer:premium",name:"ปุ๋ยพรีเมียม",price:75,days:3}];
-export const RODS = [{name:"เบ็ดไม้",price:0,rare:.04,trash:.10},{name:"เบ็ดชั้นดี",price:350,rare:.08,trash:.10},{name:"เบ็ดนักตกปลา",price:900,rare:.14,trash:.10}];
+export const FERTILIZERS = [{id:"fertilizer",name:"ปุ๋ยพื้นฐาน",price:10,days:1},{id:"fertilizer:good",name:"ปุ๋ยชั้นดี",price:18,days:2},{id:"fertilizer:premium",name:"ปุ๋ยพรีเมียม",price:24,days:3}];
+export const RODS = [{name:"เบ็ดไม้",price:0,rare:.04,trash:.10},{name:"เบ็ดชั้นดี",price:350,rare:.12,trash:.10},{name:"เบ็ดนักตกปลา",price:900,rare:.20,trash:.10}];
 export function catchTable(level: number) {
   const rod = RODS[level];
   const common = [{id:"carp",weight:25},{id:"goldfish",weight:10},{id:"trout",weight:10},{id:"perch",weight:12},{id:"catfish",weight:9}];
   return [...TRASH.map(f => ({id:f.id,chance:rod.trash/2})),...common.map(f=>({id:f.id,chance:(1-rod.trash-rod.rare)*f.weight/66})),{id:"rare",chance:rod.rare}];
 }
+export const CAST_MINUTES = 15;
 export const GRILL_MINUTES = 10;
 export const GRILL_ENERGY = 5;
-export const GRILLED_FISH = FISH.map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5) }));
+export const GRILLED_FISH = FISH.map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5), energy: f.id === 'rare' ? 40 : f.id === 'trout' ? 35 : f.id === 'goldfish' || f.id === 'catfish' ? 30 : f.id === 'carp' ? 25 : 20 }));
+export const EDIBLES = [...FOODS, ...GRILLED_FISH];
 export const ZONES = [
   {id:"food",name:"ครัวอุ่นใจของโนรา",en:"NORA’S KITCHEN",x:-10,z:33,icon:"🍲"},
   {id:"general",name:"ร้านของจิปาถะของโรวัน",en:"ROWAN’S FINDS",x:-22,z:22,icon:"🎒"},

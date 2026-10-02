@@ -116,3 +116,10 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Moved the one/two daily artwork allowance from creating to selling. Painting/model editors no longer disable saving based on the allowance; gallery buttons and messages show remaining sales. Existing energy and 24-work storage rules remain.
 - Save version 5 migrates legacy creation counts to zero sales while preserving artwork and daily mood. New sales counts persist through reload and reset the next morning.
 - Added coverage for repeated creation, exhausted sales, unsuccessful sales, next-day reset and legacy/new save migration. All 65 tests and production build pass (existing bundle-size warning).
+
+## Economy consistency (2026-10-02)
+
+- Verified old rod probability calculation was monotonic, then increased upgraded rare chances from 8/14% to 12/20%; starter remains 4%, all rods retain 10% junk. Deterministic 1,000-point distribution tests match each rate exactly.
+- Fertilizer prices now 10/18/24 for 1/2/3 growth days, with one application per planting and maturity cap explained in the shop. Meals now 35/50/65 for 20/30/40 energy.
+- Grilled fish restore 20–40 energy and are edible from inventory/campfire. Tests cover consumption, maximum-energy cap, full-energy rejection and rejection of raw fish.
+- Casting now advances 15 game minutes and costs 10 energy; late/low-energy casts fail atomically. 72 tests and production build pass.

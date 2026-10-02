@@ -492,7 +492,7 @@ describe('Village expansion rules',()=>{
     expect(validateSave(upgraded)).toBe(true);expect(upgraded.artDay.used).toBe(0);expect(upgraded.inventory.fertilizer).toBe(4);expect(upgraded.upgrades.rodLevel).toBe(0);
   });
   it('fertilizer tiers consume exactly one bag, cap at maturity and cannot stack',()=>{
-    for(const [id,price,days] of [['fertilizer',15,1],['fertilizer:good',40,2],['fertilizer:premium',75,3]] as const){
+    for(const [id,price,days] of [['fertilizer',10,1],['fertilizer:good',18,2],['fertilizer:premium',24,3]] as const){
       let s=initialState();s.inventory['seed:hydrangea']=1;s=apply(s,'buyFertilizer',{id}).state;
       expect(s.money).toBe(500-price);s=apply(s,'plant',{id:'hydrangea',index:0}).state;
       s=apply(s,'fertilize',{id,index:0}).state;expect(s.farm[0].age).toBe(days);expect(s.inventory[id]).toBe(0);expect(validateSave(s)).toBe(true);
@@ -515,7 +515,7 @@ describe('Village expansion rules',()=>{
         const r=transition(s,{type:'catch'},()=>(i+.5)/1000);const id=Object.keys(r.state.inventory)[0];counts[id]=(counts[id]||0)+1;
         if(id==='tin-can'||id==='old-boot')expect(r.state.stats.fish).toBe(0);
       }
-      expect(counts.rare).toBe([40,80,140][level]);expect(counts['tin-can']+counts['old-boot']).toBe(100);expect(Object.keys(counts)).toHaveLength(8);
+      expect(counts.rare).toBe([40,120,200][level]);expect(counts['tin-can']+counts['old-boot']).toBe(100);expect(Object.keys(counts)).toHaveLength(8);
     }
     for(const [id,price] of [['tin-can',3],['old-boot',5]] as const){const s=initialState();s.inventory[id]=4;expect(apply(s,'sell',{id,amount:4}).state.money).toBe(500+price*4);expect(apply(s,'grill',{id}).state).toBe(s);}
   });
@@ -598,5 +598,19 @@ describe("Food shop",()=>{
   it("rejects invalid and unaffordable purchases without changing inventory",()=>{
     const s=initialState(()=>.1);s.money=0;
     for(const id of [FOODS[0].id,"food:unknown"]){const result=apply(s,"buyFood",{id});expect(result.ok).toBe(false);expect(result.state).toEqual(s);}
+  });
+});
+
+describe('Balanced fishing and cooked meals',()=>{
+  for(const food of GRILLED_FISH)it(`eats ${food.id} once, caps energy and cannot eat raw fish`,()=>{
+    const s=initialState();s.energy=0;s.inventory[food.id]=2;
+    const ate=apply(s,'eatFood',{id:food.id});expect(ate.ok).toBe(true);expect(ate.state.energy).toBe(food.energy);expect(ate.state.inventory[food.id]).toBe(1);
+    ate.state.energy=99;const capped=apply(ate.state,'eatFood',{id:food.id});expect(capped.state.energy).toBe(100);expect(capped.state.inventory[food.id]).toBe(0);
+    s.energy=100;expect(apply(s,'eatFood',{id:food.id}).state).toBe(s);
+    s.energy=0;s.inventory.carp=1;expect(apply(s,'eatFood',{id:'carp'}).ok).toBe(false);
+  });
+  it('charges cast time and energy once and rejects unaffordable or late casts atomically',()=>{
+    const s=initialState();const cast=apply(s,'cast');expect(cast.state.energy).toBe(90);expect(cast.state.time).toBe(s.time+15);
+    for(const [time,energy] of [[1430,100],[600,9]]){s.time=time;s.energy=energy;expect(apply(s,'cast').state).toBe(s);}
   });
 });
