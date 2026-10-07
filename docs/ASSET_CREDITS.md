@@ -87,3 +87,5 @@ Generated with built-in image_gen. Original generated alpha preserved; CSS selec
 - `public/icons/pixelart/food.png`: generated with built-in imagegen; exact prompt in `food-prompts.json`, atlas coordinates in `atlas.json`. No purchased stock assets.
 - Goldfish, koi and catfish meshes and revised rose petals are original project geometry. Remaining fish use existing Quaternius CC0 Fish1.
 - Botanical visual references only (not bundled): https://www.rhs.org.uk/plants/30717/cosmos-bipinnatus/details/ and https://plants.ces.ncsu.edu/plants/cosmos-bipinnatus/. Non-rose redraw was subsequently reverted at user request.
+
+- `public/icons/pixelart/fish-species.png`: original builtin imagegen pixel-art atlas; five species, catfish excluded. Exact prompt in `fish-species-prompt.json`. Side-yard furniture is original procedural geometry using existing project wood materials; no paid assets.

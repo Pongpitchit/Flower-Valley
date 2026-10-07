@@ -208,8 +208,9 @@ export type Action = {
   art?: Omit<Artwork, "id" | "price">;
   amount?: number;
 };
-export type Result = { state: GameState; message: string; ok: boolean };
+export type Result = { state: GameState; message: string; ok: boolean; caughtItemId?: string };
 export const REST_MINUTES = 30;
+export const HOME_REST_ENERGY = 40;
 export function transition(
   previous: GameState,
   a: Action,
@@ -380,8 +381,10 @@ export function transition(
   if (a.type === "rest") {
     const now = s.day * 1440 + s.time;
     if (s.energy >= s.maxEnergy) return fail("พลังงานเต็มแล้ว");
-    const gained = Math.min(20, s.maxEnergy - s.energy);
-    s.energy = Math.min(s.maxEnergy, s.energy + 20);
+    if(a.index === 1 && s.upgrades.homeLevel < 3) return fail("อัปเกรดมุมพักผ่อนข้างบ้านก่อน");
+    const restored=a.index === 1?HOME_REST_ENERGY:20;
+    const gained = Math.min(restored, s.maxEnergy - s.energy);
+    s.energy += gained;
     s.restAt = now;
     s.time += REST_MINUTES;
     if (s.time >= 1440) {
@@ -421,7 +424,7 @@ export function transition(
     const item=[...FISH,...TRASH].find(f=>f.id===id)!;
     add(id,1);
     if(FISH.some(f=>f.id===id)) s.stats.fish++;
-    return ok(TRASH.some(f=>f.id===id) ? `ตกได้${item.name} นำไปขายให้โรวันได้` : `จับ${item.name}ได้!`);
+    return { ...ok(TRASH.some(f=>f.id===id) ? `ตกได้${item.name} นำไปขายให้โรวันได้` : `จับ${item.name}ได้!`), caughtItemId: id };
   }
   if (a.type === "upgradeRod") {
     const rod=RODS[s.upgrades.rodLevel+1];

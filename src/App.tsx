@@ -48,7 +48,7 @@ import {
   getState,
   save,
   getLoadMessage,
-  REST_MINUTES,
+  REST_MINUTES, HOME_REST_ENERGY,
   type Action,
   type Artwork,
 } from "./game/engine";
@@ -142,7 +142,7 @@ export default function App() {
       return;
     if (t.kind === "rest") {
       sitReturn.current = { ...bridge.position };
-      bridge.teleport = { x: 7, z: -9.4, yaw: 0 };
+      bridge.teleport = t.index === 1 ? {x:20,z:1.8,yaw:Math.PI} : { x: 7, z: -9.4, yaw: 0 };
       bridge.sitting = true;
     }
     open({ kind: t.kind, index: t.index, name: t.name });
@@ -383,7 +383,7 @@ export default function App() {
                     ✂ เก็บดอกไม้ −5 ⚡
                   </button>
                 </div>
-                <div className="fertilizer-shop">{FERTILIZERS.map(f=><button key={f.id} className="secondary" disabled={p.fertilized || p.age>=flower(p.seed!).days || !(s.inventory[f.id]>0)} onClick={()=>act({type:"fertilize",id:f.id,index:modal.index})}><ItemIcon id={f.id} size={44}/>{f.name}<small>โต +{Math.min(f.days,flower(p.seed!).days-p.age)} วัน · เหลือ {s.inventory[f.id]||0}</small></button>)}</div>
+                <div className="fertilizer-shop">{FERTILIZERS.map(f=><button key={f.id} className="secondary" disabled={p.fertilized || p.age>=flower(p.seed!).days || !(s.inventory[f.id]>0)} onClick={()=>act({type:"fertilize",id:f.id,index:modal.index})}><ItemIcon id={f.id} size={44}/>{f.name}<small>โต +{Math.min(f.days,flower(p.seed!).days-p.age)} วัน · เหลือ {s.inventory[f.id]||0}</small>{f.days>flower(p.seed!).days-p.age && <small>ใช้ผลเร่งได้ไม่ครบ · เลือกปุ๋ยระดับต่ำกว่าจะประหยัดกว่า</small>}</button>)}</div>
                 {p.fertilized && <p className="subtle">ใส่ปุ๋ยให้การปลูกรอบนี้แล้ว</p>}
                 <p className="subtle">
                   เติบโตหนึ่งขั้นเมื่อเริ่มวันใหม่ หากรดน้ำในวันก่อนหน้า
@@ -655,21 +655,21 @@ export default function App() {
               พลังงาน {s.energy} / {s.maxEnergy}
             </p>
             <p className="subtle">
-              นั่งพักแต่ละครั้งใช้เวลา 30 นาทีในเกม และฟื้นพลังงานสูงสุด 20
+              นั่งพักแต่ละครั้งใช้เวลา 30 นาทีในเกม และฟื้นพลังงานสูงสุด {modal.index === 1 ? HOME_REST_ENERGY : 20}
               หน่วย หากพักจนถึงเที่ยงคืนจะเผลอหลับ และตื่นพร้อมพลังงาน 60%
             </p>
             <button
               className="wide"
               disabled={s.energy >= s.maxEnergy}
               onClick={() => {
-                if (s.time + REST_MINUTES >= 1440) beginNight({ type: "rest" });
-                else act({ type: "rest" });
+                if (s.time + REST_MINUTES >= 1440) beginNight({ type: "rest", index: modal.index });
+                else act({ type: "rest", index: modal.index });
               }}
             >
-              นั่งพัก 30 นาที · +20 พลังงาน
+              นั่งพัก 30 นาที · +{modal.index === 1 ? HOME_REST_ENERGY : 20} พลังงาน
             </button>
             <button className="secondary wide" onClick={close}>
-              ลุกจากท่อนไม้
+              ลุกจากที่นั่ง
             </button>
           </div>
         );
@@ -714,7 +714,7 @@ export default function App() {
               <article className="home-style-card"><h3>สีหลังคาและผนังบ้าน</h3><p>ซื้อครั้งเดียว สลับรูปแบบที่มีได้ฟรี</p>{HOME_STYLES.map(style=><button key={style.id} style={{borderLeft:`6px solid ${style.wall}`}} disabled={s.home.style===style.id || (!s.home.ownedStyles.includes(style.id) && s.money<style.price)} onClick={()=>act({type:"homeStyle",id:style.id})}>{style.name} · {s.home.style===style.id?"ใช้อยู่":s.home.ownedStyles.includes(style.id)?"เลือกใช้":`${style.price} ◉`}</button>)}</article>
               <article><h3>สวนดอกไม้หลังบ้าน</h3><p>สวนประดับสำเร็จรูป ไม่ต้องปลูกหรือรดน้ำ และเก็บเกี่ยวไม่ได้</p><button disabled={s.home.garden || s.money<650} onClick={()=>act({type:"homeGarden"})}>{s.home.garden?"จัดสวนแล้ว":"จัดสวน · 650 ◉"}</button></article>
               <PondPanel s={s} act={act}/>
-              <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["แปลงดอกไม้ข้างบ้าน","ซุ้มไม้ในสวนข้างบ้าน","มุมพักผ่อนด้านข้างบ้าน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
+              <article><h3>บ้านที่อบอุ่นขึ้น</h3><p>{["แปลงดอกไม้ข้างบ้าน","ซุ้มไม้ในสวนข้างบ้าน","มุมพักผ่อนด้านข้างบ้าน · พัก 30 นาที +40 พลังงาน","ตกแต่งครบแล้ว"][s.upgrades.homeLevel]}</p><button disabled={s.upgrades.homeLevel>=3 || s.money<HOME_COSTS[s.upgrades.homeLevel]} onClick={()=>act({type:"upgradeHome"})}>{s.upgrades.homeLevel>=3?"ครบแล้ว":`ติดตั้ง · ${HOME_COSTS[s.upgrades.homeLevel]} ◉`}</button></article>
               <article>
                 <Flower2 />
                 <h3>แต่งทางเข้าบ้าน</h3>
@@ -1208,7 +1208,7 @@ export default function App() {
 
       {modal && (
         <ModalFrame
-          title={titles[modal.kind] || modal.name || ""}
+          title={modal.kind === "rest" && modal.index === 1 ? "มุมนั่งพักในสวนข้างบ้าน" : titles[modal.kind] || modal.name || ""}
           kind={modal.kind}
           onClose={close}
           money={s.money}

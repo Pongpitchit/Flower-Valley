@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ItemIcon } from "./ItemIcon";
-import { FISH, TRASH, RODS, CAST_MINUTES } from "../game/data";
+import { RODS, CAST_MINUTES } from "../game/data";
 import { dispatch, useGame } from "../game/engine";
 export function Fishing({ notify }: { notify: (s: string) => void }) {
   const {upgrades} = useGame();
@@ -12,7 +12,8 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
     [sequence, setSequence] = useState<string[]>([]),
     [step, setStep] = useState(0),
     [time, setTime] = useState(100),
-    [result, setResult] = useState("");
+    [result, setResult] = useState(""),
+    [caughtItemId, setCaughtItemId] = useState<string | null>(null);
   const status = useRef(phase),
     index = useRef(0);
   status.current = phase;
@@ -21,6 +22,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
     const r = dispatch({ type: "cast" });
     notify(r.message);
     if (r.ok) {
+      setCaughtItemId(null);
       index.current = 0;
       setStep(0);
       setTime(100);
@@ -64,6 +66,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
     if (index.current === sequence.length) {
       status.current = "won";
       const r = dispatch({ type: "catch" });
+      setCaughtItemId(r.caughtItemId ?? null);
       setResult(r.message);
       notify(r.message);
       setPhase("won");
@@ -91,14 +94,9 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
           "fish-illustration " + (phase === "waiting" ? "bobbing" : "")
         }
       >
-        <ItemIcon
-          id={
-            phase === "won"
-              ? ([...FISH,...TRASH].find((f) => result.includes(f.name))?.id ?? "carp")
-              : "goldfish"
-          }
-          size={110}
-        />
+        {phase === "won" ? (
+          caughtItemId && <ItemIcon id={caughtItemId} size={110} />
+        ) : <ItemIcon id="goldfish" size={110} />}
         <span>≈ ≈ ≈ ≈ ≈</span>
       </div>
       <h3>

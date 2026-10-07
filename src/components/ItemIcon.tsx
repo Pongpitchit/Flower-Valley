@@ -22,7 +22,7 @@ export function ItemIcon({
   const extra: Record<string,[string,number]> = {
     "food:bread":["food",0],"food:soup":["food",1],"food:omurice":["food",2],
     fertilizer:["garden-expansion",0],"fertilizer:good":["garden-expansion",1],"fertilizer:premium":["garden-expansion",2],cosmos:["garden-expansion",3],hydrangea:["garden-expansion",4],
-    trout:["lake-expansion",0],perch:["lake-expansion",1],catfish:["lake-expansion",2],"tin-can":["lake-expansion",3],"old-boot":["lake-expansion",4],
+    carp:["fish-species",0],goldfish:["fish-species",1],rare:["fish-species",2],trout:["fish-species",3],perch:["fish-species",4],catfish:["lake-expansion",2],"tin-can":["lake-expansion",3],"old-boot":["lake-expansion",4],
     "seed:cosmos":["seeds-and-rods",0],"seed:hydrangea":["seeds-and-rods",1],"rod:0":["seeds-and-rods",2],"rod:1":["seeds-and-rods",3],"rod:2":["seeds-and-rods",4],
   };
   const frame = extra[grilled ? baseId : id];

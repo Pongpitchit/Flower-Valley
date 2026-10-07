@@ -123,3 +123,13 @@ Source specification: workflow.md. Latest user change (2026-09-25): replace manu
 - Fertilizer prices now 10/18/24 for 1/2/3 growth days, with one application per planting and maturity cap explained in the shop. Meals now 35/50/65 for 20/30/40 energy.
 - Grilled fish restore 20–40 energy and are edible from inventory/campfire. Tests cover consumption, maximum-energy cap, full-energy rejection and rejection of raw fish.
 - Casting now advances 15 game minutes and costs 10 energy; late/low-energy casts fail atomically. 72 tests and production build pass.
+## Catch result icon identity (2026-10-07)
+
+- Fixed rare koi showing the common carp icon: matching the result message by substring selected “ปลาคาร์ป” inside “ปลาคาร์ปโคอิหายาก”. Catch results now expose an explicit item ID, used directly by the fishing result icon and cleared on a new cast.
+- Verified all eight outcomes for each rod level with deterministic tests. All 73 tests pass and production build passes; existing bundle-size warning remains.
+
+## Fish icons and home rest (2026-10-07)
+
+- Generated a transparent atlas for carp, goldfish, red-white koi, rainbow trout and striped perch. Updated shared ItemIcon and atlas frames, including grilled variants; catfish remains unchanged. Exact builtin imagegen prompt is saved next to the atlas.
+- Rebuilt the side-yard bench with slatted deck, cushions, armrests, reading table and foliage. Home level 3 unlocks a separate rest interaction restoring 40 energy in 30 minutes; logs remain 20. Browser verified energy 0→40 and time 08:22→08:52.
+- Added wasted fertilizer-growth warnings and documented economy findings in BALANCE_AUDIT.md. Automated checks cover rest unlock/caps/midnight, fertilizer unit costs, flower margins and meal value. 75 tests passed.

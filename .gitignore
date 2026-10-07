@@ -3,3 +3,11 @@ dist/
 test-results/
 .DS_Store
 *.tsbuildinfo
+docs/
+.ASSET_CREDITS.md
+.BALANCE_AUDIT.md
+.PROGRESS.md
+.docs
+docs/PROGRESS.md
+docs/ASSET_CREDITS.md
+docs/BALANCE_AUDIT.md

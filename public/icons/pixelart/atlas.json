@@ -75,21 +75,21 @@
       "height": 512
     },
     "carp": {
-      "image": "fish-and-tools.png",
+      "image": "fish-species.png",
       "x": 0,
       "y": 0,
       "width": 512,
       "height": 512
     },
     "goldfish": {
-      "image": "fish-and-tools.png",
+      "image": "fish-species.png",
       "x": 512,
       "y": 0,
       "width": 512,
       "height": 512
     },
     "rare": {
-      "image": "fish-and-tools.png",
+      "image": "fish-species.png",
       "x": 1024,
       "y": 0,
       "width": 512,
@@ -145,16 +145,16 @@
       "height": 512
     },
     "trout": {
-      "image": "lake-expansion.png",
+      "image": "fish-species.png",
       "x": 0,
-      "y": 0,
+      "y": 512,
       "width": 512,
       "height": 512
     },
     "perch": {
-      "image": "lake-expansion.png",
+      "image": "fish-species.png",
       "x": 512,
-      "y": 0,
+      "y": 512,
       "width": 512,
       "height": 512
     },

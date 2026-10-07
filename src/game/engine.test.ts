@@ -7,7 +7,7 @@ import {
   validParts,
   type GameState,
 } from "./engine";
-import { FLOWERS, FISH, GRILLED_FISH, FOODS } from "./data";
+import { FLOWERS, FISH, GRILLED_FISH, FOODS, FERTILIZERS, catchTable } from "./data";
 import { canMove, colliders } from "../world/bridge";
 const apply = (s: GameState, type: string, args = {}) =>
   transition(s, { type, ...args }, () => 0.8);
@@ -612,5 +612,41 @@ describe('Balanced fishing and cooked meals',()=>{
   it('charges cast time and energy once and rejects unaffordable or late casts atomically',()=>{
     const s=initialState();const cast=apply(s,'cast');expect(cast.state.energy).toBe(90);expect(cast.state.time).toBe(s.time+15);
     for(const [time,energy] of [[1430,100],[600,9]]){s.time=time;s.energy=energy;expect(apply(s,'cast').state).toBe(s);}
+  });
+});
+
+describe('Catch identity for result icons',()=>{
+  it('returns the exact item ID for every outcome and rod, including overlapping carp names',()=>{
+    for(const level of [0,1,2]){
+      const s=initialState();s.upgrades.rodLevel=level;let start=0;
+      for(const item of catchTable(level)){
+        const result=transition(s,{type:'catch'},()=>start+item.chance/2);
+        expect(result.ok).toBe(true);expect(result.caughtItemId).toBe(item.id);
+        expect(result.state.inventory[result.caughtItemId!]).toBe(1);
+        start+=item.chance;
+      }
+    }
+  });
+});
+
+describe('Home garden rest and economy safeguards',()=>{
+  it('unlocks double recovery with the final home upgrade, caps energy and preserves midnight rules',()=>{
+    const s=initialState();s.energy=0;
+    expect(apply(s,'rest',{index:1}).state).toBe(s);
+    s.upgrades.homeLevel=3;
+    const home=apply(s,'rest',{index:1});expect(home.state.energy).toBe(40);expect(home.state.time).toBe(s.time+30);
+    expect(apply(s,'rest').state.energy).toBe(20);
+    s.energy=90;expect(apply(s,'rest',{index:1}).state.energy).toBe(100);
+    s.energy=100;expect(apply(s,'rest',{index:1}).state).toBe(s);
+    s.energy=0;s.time=1430;const night=apply(s,'rest',{index:1});expect(night.state.day).toBe(s.day+1);expect(night.state.energy).toBe(60);
+  });
+  it('keeps bulk meals and fertilizer tiers economical while preserving profitable flower harvests',()=>{
+    for(let i=1;i<FOODS.length;i++)expect(FOODS[i].price/FOODS[i].energy).toBeLessThanOrEqual(FOODS[i-1].price/FOODS[i-1].energy);
+    for(let i=1;i<FERTILIZERS.length;i++)expect(FERTILIZERS[i].price/FERTILIZERS[i].days).toBeLessThan(FERTILIZERS[i-1].price/FERTILIZERS[i-1].days);
+    for(const flower of FLOWERS){
+      expect(flower.sell-flower.seed).toBeGreaterThan(0);
+      for(const fertilizer of FERTILIZERS)expect(flower.sell-flower.seed-fertilizer.price).toBeGreaterThanOrEqual(0);
+    }
+    for(const cooked of GRILLED_FISH)expect(cooked.price/cooked.energy).toBeGreaterThan(FOODS[2].price/FOODS[2].energy);
   });
 });

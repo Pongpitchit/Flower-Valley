@@ -1213,9 +1213,29 @@ if (!window.AFRAME.components["flower-world"])
           for(const z of [.4,3.8])this.box(this.m.darkWood,20,2.8,z,3.4,.14,.16,this.decorGroup);
         }
         if(s.upgrades.homeLevel>=3) {
-          this.box(this.m.wood,20,.5,2.6,1.8,.16,.65,this.decorGroup);
-          this.box(this.m.wood,20,.9,2.33,1.8,.8,.12,this.decorGroup);
-          for(const x of [19.3,20.7])this.box(this.m.darkWood,x,.24,2.6,.12,.48,.55,this.decorGroup);
+          // Raised slatted patio, upholstered bench and a small reading table.
+          for(let i=0;i<12;i++)this.box(this.m.wood,18.5+i*.27,.08,2.1,.25,.12,3.5,this.decorGroup);
+          for(let i=0;i<4;i++)this.box(this.m.wood,20,.55,1.4+i*.16,2.25,.12,.14,this.decorGroup);
+          for(let i=0;i<3;i++){const back=this.box(this.m.wood,20,.84+i*.17,1.23,2.25,.12,.09,this.decorGroup);back.rotation.x=-.12;}
+          for(const x of [19.04,20.96]){
+            for(const z of [1.4,1.95])this.box(this.m.darkWood,x,.3,z,.12,.5,.12,this.decorGroup);
+            this.box(this.m.wood,x,.82,1.65,.14,.1,.8,this.decorGroup);
+          }
+          for(const x of [19.48,20.52]){
+            const cushion=new T.Mesh(new T.BoxGeometry(.92,.16,.48),mat("#a9b999"));cushion.position.set(x,.68,1.7);this.decorGroup.add(cushion);
+          }
+          this.box(this.m.wood,18.9,.67,2.8,.65,.1,.65,this.decorGroup);
+          for(const x of [18.66,19.14])for(const z of [2.56,3.04])this.box(this.m.darkWood,x,.36,z,.07,.6,.07,this.decorGroup);
+          this.mesh(geometries.cylinder,mat("#d4ad87"),18.9,.82,2.8,.12,.22,.12,this.decorGroup);
+          const vase=createFlower("lavender");vase.scale.setScalar(.4);vase.position.set(18.9,.9,2.8);this.decorGroup.add(vase);
+          for(const x of [18.65,21.35])for(let i=0;i<15;i++){
+            const leaf=this.mesh(geometries.sphere,this.m.leaf,x+Math.sin(i*2)*.1,.65+i*.13,.4+Math.cos(i*2)*.08,.14,.035,.06,this.decorGroup);leaf.rotation.z=i*.5;
+          }
+          if(!this.homeRestTarget){
+            this.homeRestTarget=true;
+            this.targets.push({id:"home-rest",kind:"rest",index:1,name:"มุมนั่งพักในสวนข้างบ้าน",hint:"นั่งพัก 30 นาที • พลังงาน +40",x:20,z:2.5});
+            colliders.push({x:20,z:1.65,w:2.25,d:.8},{x:18.9,z:2.8,w:.65,d:.65});
+          }
         }
       }
       const artSig = s.artworks.map((a) => a.id).join();
