@@ -1,4 +1,5 @@
 import { FLOWERS, itemName } from "../game/data";
+import { PixelIcon, hasPixelIcon } from "./PixelIcon";
 
 export function ItemIcon({
   id,
@@ -25,6 +26,7 @@ export function ItemIcon({
     carp:["fish-species",0],goldfish:["fish-species",1],rare:["fish-species",2],trout:["fish-species",3],perch:["fish-species",4],catfish:["lake-expansion",2],"tin-can":["lake-expansion",3],"old-boot":["lake-expansion",4],
     "seed:cosmos":["seeds-and-rods",0],"seed:hydrangea":["seeds-and-rods",1],"rod:0":["seeds-and-rods",2],"rod:1":["seeds-and-rods",3],"rod:2":["seeds-and-rods",4],
   };
+  if (hasPixelIcon(baseId)) return <PixelIcon id={baseId} size={size} grilled={grilled} name={label ?? itemName(id)} />;
   const frame = extra[grilled ? baseId : id];
   if(index<0 && !frame)return null;
   const sheet = frame?.[0] ?? (flowerIndex>=0 ? (seed ? "seeds" : "flowers") : "fish-and-tools");

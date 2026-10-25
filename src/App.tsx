@@ -34,7 +34,7 @@ import { SleepTransition } from "./components/SleepTransition";
 import {
   FOODS, FERTILIZERS, RODS, TRASH,
   FLOWERS,
-  FISH,
+  FISH, SEA_FISH, FORAGE, SCENES, sceneAt,
   GRILLED_FISH, EDIBLES,
   flower,
   itemName,
@@ -53,6 +53,7 @@ import {
   type Artwork,
 } from "./game/engine";
 import { bridge, type Target } from "./world/bridge";
+import { TELESCOPE } from "./world/scenes";
 import { setSound, setMusic, setVolume, chime } from "./game/audio";
 const clock = (time: number) =>
   `${Math.floor(time / 60)
@@ -77,6 +78,7 @@ export default function App() {
     [selectedSeed, setSelectedSeed] = useState<FlowerId>(() => { try { const id = localStorage.getItem("flower-valley-selected-seed"); return FLOWERS.find(f => f.id === id)?.id ?? "daisy"; } catch { return "daisy"; } }),
     [bouquet, setBouquet] = useState<FlowerId[]>([]),
     [mapPos, setMapPos] = useState(bridge.position),
+    [banner, setBanner] = useState<(typeof SCENES)[number] | null>(null),
     [savedAt, setSavedAt] = useState("บันทึกอัตโนมัติ"),
     [touch, setTouch] = useState(matchMedia("(pointer:coarse)").matches),
     [fullscreen, setFullscreen] = useState(false);
@@ -127,6 +129,7 @@ export default function App() {
       sitReturn.current = null;
     }
     bridge.sitting = false;
+    bridge.zoom = false;
     bridge.keys.clear();
   };
   const open = (m: Modal) => {
@@ -136,10 +139,37 @@ export default function App() {
     bridge.move = { x: 0, y: 0 };
     setModal(m);
   };
+  // Aim the telescope from its eyepiece toward a scene.
+  const lookFrom = (scene: { x: number; z: number }) =>
+    (bridge.teleport = { x: TELESCOPE.x, z: TELESCOPE.z + 0.45, yaw: Math.atan2(-(scene.x - TELESCOPE.x), -(scene.z - TELESCOPE.z)), pitch: -0.07 });
+  const warp = (scene: (typeof SCENES)[number]) => {
+    close();
+    bridge.teleport = { x: scene.x, z: scene.z, yaw: scene.yaw, pitch: 0 };
+  };
+  const lastScene = useRef(sceneAt(bridge.position.x, bridge.position.z).id);
+  useEffect(() => {
+    const scene = sceneAt(mapPos.x, mapPos.z);
+    if (scene.id === lastScene.current) return;
+    lastScene.current = scene.id;
+    if (!getState().started) return;
+    setBanner(scene);
+    const t = setTimeout(() => setBanner(null), 3600);
+    return () => clearTimeout(t);
+  }, [mapPos]);
   const interact = () => {
     const t = bridge.target;
     if (!t || nightRef.current || modalRef.current || !getState().started)
       return;
+    if (t.kind === "forage") {
+      act({ type: "forage", index: t.index });
+      return;
+    }
+    if (t.kind === "viewpoint") {
+      sitReturn.current = { ...bridge.position };
+      lookFrom(SCENES[0]);
+      bridge.sitting = true;
+      bridge.zoom = true;
+    }
     if (t.kind === "rest") {
       sitReturn.current = { ...bridge.position };
       bridge.teleport = t.index === 1 ? {x:20,z:1.8,yaw:Math.PI} : { x: 7, z: -9.4, yaw: 0 };
@@ -480,10 +510,11 @@ export default function App() {
                 : "“ดอกไม้จากสวนของคุณจะทำให้ใครบางคนยิ้มได้” — เมย์"}
             </p>
             {modal.kind === "fish" && <div className="recipe-summary"><ItemIcon id={"rod:"+s.upgrades.rodLevel} size={54}/><b>{RODS[s.upgrades.rodLevel].name}</b><p>ปลาหายาก {Math.round(RODS[s.upgrades.rodLevel].rare*100)}% · ขยะ {Math.round(RODS[s.upgrades.rodLevel].trash*100)}%</p><button disabled={s.upgrades.rodLevel>=2 || s.money<(RODS[s.upgrades.rodLevel+1]?.price ?? 0)} onClick={()=>act({type:"upgradeRod"})}>{s.upgrades.rodLevel>=2 ? "เบ็ดระดับสูงสุดแล้ว" : `ซื้อ${RODS[s.upgrades.rodLevel+1].name} · ${RODS[s.upgrades.rodLevel+1].price} ◉`}</button></div>}
-            {modal.kind === "general" && <p className="subtle">รับซื้อของจิปาถะที่ตกได้จากทะเลสาบ ส่วนของป่าจะเพิ่มในระบบเก็บของภายหลัง</p>}
+            {modal.kind === "general" && <p className="subtle">รับซื้อของจิปาถะจากการตกปลา และของป่าจากป่าลึกทางทิศตะวันตก (จุดเก็บงอกใหม่ทุกเช้า)</p>}
+            {modal.kind === "fish" && <p className="subtle">ปลาน้ำจืดจากทะเลสาบกระจก · ปลาทะเลจากท่าเรือชายหาดทางทิศตะวันออก</p>}
             <div className="item-list">
-              {(modal.kind === "general" ? TRASH : modal.kind === "fish"
-                ? [...FISH, ...GRILLED_FISH]
+              {(modal.kind === "general" ? [...FORAGE, ...TRASH] : modal.kind === "fish"
+                ? [...FISH, ...SEA_FISH, ...GRILLED_FISH]
                 : FLOWERS
               ).map((f) => (
                 <SaleRow key={f.id} id={f.id} name={f.name} count={s.inventory[f.id] || 0} price={"price" in f ? f.price : f.sell} act={act} />
@@ -618,7 +649,20 @@ export default function App() {
       case "grill":
         return <Grilling notify={notify} />;
       case "fishing":
-        return <Fishing notify={notify} />;
+        return <Fishing notify={notify} spot={modal.index === 1 ? "sea" : "lake"} />;
+      case "viewpoint":
+        return (
+          <div className="sleep-panel viewpoint-panel">
+            <h3>มองผ่านกล้องส่องทางไกล</h3>
+            <p className="subtle">จากยอดเนินฟ้ามองเห็นทั้งหุบเขา เลือกทิศที่อยากส่องดู</p>
+            <div className="viewpoint-buttons">
+              {SCENES.filter((v) => v.id !== "lookout").map((v) => (
+                <button key={v.id} className="secondary" onClick={() => lookFrom(v)}>{v.name}</button>
+              ))}
+            </div>
+            <button className="wide" onClick={close}>ละสายตาจากกล้อง</button>
+          </div>
+        );
       case "sleep":
         return (
           <div className="sleep-panel">
@@ -825,21 +869,28 @@ export default function App() {
             ))}
           </div>
         );
-      case "map":
+      case "map": {
+        // Whole-world projection: x −84…80, z −48…90 (north is up).
+        const mx = (x: number) => ((x + 84) / 164) * 100 + "%",
+          mz = (z: number) => ((z + 48) / 138) * 100 + "%";
+        const area = (x0: number, x1: number, z0: number, z1: number) => ({ left: mx(x0), top: mz(z0), width: ((x1 - x0) / 164) * 100 + "%", height: ((z1 - z0) / 138) * 100 + "%" });
         return (
           <>
             <div className="map-world">
-              <div className="map-path vertical" />
-              <div className="map-path horizontal" />
-              <div className="map-lake">MIRROR LAKE</div>
+              <div className="map-area sea" style={area(60, 80, -48, 90)} />
+              <div className="map-area sand" style={area(47, 60, -48, 90)} />
+              <div className="map-area valley" style={area(-43, 43, -43, 43)} />
+              <div className="map-area woods" style={area(-82, -48, -12, 40)}><span>THE DEEP WOODS</span></div>
+              <div className="map-area hill" style={{ ...area(-21, 21, 45, 87), borderRadius: "50%" }}><span>SKYHILL</span></div>
+              <div className="map-area lake" style={{ ...area(-13, 13, -42, -20), borderRadius: "50%" }}><span>MIRROR LAKE</span></div>
+              <div className="map-area path" style={area(-1.5, 1.5, -20, 62)} />
+              <div className="map-area path" style={area(-48, -1, 13.8, 16.2)} />
+              <div className="map-area path" style={area(0, 76, -17.2, -14.8)} />
               {ZONES.map((z) => (
                 <div
                   className={"map-marker " + z.id}
                   key={z.id}
-                  style={{
-                    left: ((z.x + 28) / 56) * 100 + "%",
-                    top: ((z.z + 38) / 76) * 100 + "%",
-                  }}
+                  style={{ left: mx(z.x), top: mz(z.z) }}
                 >
                   <span>{z.icon}</span>
                   <small>{z.name}</small>
@@ -848,8 +899,8 @@ export default function App() {
               <div
                 className="map-player"
                 style={{
-                  left: ((mapPos.x + 28) / 56) * 100 + "%",
-                  top: ((mapPos.z + 38) / 76) * 100 + "%",
+                  left: mx(mapPos.x),
+                  top: mz(mapPos.z),
                   transform: `translate(-50%,-50%) rotate(${(-mapPos.yaw * 180) / Math.PI}deg)`,
                 }}
               >
@@ -857,12 +908,22 @@ export default function App() {
               </div>
               <span className="map-north">N ↑</span>
             </div>
+            <h3 className="warp-title">วาร์ปไปยังฉาก</h3>
+            <div className="warp-list">
+              {SCENES.map((scene, i) => (
+                <button key={scene.id} className={"secondary" + (sceneAt(mapPos.x, mapPos.z).id === scene.id ? " current" : "")} onClick={() => warp(scene)}>
+                  <b>{i + 1}. {scene.name}</b>
+                  <small>{scene.desc}</small>
+                </button>
+              ))}
+            </div>
             <p className="subtle">
               ▲ ตำแหน่งของคุณ • ร้านค้าเปิด 07:00–20:00 น. •
-              เกมหยุดเวลาขณะเปิดแผนที่
+              เกมหยุดเวลาขณะเปิดแผนที่ • วาร์ปไม่เสียเวลาหรือพลังงาน
             </p>
           </>
         );
+      }
       case "pause":
       case "settings":
         return (
@@ -977,6 +1038,7 @@ export default function App() {
     bouquet: "จัดช่อดอกไม้",
     customer: "ออร์เดอร์ประจำวัน",
     fishing: "ตกปลาที่ Mirror Lake",
+    viewpoint: "จุดชมวิวเนินฟ้า",
     sleep: "พักผ่อนที่บ้าน",
     rest: "มุมสงบใต้ร่มไม้",
     food: "ครัวอุ่นใจของโนรา",
@@ -1208,7 +1270,7 @@ export default function App() {
 
       {modal && (
         <ModalFrame
-          title={modal.kind === "rest" && modal.index === 1 ? "มุมนั่งพักในสวนข้างบ้าน" : titles[modal.kind] || modal.name || ""}
+          title={modal.kind === "rest" && modal.index === 1 ? "มุมนั่งพักในสวนข้างบ้าน" : modal.kind === "fishing" && modal.index === 1 ? "ตกปลาทะเลที่ท่าเรือ" : titles[modal.kind] || modal.name || ""}
           kind={modal.kind}
           onClose={close}
           money={s.money}
@@ -1216,6 +1278,13 @@ export default function App() {
         >
           {content()}
         </ModalFrame>
+      )}
+      {banner && !modal && (
+        <div className="scene-banner" key={banner.id}>
+          <small>SCENE {SCENES.indexOf(banner) + 1} / {SCENES.length}</small>
+          <b>{banner.name}</b>
+          <span>{banner.en}</span>
+        </div>
       )}
       {night && <SleepTransition action={night} onComplete={finishNight} />}
       <div className="world-label">
@@ -1272,7 +1341,7 @@ function ModalFrame({
   }, [kind]);
   return (
     <div
-      className={"modal-backdrop " + (kind === "rest" ? "rest-backdrop" : "")}
+      className={"modal-backdrop " + (kind === "rest" || kind === "viewpoint" ? "rest-backdrop" : "")}
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}

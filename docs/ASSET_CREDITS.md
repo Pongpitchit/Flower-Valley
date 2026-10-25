@@ -89,3 +89,14 @@ Generated with built-in image_gen. Original generated alpha preserved; CSS selec
 - Botanical visual references only (not bundled): https://www.rhs.org.uk/plants/30717/cosmos-bipinnatus/details/ and https://plants.ces.ncsu.edu/plants/cosmos-bipinnatus/. Non-rose redraw was subsequently reverted at user request.
 
 - `public/icons/pixelart/fish-species.png`: original builtin imagegen pixel-art atlas; five species, catfish excluded. Exact prompt in `fish-species-prompt.json`. Side-yard furniture is original procedural geometry using existing project wood materials; no paid assets.
+
+## New scenes: Breezy Beach, Deep Woods, Skyhill Lookout (2026-10-25)
+
+| Asset | Use | Source / license |
+| --- | --- | --- |
+| Coast Sand 01 (Poly Haven) | Beach sand color + OpenGL normal, 1K → `public/textures/scenes/sand-*.jpg` | https://polyhaven.com/a/coast_sand_01 — CC0 |
+| Forest Leaves 02 (Poly Haven) | Deep Woods floor color + OpenGL normal, 1K → `public/textures/scenes/forest-floor-*.jpg` | https://polyhaven.com/a/forest_leaves_02 — CC0 |
+| Kenney Nature Kit 2.1 | Woods trees, bushes, ferns, grass, flowers, mushrooms, stumps, logs, rocks, tent, fire ring, canoe; beach palms → `public/models/woods/`, `public/models/beach/tree_palm*.glb` | https://kenney.nl/assets/nature-kit — CC0 (license copied beside the models) |
+| Kenney Pirate Kit 2.1 | Rowing boats, distant ship, barrel, crate, chest, sand rocks → `public/models/beach/` (+ `Textures/colormap.png`) | https://kenney.nl/assets/pirate-kit — CC0 (license copied beside the models) |
+
+Kenney foliage/bark colours are re-tinted at load time to match the valley palette. The sea, waves, foam, pier, lighthouse, umbrellas, sandcastle, shells, gulls, leaping fish, brook, bridge, light shafts, mist, fireflies, forage spot props, hill, deck, telescope, benches, flag, kite and scene gates are original procedural geometry. Sea-fish and forage icons are original 16×16 pixel art drawn in code (`src/components/PixelIcon.tsx`). No paid assets.

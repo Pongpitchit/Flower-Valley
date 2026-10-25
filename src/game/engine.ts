@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import {
   FOODS, EDIBLES, CAST_MINUTES, FERTILIZERS, RODS, TRASH, catchTable,
   FLOWERS,
-  FISH,
+  FISH, SEA_FISH, seaCatchTable, FORAGE, FORAGE_SPOTS, FORAGE_ENERGY, FORAGE_MINUTES,
   GRILLED_FISH,
   GRILL_MINUTES,
   GRILL_ENERGY,
@@ -37,7 +37,7 @@ export type Artwork = {
 };
 export type Bouquet = { id: string; flowers: FlowerId[]; price: number };
 export type GameState = {
-  version: 5;
+  version: 6;
   artDay: ArtDay;
   day: number;
   time: number;
@@ -52,6 +52,7 @@ export type GameState = {
   upgrades: { farmLevel: number; energyLevel: number; wateringLevel: number; rodLevel: number; homeLevel: number };
   home: { style: string; ownedStyles: string[]; garden: boolean; pond: boolean; fish: string[] };
   decorations: number;
+  foraged: number[];
   restAt: number;
   order: { flower: FlowerId; fulfilled: boolean };
   stats: { harvested: number; fish: number; earned: number };
@@ -66,7 +67,7 @@ export const SAVE_KEY =
     ? "-qa" + (new URLSearchParams(location.search).get("qa") ? "-" + new URLSearchParams(location.search).get("qa") : "")
     : "");
 export const initialState = (rng = Math.random): GameState => ({
-  version: 5,
+  version: 6,
   artDay: rollArtDay(rng),
   day: 1,
   time: 480,
@@ -85,6 +86,7 @@ export const initialState = (rng = Math.random): GameState => ({
   upgrades: { farmLevel: 0, energyLevel: 0, wateringLevel: 0, rodLevel: 0, homeLevel: 0 },
   home: {style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]},
   decorations: 0,
+  foraged: [],
   restAt: -999,
   order: { flower: "daisy", fulfilled: false },
   stats: { harvested: 0, fish: 0, earned: 0 },
@@ -96,7 +98,9 @@ const finite = (v: unknown, min: number, max: number) =>
   typeof v === "number" && Number.isFinite(v) && v >= min && v <= max;
 export function validateSave(v: any): v is GameState {
   return (
-    v?.version === 5 &&
+    v?.version === 6 &&
+    Array.isArray(v.foraged) && v.foraged.length <= FORAGE_SPOTS.length && new Set(v.foraged).size === v.foraged.length &&
+    v.foraged.every((i: unknown) => Number.isInteger(i) && finite(i, 0, FORAGE_SPOTS.length - 1)) &&
     v.home && typeof v.home.garden === "boolean" && typeof v.home.pond === "boolean" &&
     HOME_STYLES.some(x=>x.id===v.home.style) && Array.isArray(v.home.ownedStyles) && v.home.ownedStyles.includes(v.home.style) && v.home.ownedStyles.every((id:string)=>HOME_STYLES.some(x=>x.id===id)) &&
     Array.isArray(v.home.fish) && v.home.fish.length<=6 && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
@@ -131,7 +135,7 @@ export function validateSave(v: any): v is GameState {
       ([k, n]) =>
         (FERTILIZERS.some(f=>f.id===k) || validId(k) ||
           (k.startsWith("seed:") && validId(k.slice(5))) ||
-          [...FISH, ...GRILLED_FISH, ...TRASH, ...FOODS].some((f) => f.id === k)) &&
+          [...FISH, ...SEA_FISH, ...GRILLED_FISH, ...TRASH, ...FOODS, ...FORAGE].some((f) => f.id === k)) &&
         finite(n, 0, 1e6) &&
         Number.isInteger(n),
     ) &&
@@ -178,8 +182,8 @@ export function validateSave(v: any): v is GameState {
     ["harvested", "fish", "earned"].every((k) =>
       finite(v.stats?.[k], 0, 1e12),
     ) &&
-    finite(v.position?.x, -44, 44) &&
-    finite(v.position?.z, -44, 44) &&
+    finite(v.position?.x, -90, 90) &&
+    finite(v.position?.z, -60, 95) &&
     finite(v.position?.yaw, -1e6, 1e6)
   );
 }
@@ -323,7 +327,7 @@ export function transition(
   }
   if (a.type === "sell") {
     const f = FLOWERS.find((f) => f.id === a.id),
-      fish = [...FISH, ...GRILLED_FISH, ...TRASH].find((f) => f.id === a.id);
+      fish = [...FISH, ...SEA_FISH, ...GRILLED_FISH, ...TRASH, ...FORAGE].find((f) => f.id === a.id);
     if ((!f && !fish) || !a.id || !(s.inventory[a.id] > 0))
       return fail("ไม่มีสินค้านี้ในกระเป๋า");
     const count = a.amount ?? 1;
@@ -334,7 +338,7 @@ export function transition(
     return ok(`ขาย ${count} ชิ้น +${value} เหรียญ`);
   }
   if (a.type === "grill") {
-    const fish = FISH.find((f) => f.id === a.id);
+    const fish = [...FISH, ...SEA_FISH].find((f) => f.id === a.id);
     if (!fish || !(s.inventory[fish.id] > 0))
       return fail("เลือกปลาสดที่มีในกระเป๋า");
     if (s.time + GRILL_MINUTES >= 1440)
@@ -418,13 +422,25 @@ export function transition(
   }
   if (a.type === "catch") {
     let roll = rng();
-    const table = catchTable(s.upgrades.rodLevel);
+    const table = a.id === "sea" ? seaCatchTable(s.upgrades.rodLevel) : catchTable(s.upgrades.rodLevel);
     let id = table[table.length-1].id;
     for (const entry of table) { roll -= entry.chance; if (roll < 0) { id=entry.id; break; } }
-    const item=[...FISH,...TRASH].find(f=>f.id===id)!;
+    const item=[...FISH,...SEA_FISH,...TRASH].find(f=>f.id===id)!;
     add(id,1);
-    if(FISH.some(f=>f.id===id)) s.stats.fish++;
+    if(!TRASH.some(f=>f.id===id)) s.stats.fish++;
     return { ...ok(TRASH.some(f=>f.id===id) ? `ตกได้${item.name} นำไปขายให้โรวันได้` : `จับ${item.name}ได้!`), caughtItemId: id };
+  }
+  if (a.type === "forage") {
+    const index = a.index ?? -1, spot = FORAGE_SPOTS[index];
+    if (!spot) return fail("ไม่พบจุดเก็บของป่า");
+    if (s.foraged.includes(index)) return fail("เก็บไปแล้ววันนี้ พรุ่งนี้เช้าจะงอกใหม่");
+    if (s.time + FORAGE_MINUTES >= 1440) return fail("มืดเกินกว่าจะหาของในป่า กลับมาพรุ่งนี้นะ");
+    if (!energy(FORAGE_ENERGY)) return fail(`ต้องใช้พลังงาน ${FORAGE_ENERGY} หน่วย`);
+    const item = FORAGE.find((f) => f.id === spot.item)!;
+    add(item.id, 1);
+    s.foraged.push(index);
+    s.time += FORAGE_MINUTES;
+    return ok(`เก็บ${item.name}ได้ 1 ชิ้น · ขายให้โรวันได้ ${item.price} เหรียญ`);
   }
   if (a.type === "upgradeRod") {
     const rod=RODS[s.upgrades.rodLevel+1];
@@ -553,6 +569,7 @@ function nextDay(s: GameState, rng: () => number, rested = true) {
     flower: FLOWERS[(s.day - 1) % FLOWERS.length].id,
     fulfilled: false,
   };
+  s.foraged = [];
   s.position = { x: 13, z: 2, yaw: -Math.PI / 2 };
 }
 // Preserve existing farms, inventory, artwork and historical sale values.
@@ -564,6 +581,7 @@ export function migrateSave(value: any): unknown {
   if (value?.version === 2) value={...value,version:3,upgrades:{...value.upgrades,rodLevel:0,homeLevel:0}};
   if(value?.version === 3) value= {...value,version:4,home:{style:"original",ownedStyles:["original"],garden:false,pond:false,fish:[]}};
   if(value?.version === 4) value={...value,version:5,artDay:{...value.artDay,used:0}};
+  if(value?.version === 5) value={...value,version:6,foraged:[]};
   return value;
 }
 let loadMessage = "";

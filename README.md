@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-Open the localhost address printed by Vite. To play on an iPad/phone on the same Wi-Fi, use the Network address printed by Vite. Internet is needed for installing packages and optional UI fonts; all game models and material textures are included locally. This task has not published the game to a public server.
+Open the localhost address printed by Vite. To play on an iPad/phone on the same Wi-Fi, use the Network address printed by Vite. Internet is needed for installing packages and optional UI fonts; all game models and material textures are included locally. Deployed at https://flower-valley-beige.vercel.app/ (Vercel).
 
 ```sh
 npm test
@@ -26,7 +26,19 @@ npm run preview
 - E: interact with a nearby object/NPC; on plots, open the original seed-selection/crop panel. Choose a seed and explicitly press Plant. Space waters the targeted plot (also works inside its panel); Q opens plot details. I: inventory. M: map. B: flower encyclopedia.
 - Escape: close a panel / pause / release mouse. Settings include quality and touch-control toggles.
 - Phone/iPad: left joystick to walk, drag on the world to look, E touch button to interact.
+- Map (M) → "วาร์ปไปยังฉาก": jump instantly to any of the six scenes (free, no time or energy).
 - Fishing: Space casts/recasts; press the shown A/D sequence, or tap the corresponding buttons, within 14 seconds. A wrong input or timeout lets the fish escape; casting still costs energy.
+
+## Scenes
+
+Six scenes, each announced by a banner when you walk in:
+
+1. **Flower Village**: market, shops and Oliver's atelier
+2. **Garden & Home**: plots, cottage and Theo
+3. **Mirror Lake**: freshwater fishing and the campfire
+4. **Breezy Beach** (east trail past Finn): pier sea fishing (mackerel 45, sea bass 70, clownfish 120, rare tuna 280), lighthouse, boats, gulls
+5. **The Deep Woods** (west trail past Rowan): 12 forage spots (mushroom 25, berry 20, herb 30, glowing rare mushroom 150) that regrow every morning; 3 energy and 5 minutes each; sold to Rowan
+6. **Skyhill Lookout** (south of the village gate): hilltop deck with a telescope that zooms toward any scene
 
 ## Game systems
 

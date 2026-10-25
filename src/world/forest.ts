@@ -10,6 +10,8 @@ export function buildForest(w: any, random: () => number) {
     if(i<48) { const a=i/48*Math.PI*2; x=Math.sin(a)*(41+random()*12);z=Math.cos(a)*(42+random()*12); }
     else { x=(random()-.5)*76;z=(random()-.5)*75; if(Math.abs(x)<22 && z>-24 && z<32)continue; if(x>17 && x<28 && z>-8 && z<10)continue; if(x*x/220+(z+31)**2/130<1.5)continue; }
     if(x>-17 && x<-3 && z>29 && z<42)continue;
+    // Leave the beach, the Deep Woods, Skyhill and their connecting trails to scenes.ts.
+    if(x>44 || (x<-44 && z>-16 && z<44) || Math.hypot(x,z-66)<23 || (Math.abs(x)<5 && z>38) || (Math.abs(z-15)<4 && x<-36) || (Math.abs(z+16)<4 && x>34))continue;
     const height=7+random()*4, radius=height*(i%3===2?.26:.43);
     if(planted.some(p=>Math.hypot(x-p.x,z-p.z)<radius+p.radius+.8))continue;
     planted.push({x,z,radius});

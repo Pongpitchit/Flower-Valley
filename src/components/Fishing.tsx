@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { ItemIcon } from "./ItemIcon";
 import { RODS, CAST_MINUTES } from "../game/data";
 import { dispatch, useGame } from "../game/engine";
-export function Fishing({ notify }: { notify: (s: string) => void }) {
+export function Fishing({ notify, spot = "lake" }: { notify: (s: string) => void; spot?: "lake" | "sea" }) {
   const {upgrades} = useGame();
   const rod=RODS[upgrades.rodLevel];
   const [phase, setPhase] = useState<
@@ -65,7 +65,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
     setStep(index.current);
     if (index.current === sequence.length) {
       status.current = "won";
-      const r = dispatch({ type: "catch" });
+      const r = dispatch({ type: "catch", id: spot === "sea" ? "sea" : undefined });
       setCaughtItemId(r.caughtItemId ?? null);
       setResult(r.message);
       notify(r.message);
@@ -96,12 +96,12 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
       >
         {phase === "won" ? (
           caughtItemId && <ItemIcon id={caughtItemId} size={110} />
-        ) : <ItemIcon id="goldfish" size={110} />}
+        ) : <ItemIcon id={spot === "sea" ? "tuna" : "goldfish"} size={110} />}
         <span>≈ ≈ ≈ ≈ ≈</span>
       </div>
       <h3>
         {phase === "idle"
-          ? "ช่วงเวลาเงียบ ๆ ริมทะเลสาบ"
+          ? spot === "sea" ? "ลมทะเลพัดเบา ๆ ที่ปลายท่าเรือ" : "ช่วงเวลาเงียบ ๆ ริมทะเลสาบ"
           : phase === "waiting"
             ? "รอปลากินเหยื่อ…"
             : phase === "playing"
@@ -119,6 +119,7 @@ export function Fishing({ notify }: { notify: (s: string) => void }) {
               ? "มองผิวน้ำ แล้วรอจังหวะดี ๆ"
               : "Space หย่อนเบ็ด / ตกอีกครั้ง · A / D ดึงปลา · ใช้พลังงาน 10"}
       </p>
+      {spot === "sea" && <p className="subtle">ปลาทะเล: ปลาทู · ปลากะพง · ปลาการ์ตูน · ปลาทูน่า (หายาก) — ขายให้ฟินน์ได้ราคาสูงกว่าปลาน้ำจืด</p>}
       <p className="subtle"><ItemIcon id={"rod:"+upgrades.rodLevel} /> {rod.name} · ปลาหายาก {Math.round(rod.rare*100)}% · ขยะ {Math.round(rod.trash*100)}% · ลงเบ็ดครั้งละ {CAST_MINUTES} นาที / 10 พลังงาน</p><p className="subtle">โอกาสต่อครั้งที่ตกสำเร็จ สุ่มใหม่ทุกครั้ง เบ็ดดีเพิ่มโอกาสแต่ไม่ได้รับประกันว่าจะได้ทุกครั้ง</p>
       {phase === "playing" && (
         <>

@@ -14,9 +14,10 @@ import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { buildCampProps } from "./campProps";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { bridge, colliders, canMove, type Target } from "./bridge";
+import { bridge, colliders, canMove, groundHeight, type Target } from "./bridge";
 import { getState, updatePosition, type GameState } from "../game/engine";
-import { flower, FLOWERS, plotPosition, ZONES } from "../game/data";
+import { flower, FLOWERS, plotPosition, ZONES, FORAGE_SPOTS, FORAGE_ENERGY, itemName, sceneAt } from "../game/data";
+import { buildBeach, buildWoods, buildLookout } from "./scenes";
 const T = window.AFRAME.THREE;
 let randomSeed = 7042;
 const random = () => {
@@ -159,6 +160,7 @@ if (!window.AFRAME.components["flower-world"])
   window.AFRAME.registerComponent("flower-world", {
     init(this: any) {
       this.world = new T.Group();
+      this.geometries = geometries;
       bridge.npcModels = {};
       this.breezeClock = { value: 0 };
       this.reducedMotion = matchMedia(
@@ -247,8 +249,9 @@ if (!window.AFRAME.components["flower-world"])
       // Cut the lake out of the terrain so underwater fish are not hidden by grass.
       const landShape = new T.Shape();
       landShape.moveTo(-80, -80);
-      landShape.lineTo(80, -80);
-      landShape.lineTo(80, 80);
+      // The east edge stops at the beach so the sea can show beyond the sand.
+      landShape.lineTo(49, -80);
+      landShape.lineTo(49, 80);
       landShape.lineTo(-80, 80);
       landShape.closePath();
       const lakeHole = new T.Path();
@@ -270,6 +273,9 @@ if (!window.AFRAME.components["flower-world"])
       this.box(this.m.path, 8, 0.012, 23, 18, 0.05, 3);
       this.box(this.m.path, 8, 0.012, 6, 18, 0.05, 3);
       this.box(this.m.path, 8, 0.012, -16, 16, 0.05, 2.5);
+      // Trails out to the beach (east) and the Deep Woods (west).
+      this.box(this.m.path, 32, 0.012, -16, 32, 0.05, 2.5);
+      this.box(this.m.path, -33.5, 0.012, 15, 31, 0.05, 2.5);
       // CC0 rocky terrain gives the distant hills a natural surface.
       const mountainMaterial=landscapeMaterial(T);
       for (let i = 0; i < 20; i++) {
@@ -282,16 +288,10 @@ if (!window.AFRAME.components["flower-world"])
         mountain.computeVertexNormals();
         const a = (i / 20) * Math.PI * 2,
           r = 120 + random() * 18;
-        this.mesh(
-          mountain,
-          mountainMaterial,
-          Math.sin(a) * r,
-          -1,
-          Math.cos(a) * r,
-          24 + random() * 8,
-          16 + random() * 14,
-          22 + random() * 6,
-        );
+        const sx = 24 + random() * 8, sy = 16 + random() * 14, sz = 22 + random() * 6;
+        // Keep the eastern horizon open over the sea.
+        if (Math.sin(a) > 0.35) continue;
+        this.mesh(mountain, mountainMaterial, Math.sin(a) * r, -1, Math.cos(a) * r, sx, sy, sz);
       }
       this.buildLake();
       this.buildHouse();
@@ -394,6 +394,9 @@ if (!window.AFRAME.components["flower-world"])
       this.standingSign("THE GARDEN", -10, 7.2, 2.4);
       // Trees, grasses, flowers and stone boundaries.
       buildForest(this, random);
+      this.updateBeach = buildBeach(this);
+      this.woods = buildWoods(this);
+      this.updateLookout = buildLookout(this);
       this.feedback = buildActivityFeedback(this.world);
       const grassMatrices = [];
       for (let i = 0; i < 11000; i++) {
@@ -487,6 +490,8 @@ if (!window.AFRAME.components["flower-world"])
       this.sun.shadow.bias = -0.0004;
       this.sun.shadow.normalBias = 0.05;
       this.world.add(this.sun);
+      this.world.add(this.sun.target);
+      this.fogDensity = 0.0105;
       this.sky = new T.Mesh(
         new T.SphereGeometry(230, 32, 16),
         new T.ShaderMaterial({
@@ -1127,6 +1132,11 @@ if (!window.AFRAME.components["flower-world"])
     },
     refresh(this: any, s: GameState) {
       refreshHomeGarden(this,s,createFlower);
+      const forageSig = s.foraged.join();
+      if (forageSig !== this.lastForage) {
+        this.lastForage = forageSig;
+        this.woods.refresh(s);
+      }
       const sig = JSON.stringify(s.farm);
       if (sig !== this.lastFarm) {
         this.lastFarm = sig;
@@ -1320,7 +1330,7 @@ if (!window.AFRAME.components["flower-world"])
         bridge.teleport = s.position;
       }
       if (bridge.teleport) {
-        this.pos.set(bridge.teleport.x, 1.7, bridge.teleport.z);
+        this.pos.set(bridge.teleport.x, 1.7 + groundHeight(bridge.teleport.x, bridge.teleport.z), bridge.teleport.z);
         this.yaw = bridge.teleport.yaw ?? this.yaw;
         this.pitch = bridge.teleport.pitch ?? 0;
         bridge.teleport = null;
@@ -1356,11 +1366,19 @@ if (!window.AFRAME.components["flower-world"])
               (-dx * Math.sin(this.yaw) + dz * Math.cos(this.yaw)) * speed;
           if (canMove(nx, this.pos.z)) this.pos.x = nx;
           if (canMove(this.pos.x, nz)) this.pos.z = nz;
-          this.pos.y = 1.7 + (len > 0 ? Math.sin(time * 0.01) * 0.025 : 0);
+          // Ease onto the hill and pier instead of snapping between heights.
+          const ground = 1.7 + groundHeight(this.pos.x, this.pos.z);
+          this.pos.y += (ground - this.pos.y) * Math.min(1, delta * 12);
+          this.pos.y += len > 0 ? Math.sin(time * 0.01) * 0.0025 : 0;
         }
         bridge.look.x = bridge.look.y = 0;
         camera.position.copy(this.pos);
-        if (bridge.sitting) camera.position.y = 1.3;
+        if (bridge.sitting && !bridge.zoom) camera.position.y = 1.3 + groundHeight(this.pos.x, this.pos.z);
+        const fov = bridge.zoom ? 28 : 65;
+        if (camera.fov !== fov) {
+          camera.fov = fov;
+          camera.updateProjectionMatrix();
+        }
         camera.rotation.set(this.pitch, this.yaw, 0, "YXZ");
         bridge.position = { x: this.pos.x, z: this.pos.z, yaw: this.yaw };
         if (!bridge.sitting) updatePosition(this.pos.x, this.pos.z, this.yaw);
@@ -1377,11 +1395,17 @@ if (!window.AFRAME.components["flower-world"])
           ? 1.1
           : 1.45;
       this.sun.color.set(night ? "#b1c9ee" : sunset ? "#ffc18b" : "#fff1d6");
+      // The shadow frustum follows the player so the new scenes get shadows too.
       this.sun.position.set(
-        Math.cos(((hours - 6) / 14) * Math.PI) * 35,
+        this.pos.x + Math.cos(((hours - 6) / 14) * Math.PI) * 35,
         Math.max(5, daylight * 45),
-        15,
+        this.pos.z + 15,
       );
+      this.sun.target.position.set(this.pos.x, 0, this.pos.z);
+      const scene = sceneAt(this.pos.x, this.pos.z).id;
+      const fogTarget = scene === "woods" ? 0.021 : scene === "beach" || scene === "lookout" ? 0.0065 : 0.0105;
+      this.fogDensity += (fogTarget - this.fogDensity) * Math.min(1, delta * 1.5);
+      this.el.sceneEl.object3D.fog.density = this.fogDensity;
       const top = night
           ? "#162737"
           : s.weather === "rain"
@@ -1449,6 +1473,9 @@ if (!window.AFRAME.components["flower-world"])
         f.rotation.y = Math.atan2(4*Math.sin(a*.8),5*Math.cos(a));
       });
       animateHomePond(this,motionTime);
+      this.updateBeach(motionTime, night, sunset);
+      this.woods.update(motionTime, night, sunset);
+      this.updateLookout(motionTime);
       this.campfireUpdate?.(motionTime);
       this.npcs.forEach((n: any, i: number) => {
         const open = hours >= 7 && hours < 20;
@@ -1518,6 +1545,11 @@ if (!window.AFRAME.components["flower-world"])
               : "เลือกเมล็ดพันธุ์",
             ...plotPosition(i),
           })),
+          ...FORAGE_SPOTS.flatMap((spot, i) =>
+            s.foraged.includes(i)
+              ? []
+              : [{ id: "forage" + i, kind: "forage", index: i, name: itemName(spot.item), hint: `เก็บของป่า • พลังงาน −${FORAGE_ENERGY}`, x: spot.x, z: spot.z }],
+          ),
           ...this.npcs
             .filter((n: any) => n.open)
             .map((n: any) => ({

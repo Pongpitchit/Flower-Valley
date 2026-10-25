@@ -7,8 +7,8 @@ import {
   validParts,
   type GameState,
 } from "./engine";
-import { FLOWERS, FISH, GRILLED_FISH, FOODS, FERTILIZERS, catchTable } from "./data";
-import { canMove, colliders } from "../world/bridge";
+import { FLOWERS, FISH, GRILLED_FISH, FOODS, FERTILIZERS, catchTable, seaCatchTable, SEA_FISH, FORAGE, FORAGE_SPOTS, SCENES, sceneAt } from "./data";
+import { canMove, colliders, groundHeight, HILL, PIER } from "../world/bridge";
 const apply = (s: GameState, type: string, args = {}) =>
   transition(s, { type, ...args }, () => 0.8);
 const day = (s: GameState, rain = false) =>
@@ -336,7 +336,8 @@ describe("Persistence and collisions", () => {
     colliders.length = 0;
     colliders.push({ x: 5, z: 5, w: 2, d: 2 });
     expect(canMove(0, 20)).toBe(true);
-    expect(canMove(44, 0)).toBe(false);
+    expect(canMove(44, 30)).toBe(false);
+    expect(canMove(0, 90)).toBe(false);
     expect(canMove(0, -31)).toBe(false);
     expect(canMove(5, 5)).toBe(false);
     expect(canMove(7, 5)).toBe(true);
@@ -648,5 +649,68 @@ describe('Home garden rest and economy safeguards',()=>{
       for(const fertilizer of FERTILIZERS)expect(flower.sell-flower.seed-fertilizer.price).toBeGreaterThanOrEqual(0);
     }
     for(const cooked of GRILLED_FISH)expect(cooked.price/cooked.energy).toBeGreaterThan(FOODS[2].price/FOODS[2].energy);
+  });
+});
+
+describe('New scenes: sea pier, Deep Woods and Skyhill',()=>{
+  it('catches only sea fish or junk at the pier with exact rod chances, distinct from the lake',()=>{
+    for(const level of [0,1,2]){
+      const table=seaCatchTable(level);
+      expect(table.reduce((n,e)=>n+e.chance,0)).toBeCloseTo(1,10);
+      expect(table.find(e=>e.id==='tuna')!.chance).toBe([.04,.12,.2][level]);
+      expect(table.every(e=>!FISH.some(f=>f.id===e.id))).toBe(true);
+      const s=initialState();s.upgrades.rodLevel=level;let start=0;
+      for(const item of table){
+        const r=transition(s,{type:'catch',id:'sea'},()=>start+item.chance/2);
+        expect(r.caughtItemId).toBe(item.id);expect(r.state.inventory[item.id]).toBe(1);
+        start+=item.chance;
+      }
+    }
+    expect(SEA_FISH.map(f=>f.price)).toEqual([45,70,120,280]);
+  });
+  it('sells and grills sea fish but keeps them out of the freshwater pond',()=>{
+    const s=initialState();s.inventory.tuna=2;s.home.pond=true;
+    const sold=apply(s,'sell',{id:'tuna'});expect(sold.state.money).toBe(500+280);
+    const grilled=apply(s,'grill',{id:'tuna'});expect(grilled.state.inventory['grilled:tuna']).toBe(1);
+    expect(GRILLED_FISH.find(f=>f.id==='grilled:tuna')!.price).toBe(420);
+    expect(apply(s,'pondAdd',{id:'tuna'}).ok).toBe(false);
+  });
+  it('forages each spot once per day for energy and time, then regrows next morning',()=>{
+    const s=initialState();
+    const rare=FORAGE_SPOTS.findIndex(p=>p.item==='forage:rare-mushroom');
+    const r=apply(s,'forage',{index:rare});
+    expect(r.ok).toBe(true);expect(r.state.inventory['forage:rare-mushroom']).toBe(1);
+    expect(r.state.energy).toBe(97);expect(r.state.time).toBe(s.time+5);
+    expect(apply(r.state,'forage',{index:rare}).ok).toBe(false);
+    expect(apply(s,'forage',{index:99}).ok).toBe(false);
+    expect(apply({...s,energy:2},'forage',{index:0}).ok).toBe(false);
+    expect(apply({...s,time:1436},'forage',{index:0}).ok).toBe(false);
+    const sold=apply(r.state,'sell',{id:'forage:rare-mushroom'});expect(sold.state.money).toBe(650);
+    const next=day(r.state);expect(next.foraged).toEqual([]);expect(apply(next,'forage',{index:rare}).ok).toBe(true);
+    expect(FORAGE.map(f=>f.price)).toEqual([25,20,30,150]);
+  });
+  it('migrates version 5 saves and validates foraged spots and wider positions',()=>{
+    const old:any=initialState();old.version=5;delete old.foraged;old.inventory.carp=1;
+    const migrated:any=migrateSave(old);
+    expect(validateSave(migrated)).toBe(true);expect(migrated.foraged).toEqual([]);expect(migrated.inventory.carp).toBe(1);
+    const s=initialState();
+    expect(validateSave({...s,foraged:[0,0]})).toBe(false);
+    expect(validateSave({...s,foraged:[FORAGE_SPOTS.length]})).toBe(false);
+    expect(validateSave({...s,position:{x:70,z:-16,yaw:0}})).toBe(true);
+    expect(validateSave({...s,position:{x:0,z:66,yaw:0}})).toBe(true);
+  });
+  it('connects every scene by walkable paths and raises the lookout hill and pier',()=>{
+    colliders.length=0;
+    expect(SCENES.length).toBeGreaterThanOrEqual(5);
+    for(const scene of SCENES){expect(canMove(scene.x,scene.z)).toBe(true);expect(sceneAt(scene.x,scene.z).id).toBe(scene.id);}
+    for(let x=16;x<=60;x++)expect(canMove(x,-16)).toBe(true);
+    for(let x=-18;x>=-60;x--)expect(canMove(x,15)).toBe(true);
+    for(let z=40;z<=66;z++)expect(canMove(0,z)).toBe(true);
+    for(let x=56;x<=75;x++)expect(canMove(x,PIER.z)).toBe(true);
+    expect(canMove(70,-10)).toBe(false);
+    expect(groundHeight(HILL.x,HILL.z)).toBe(HILL.height);
+    expect(groundHeight(0,40)).toBe(0);
+    expect(groundHeight(74,PIER.z)).toBe(PIER.height);
+    for(const spot of FORAGE_SPOTS)expect(canMove(spot.x,spot.z)).toBe(true);
   });
 });
