@@ -1439,20 +1439,21 @@ function TouchControls({
 }
 
 function PondPanel({s,act}:{s:import("./game/engine").GameState;act:(action:import("./game/engine").Action)=>unknown}) {
-  const full=s.home.fish.length>=6;
   return <article className="pond-panel">
-    <div className="pond-heading"><h3>บ่อปลาประดับข้างบ้าน</h3><span className="pond-capacity">{s.home.fish.length} / 6 ตัว</span></div>
+    <div className="pond-heading"><h3>บ่อปลาประดับข้างบ้าน</h3><span className="pond-capacity">ในบ่อ {s.home.fish.length} ตัว · ไม่จำกัด</span></div>
     <p>เลือกปลาจากกระเป๋ามาเลี้ยง และนำกลับได้ทุกเมื่อ</p>
     {!s.home.pond ? <button disabled={s.money<850} onClick={()=>act({type:"homePond"})}>สร้างบ่อ · 850 ◉</button> : <>
-      <p className="pond-hint">{full?"บ่อเต็มแล้ว · นำปลาออกก่อนเพิ่มตัวใหม่":"ปล่อยหรือนำกลับครั้งละ 1 ตัว"}</p>
+      <p className="pond-hint">เลี้ยงได้เท่าจำนวนปลาน้ำจืดที่คุณมี · ปล่อยหรือนำกลับทีละตัวหรือทั้งหมด</p>
       <div className="pond-list">{FISH.map(f=>{
         const owned=s.inventory[f.id]||0, stocked=s.home.fish.filter(id=>id===f.id).length;
         return <div className="pond-row" key={f.id}>
           <ItemIcon id={f.id} size={44}/>
           <div className="pond-fish-info"><strong>{f.name}</strong><span>ในกระเป๋า {owned} · ในบ่อ {stocked}</span></div>
           <div className="pond-actions">
-            <button aria-label={`ปล่อย${f.name}ลงบ่อ 1 ตัว`} disabled={!owned||full} onClick={()=>act({type:"pondAdd",id:f.id})}>{!owned?"ไม่มีในกระเป๋า":full?"บ่อเต็ม":"ปล่อยลงบ่อ"}</button>
-            <button className="secondary" aria-label={`นำ${f.name}กลับ 1 ตัว`} disabled={!stocked} onClick={()=>act({type:"pondRemove",id:f.id})}>นำกลับ</button>
+            <button aria-label={`ปล่อย${f.name}ลงบ่อ 1 ตัว`} disabled={!owned} onClick={()=>act({type:"pondAdd",id:f.id})}>{owned?"ปล่อย 1":"ไม่มีในกระเป๋า"}</button>
+            {owned>1 && <button aria-label={`ปล่อย${f.name}ลงบ่อทั้งหมด`} onClick={()=>act({type:"pondAdd",id:f.id,amount:owned})}>ปล่อยทั้งหมด {owned}</button>}
+            <button className="secondary" aria-label={`นำ${f.name}กลับ 1 ตัว`} disabled={!stocked} onClick={()=>act({type:"pondRemove",id:f.id})}>นำกลับ 1</button>
+            {stocked>1 && <button className="secondary" aria-label={`นำ${f.name}กลับทั้งหมด`} onClick={()=>act({type:"pondRemove",id:f.id,amount:stocked})}>นำกลับทั้งหมด</button>}
           </div>
         </div>;
       })}</div>

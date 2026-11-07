@@ -103,7 +103,7 @@ export function validateSave(v: any): v is GameState {
     v.foraged.every((i: unknown) => Number.isInteger(i) && finite(i, 0, FORAGE_SPOTS.length - 1)) &&
     v.home && typeof v.home.garden === "boolean" && typeof v.home.pond === "boolean" &&
     HOME_STYLES.some(x=>x.id===v.home.style) && Array.isArray(v.home.ownedStyles) && v.home.ownedStyles.includes(v.home.style) && v.home.ownedStyles.every((id:string)=>HOME_STYLES.some(x=>x.id===id)) &&
-    Array.isArray(v.home.fish) && v.home.fish.length<=6 && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
+    Array.isArray(v.home.fish) && v.home.fish.length<=POND_LIMIT && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
     ["calm", "inspired"].includes(v.artDay?.mood) &&
     v.artDay.limit === (v.artDay.mood === "inspired" ? 2 : 1) &&
     Number.isInteger(v.artDay.used) && finite(v.artDay.used, 0, v.artDay.limit) &&
@@ -214,6 +214,8 @@ export type Action = {
 };
 export type Result = { state: GameState; message: string; ok: boolean; caughtItemId?: string };
 export const REST_MINUTES = 30;
+// Effectively unlimited; only guards save size.
+export const POND_LIMIT = 999;
 export const HOME_REST_ENERGY = 40;
 export function transition(
   previous: GameState,
@@ -468,16 +470,19 @@ export function transition(
   }
   if(a.type === "pondAdd" || a.type === "pondRemove") {
     if(!s.home.pond || !FISH.some(f=>f.id===a.id)) return fail("ต้องมีบ่อและเลือกปลาสด");
-    const id=a.id!;
+    // The pond holds every fish the player owns; amount moves several at once.
+    const id=a.id!, count=a.amount ?? 1;
+    if(!Number.isInteger(count) || count<1) return fail("เลือกจำนวนปลา");
     if(a.type === "pondAdd") {
-      if(s.home.fish.length>=6 || !(s.inventory[id]>0)) return fail("บ่อเต็มหรือไม่มีปลาในกระเป๋า");
-      s.inventory[id]--; s.home.fish.push(id);
+      if(!((s.inventory[id]||0)>=count)) return fail("ปลาในกระเป๋าไม่พอ");
+      if(s.home.fish.length+count>POND_LIMIT) return fail("บ่อแน่นเกินไปแล้ว");
+      s.inventory[id]-=count; for(let i=0;i<count;i++) s.home.fish.push(id);
     } else {
-      const index=s.home.fish.indexOf(id);
-      if(index<0) return fail("ไม่มีปลาชนิดนี้ในบ่อ");
-      s.home.fish.splice(index,1); add(id,1);
+      if(s.home.fish.filter(f=>f===id).length<count) return fail("ไม่มีปลาชนิดนี้ในบ่อ");
+      for(let i=0;i<count;i++) s.home.fish.splice(s.home.fish.indexOf(id),1);
+      add(id,count);
     }
-    return ok(a.type === "pondAdd" ? "ปล่อยปลาลงบ่อแล้ว" : "นำปลากลับเข้ากระเป๋าแล้ว");
+    return ok(a.type === "pondAdd" ? `ปล่อยปลาลงบ่อ ${count} ตัว` : `นำปลากลับเข้ากระเป๋า ${count} ตัว`);
   }
   if (a.type === "upgradeHome") {
     const cost=HOME_COSTS[s.upgrades.homeLevel];

@@ -132,7 +132,7 @@ Follow-up layout: the garden lantern is outside the west fence, clear of all twe
 
 Talk to Theo to buy permanent house palettes (300 coins each, free switching after purchase), a ready-made backyard flower garden (650), or a side-yard pond (850). The original house palette remains free. The garden is decorative: no planting, watering or harvesting. Existing six front pots and side-yard upgrades remain available.
 
-The pond holds up to six raw fish. Press E at its southern edge to transfer fish from inventory or return them one at a time. Fish remain saved and swim visibly in the pond; grilled fish and junk cannot be stocked. Saves migrate from versions 1–3 to version 4 without resetting progress.
+The pond holds as many freshwater fish as you own. Press E at its southern edge to move fish in or out, one at a time or all of a species at once. Fish remain saved and swim visibly in the pond; grilled fish and junk cannot be stocked. Saves migrate from versions 1–3 to version 4 without resetting progress.
 
 Mountains and pond rocks use the locally downloaded 1K diffuse/OpenGL normal maps of **Rocky Terrain**, Amal Kumar / Poly Haven, CC0: https://polyhaven.com/a/rocky_terrain. Attribution and license are in `public/textures/landscape/LICENSE.txt`. No paid assets or new HDRI sky were added.
 

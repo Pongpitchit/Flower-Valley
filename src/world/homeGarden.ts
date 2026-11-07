@@ -52,9 +52,10 @@ export function refreshHomeGarden(w:any,s:GameState,makeFlower:(id:string)=>any)
     const water=mesh(new T.CircleGeometry(1,48),new T.MeshStandardMaterial({color:'#69a6ad',transparent:true,opacity:.35,roughness:.16,metalness:.12,depthWrite:false,side:T.DoubleSide}),24,.48,2);
     water.rotation.x=-Math.PI/2;water.scale.set(2.4,1.75,1);w.pondWater=water;
     const species=['carp','goldfish','rare','trout','perch','catfish'];
-    s.home.fish.forEach(id=>{
+    // Draw at most 24 swimmers (smaller when crowded); the panel shows the full count.
+    s.home.fish.slice(0,24).forEach(id=>{
       const index=species.indexOf(id),f=createLakeFish(w,index);
-      f.scale.setScalar(.7);f.userData.species=id;
+      f.scale.setScalar(s.home.fish.length>12?.42:.7);f.userData.species=id;
 
       group.add(f);w.pondFish.push(f);
     });
@@ -62,9 +63,9 @@ export function refreshHomeGarden(w:any,s:GameState,makeFlower:(id:string)=>any)
 }
 export function animateHomePond(w:any,time:number){
   w.pondFish?.forEach((f:any,i:number)=>{
-    const a=time*.00022+i*1.9,r=1+(i%3)*.3;
-    f.position.set(24+Math.cos(a)*r,.39,2+Math.sin(a)*r*.65);
-    f.rotation.y=Math.atan2(-Math.cos(a)*.65,-Math.sin(a));
+    const dir=i%2?-1:1,a=dir*time*(.00018+(i%5)*.00002)+i*1.9,r=.45+(i%6)*.26;
+    f.position.set(24+Math.cos(a)*r,.33+(i%3)*.03,2+Math.sin(a)*r*.65);
+    f.rotation.y=Math.atan2(-Math.cos(a)*.65*dir,-Math.sin(a)*dir);
     f.userData.tail.rotation.y=Math.sin(time*.007+i)*.3;
   });
   if(w.pondWater)w.pondWater.position.y=.48+Math.sin(time*.001)*.008;

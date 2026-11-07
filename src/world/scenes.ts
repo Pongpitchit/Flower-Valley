@@ -661,6 +661,107 @@ export function buildWoods(w: any) {
   return { update, refresh };
 }
 
+// Diamond kite with two-tone sail panels, cross spars, a bowed ribbon tail
+// that ripples in the wind, and a sagging line tied to a ground stake.
+function kite(w: any, [main, accent]: [string, string], size: number, anchor: any, home: any, phase: number) {
+  const T = window.AFRAME.THREE,
+    g = new T.Group(),
+    body = new T.Group();
+  g.add(body);
+  const sail = (color: string) => new T.MeshStandardMaterial({ color, side: T.DoubleSide, roughness: 0.75 });
+  const h0 = 0.75 * size,
+    h1 = 1.35 * size,
+    half = 0.68 * size;
+  // Four triangular panels meeting at the spar cross.
+  [[0, h0, -half, 0, main], [0, h0, half, 0, accent], [0, -h1, -half, 0, accent], [0, -h1, half, 0, main]].forEach(([x1, y1, x2, y2, color]) => {
+    const shape = new T.Shape();
+    shape.moveTo(0, 0);
+    shape.lineTo(x1 as number, y1 as number);
+    shape.lineTo(x2 as number, y2 as number);
+    shape.closePath();
+    body.add(new T.Mesh(new T.ShapeGeometry(shape), sail(color as string)));
+  });
+  const edge = new T.LineLoop(
+    new T.BufferGeometry().setFromPoints([new T.Vector3(0, h0, 0.01), new T.Vector3(half, 0, 0.01), new T.Vector3(0, -h1, 0.01), new T.Vector3(-half, 0, 0.01)]),
+    new T.LineBasicMaterial({ color: "#fffaf0" }),
+  );
+  body.add(edge);
+  const spar = new T.MeshStandardMaterial({ color: "#5a4030", roughness: 0.9 });
+  const vertical = new T.Mesh(new T.CylinderGeometry(0.018, 0.018, h0 + h1, 6), spar);
+  vertical.position.set(0, (h0 - h1) / 2, -0.02);
+  const cross = new T.Mesh(new T.CylinderGeometry(0.016, 0.016, half * 2, 6), spar);
+  cross.rotation.z = Math.PI / 2;
+  cross.position.z = -0.02;
+  body.add(vertical, cross);
+  // Ribbon tail: a strip whose vertices are re-waved every frame, with bows along it.
+  const segments = 24,
+    length = 3.6 * size,
+    width = 0.07 * size;
+  const tailGeo = new T.PlaneGeometry(width, length, 1, segments);
+  tailGeo.translate(0, -length / 2 - h1, 0);
+  const tailBase = Float32Array.from(tailGeo.attributes.position.array);
+  body.add(new T.Mesh(tailGeo, sail(accent)));
+  const bows = Array.from({ length: 5 }, (_, i) => {
+    const bow = new T.Group();
+    const wing = new T.Shape();
+    wing.moveTo(0, 0);
+    wing.lineTo(0.16 * size, 0.08 * size);
+    wing.lineTo(0.16 * size, -0.08 * size);
+    wing.closePath();
+    const material = sail(i % 2 ? main : "#ffffff");
+    for (const side of [1, -1]) {
+      const m = new T.Mesh(new T.ShapeGeometry(wing), material);
+      m.scale.x = side;
+      bow.add(m);
+    }
+    body.add(bow);
+    return { bow, t: (i + 1) / 6 };
+  });
+  w.world.add(g);
+  const stake = new T.Mesh(new T.CylinderGeometry(0.03, 0.05, 0.7, 6), spar);
+  stake.position.copy(anchor).add(new T.Vector3(0, -0.1, 0));
+  w.world.add(stake);
+  const spool = new T.Mesh(new T.CylinderGeometry(0.09, 0.09, 0.08, 12), sail(accent));
+  spool.rotation.x = Math.PI / 2;
+  spool.position.copy(anchor).add(new T.Vector3(0, 0.15, 0));
+  w.world.add(spool);
+  colliders.push({ x: anchor.x, z: anchor.z, w: 0.3, d: 0.3 });
+  const points = 28,
+    lineGeo = new T.BufferGeometry().setFromPoints(Array.from({ length: points }, () => anchor.clone()));
+  w.world.add(new T.Line(lineGeo, new T.LineBasicMaterial({ color: "#f4f1e8", transparent: true, opacity: 0.85 })));
+  const bridle = new T.Vector3(),
+    wave = (y: number, t: number) => Math.sin(t * 0.004 - y * 2.4 / size + phase) * 0.22 * size * Math.min(1, -y / (h1 + 0.6));
+  return (time: number) => {
+    const t = time + phase * 1000;
+    g.position.set(home.x + Math.sin(t * 0.00045) * 2.2, home.y + Math.sin(t * 0.0008) * 1.1, home.z + Math.cos(t * 0.00037) * 1.4);
+    g.lookAt(anchor);
+    body.rotation.set(0.35, 0, Math.sin(t * 0.0011) * 0.22 + Math.sin(t * 0.0031) * 0.05);
+    const p = tailGeo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const y = tailBase[i * 3 + 1];
+      p.setX(i, tailBase[i * 3] + wave(y, t));
+      p.setZ(i, Math.sin(t * 0.003 - y * 1.6 + phase) * 0.12 * size * Math.min(1, -y / (h1 + 0.6)));
+    }
+    p.needsUpdate = true;
+    bows.forEach(({ bow, t: k }) => {
+      const y = -h1 - length * k;
+      bow.position.set(wave(y, t), y, Math.sin(t * 0.003 - y * 1.6 + phase) * 0.12 * size);
+      bow.rotation.z = Math.sin(t * 0.004 + k * 6) * 0.4;
+    });
+    // The line leaves the cross point and sags toward the stake.
+    g.updateMatrixWorld(true);
+    bridle.set(0, 0, 0.05);
+    body.localToWorld(bridle);
+    const lp = lineGeo.attributes.position,
+      sag = anchor.distanceTo(bridle) * 0.06;
+    for (let i = 0; i < points; i++) {
+      const k = i / (points - 1);
+      lp.setXYZ(i, anchor.x + (bridle.x - anchor.x) * k, anchor.y + (bridle.y - anchor.y) * k - Math.sin(k * Math.PI) * sag, anchor.z + (bridle.z - anchor.z) * k);
+    }
+    lp.needsUpdate = true;
+  };
+}
+
 export const TELESCOPE = { x: -2.2, z: HILL.z - 4.1 };
 export function buildLookout(w: any) {
   const T = window.AFRAME.THREE,
@@ -745,20 +846,10 @@ export function buildLookout(w: any) {
   w.world.add(flag);
   w.mesh(w.geometries.cylinder, w.m.white, -3.6, top + 1.95, HILL.z + 3, 0.05, 3.9, 0.05);
   colliders.push({ x: -3.6, z: HILL.z + 3, w: 0.3, d: 0.3 });
-  const kite = new T.Group();
-  const kiteShape = new T.Shape();
-  kiteShape.moveTo(0, 0.7);
-  kiteShape.lineTo(0.45, 0);
-  kiteShape.lineTo(0, -0.9);
-  kiteShape.lineTo(-0.45, 0);
-  kiteShape.closePath();
-  w.mesh(new T.ShapeGeometry(kiteShape), new T.MeshStandardMaterial({ color: "#e0626d", side: T.DoubleSide, roughness: 0.8 }), 0, 0, 0, 1, 1, 1, kite);
-  for (let i = 0; i < 5; i++) w.mesh(w.geometries.box, new T.MeshStandardMaterial({ color: ["#f3c552", "#7fb5d8"][i % 2] }), 0, -1.1 - i * 0.35, 0, 0.14, 0.04, 0.02, kite);
-  w.world.add(kite);
-  const anchor = new T.Vector3(4.2, top + 0.9, HILL.z + 0.4);
-  const stringGeo = new T.BufferGeometry().setFromPoints([anchor, anchor.clone()]);
-  const kiteString = new T.Line(stringGeo, new T.LineBasicMaterial({ color: "#f4f1e8" }));
-  w.world.add(kiteString);
+  const kites = [
+    kite(w, ["#e0626d", "#f3c552"], 1, new T.Vector3(4.2, top + 0.35, HILL.z + 0.6), new T.Vector3(9, top + 14, HILL.z + 10), 0),
+    kite(w, ["#4f9fbf", "#f5efe0"], 0.7, new T.Vector3(-2.8, top + 0.35, HILL.z + 3.6), new T.Vector3(-7, top + 10.5, HILL.z + 11), 2.3),
+  ];
 
   // Wildflowers and tall grass on the slopes, clear of the path.
   const slope = (count: number, h0: number, h1: number) => {
@@ -788,9 +879,6 @@ export function buildLookout(w: any) {
     }
     p.needsUpdate = true;
     flagGeo.computeVertexNormals();
-    kite.position.set(9 + Math.sin(time * 0.0005) * 2, top + 13 + Math.sin(time * 0.0009) * 1.2, HILL.z + 9 + Math.cos(time * 0.0004) * 1.5);
-    kite.rotation.set(-0.3, Math.PI + Math.sin(time * 0.0007) * 0.3, Math.sin(time * 0.0011) * 0.25);
-    stringGeo.attributes.position.setXYZ(1, kite.position.x, kite.position.y - 0.9, kite.position.z);
-    stringGeo.attributes.position.needsUpdate = true;
+    kites.forEach((k) => k(time));
   };
 }

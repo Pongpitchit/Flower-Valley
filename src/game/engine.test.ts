@@ -553,11 +553,25 @@ describe('home customization and ornamental pond',()=>{
     expect(apply(s,'pondAdd',{id:'grilled:carp'}).state).toBe(s);
     for(let i=0;i<6;i++)s=apply(s,'pondAdd',{id:'carp'}).state;
     expect(s.inventory.carp).toBe(1);expect(s.home.fish.length).toBe(6);
+    s=apply(s,'pondAdd',{id:'carp'}).state;
+    expect(s.inventory.carp).toBe(0);expect(s.home.fish.length).toBe(7);
     expect(apply(s,'pondAdd',{id:'carp'}).state).toBe(s);
     s=JSON.parse(JSON.stringify(s));expect(validateSave(s)).toBe(true);
     s=apply(s,'pondRemove',{id:'carp'}).state;
     expect(s.inventory.carp+s.home.fish.length).toBe(7);
     expect(apply(s,'pondRemove',{id:'rare'}).state).toBe(s);
+  });
+  it('holds as many fish as the player owns and moves them in bulk',()=>{
+    let s=initialState();s.home.pond=true;s.inventory.goldfish=40;s.inventory.trout=3;
+    s=apply(s,'pondAdd',{id:'goldfish',amount:40}).state;
+    s=apply(s,'pondAdd',{id:'trout',amount:3}).state;
+    expect(s.home.fish.length).toBe(43);expect(s.inventory.goldfish).toBe(0);
+    expect(validateSave(JSON.parse(JSON.stringify(s)))).toBe(true);
+    expect(apply(s,'pondAdd',{id:'goldfish',amount:1}).state).toBe(s);
+    expect(apply(s,'pondRemove',{id:'trout',amount:4}).state).toBe(s);
+    expect(apply(s,'pondRemove',{id:'trout',amount:0}).state).toBe(s);
+    s=apply(s,'pondRemove',{id:'goldfish',amount:15}).state;
+    expect(s.inventory.goldfish).toBe(15);expect(s.home.fish.filter(f=>f==='goldfish').length).toBe(25);
   });
 });
 
