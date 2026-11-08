@@ -36,9 +36,9 @@ Six scenes, each announced by a banner when you walk in:
 1. **Flower Village**: market, shops and Oliver's atelier
 2. **Garden & Home**: plots, cottage and Theo
 3. **Mirror Lake**: freshwater fishing and the campfire
-4. **Breezy Beach** (east trail past Finn): pier sea fishing (mackerel 45, sea bass 70, clownfish 120, rare tuna 280), lighthouse, boats, gulls
-5. **The Deep Woods** (west trail past Rowan): 12 forage spots (mushroom 25, berry 20, herb 30, glowing rare mushroom 150) that regrow every morning; 3 energy and 5 minutes each; sold to Rowan
-6. **Skyhill Lookout** (south of the village gate): hilltop deck with a telescope that zooms toward any scene
+4. **Breezy Beach** (east trail past Finn): pier sea fishing (mackerel 45, sea bass 70, clownfish 120, rare tuna 280), lighthouse, boats, gulls, fish schools and jellyfish under the pier
+5. **The Deep Woods** (west trail past Rowan): snakes, slimes, a crackling campfire, 12 forage spots (mushroom 25, berry 20, herb 30, glowing rare mushroom 150) that regrow every morning; 3 energy and 5 minutes each; sold to Rowan
+6. **Skyhill Lookout** (south of the village gate): a waterfall at the hill's foot, hilltop deck with a telescope that zooms toward any scene
 
 ## Game systems
 
@@ -59,7 +59,7 @@ Theo, the builder beside the cottage, expands the garden through 3 → 6 → 9 �
 
 ## Visuals and assets
 
-The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Butterflies, birds, nighttime fireflies and chimney smoke animate the village. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `docs/ASSET_CREDITS.md` for exact sources/licenses.
+The cottage and atelier have modeled window/door openings, timber frames, plank floors, stone foundations, pitched tiled roofs and PBR plaster/roof/stone materials. The rest seat is a downloaded Three Logs model from CGTrader. The nearby Campfire model is used for grilling fish. Sky uses an HDRI; foliage and wildflower meadows are instanced and sway in the breeze. Chimney smoke animates the village. Weather, critters and water effects are live pixel art from [pixelfx](https://github.com/patch-gg/pixelfx) (MIT, trimmed copy in `src/vendor/pixelfx`), drawn into textures in `src/world/pixelLife.ts`: pixel rain over the screen on rainy days with splashes on the ponds; each night rolls its own sky (shooting stars, aurora, clouds) plus fireflies; daytime falling leaves change colour by day; songbirds, gulls and butterflies in several colours; snakes, slimes and the camp's campfire in the Deep Woods; fish schools and jellyfish in the clear water round the pier; a waterfall at Skyhill; bubbles in the lake and home pond. NPCs blink, breathe, turn smoothly and show a short greeting when approached. High quality enables shadows; low quality reduces resolution and disables shadows. See `docs/ASSET_CREDITS.md` for exact sources/licenses.
 
 Lily sells basic/good/premium fertilizer for 10/18/24 coins, advancing growth by 1/2/3 days, capped at maturity, once per planting. Shops offer sell-one or sell-all for each item. Bouquet previews show ingredients, remaining inventory and the extra sale value. Settings control synthesized original background music, effects/ambience and master volume; audio starts only after a user gesture and mutes when the tab is hidden.
 

@@ -100,3 +100,11 @@ Generated with built-in image_gen. Original generated alpha preserved; CSS selec
 | Kenney Pirate Kit 2.1 | Rowing boats, distant ship, barrel, crate, chest, sand rocks → `public/models/beach/` (+ `Textures/colormap.png`) | https://kenney.nl/assets/pirate-kit — CC0 (license copied beside the models) |
 
 Kenney foliage/bark colours are re-tinted at load time to match the valley palette. The sea, waves, foam, pier, lighthouse, umbrellas, sandcastle, shells, gulls, leaping fish, brook, bridge, light shafts, mist, fireflies, forage spot props, hill, deck, telescope, benches, flag, kite and scene gates are original procedural geometry. Sea-fish and forage icons are original 16×16 pixel art drawn in code (`src/components/PixelIcon.tsx`). No paid assets.
+
+## Pixel-art effects: pixelfx (2026-11-08)
+
+| Asset | Use | Source / license |
+| --- | --- | --- |
+| pixelfx 0.3.0 by Patch (adapting Hugo Duprez's Sprite Fusion VFX) | Rain, fireflies, shooting stars, clouds, aurora, falling leaves, bird, butterfly, snake, slime, campfire, fish school, jellyfish, waterfall, rain splash, bubbles; drawn live into canvas textures | https://github.com/patch-gg/pixelfx — MIT (code, no images). Trimmed copy with its `LICENSE` and `NOTICE.md` in `src/vendor/pixelfx/` |
+
+The copy keeps all of `core/` and only the effects used. Lines marked "Flower Valley" add a `bare: true` option that skips an effect's painted backdrop (haze, ground, grass, sky, moon, puddle, water body) so it can sit over the 3D world. Colour variants are palette options passed to the effects. The patched library's Patch Pixel font is not included.

@@ -24,93 +24,11 @@ export function addBreeze(
   material.customProgramCacheKey = () => `valley-breeze-${strength}`;
 }
 
+// Birds, butterflies and fireflies are pixel art now (pixelLife.ts); this keeps the chimney smoke.
 export function buildAtmosphere(w: any) {
   const T = window.AFRAME.THREE,
     group = new T.Group();
   w.world.add(group);
-  const wingGeometry = new T.SphereGeometry(1, 10, 6);
-  const dark = new T.MeshStandardMaterial({ color: "#514d3b", roughness: 0.9 });
-  const butterflies: any[] = [],
-    birds: any[] = [],
-    motes: any[] = [];
-  const centers = [
-    [22, 10],
-    [-24, 4],
-    [5, 1],
-    [-6, 10],
-    [23, 24],
-    [-24, 23],
-  ];
-  for (let i = 0; i < 18; i++) {
-    const b = new T.Group(),
-      wings: any[] = [];
-    const color = new T.MeshStandardMaterial({
-      color: ["#e8b954", "#b390cf", "#e88da4", "#7dbfc8"][i % 4],
-      roughness: 0.8,
-      side: T.DoubleSide,
-    });
-    for (const side of [-1, 1]) {
-      const hinge = new T.Group();
-      const wing = new T.Mesh(wingGeometry, color);
-      wing.scale.set(0.12, 0.012, 0.16);
-      wing.position.set(side * 0.09, 0, 0);
-      hinge.add(wing);
-      b.add(hinge);
-      wings.push(hinge);
-      const dot = new T.Mesh(wingGeometry, dark);
-      dot.scale.set(0.023, 0.014, 0.03);
-      dot.position.set(side * 0.13, 0.006, -0.035);
-      hinge.add(dot);
-    }
-    const body = new T.Mesh(wingGeometry, dark);
-    body.scale.set(0.02, 0.025, 0.11);
-    b.add(body);
-    group.add(b);
-    butterflies.push({
-      g: b,
-      wings,
-      center: centers[i % centers.length],
-      phase: i * 2.39,
-    });
-  }
-  const birdGeometry = new T.BufferGeometry();
-  birdGeometry.setAttribute(
-    "position",
-    new T.Float32BufferAttribute([0, 0, 0, 0.8, 0.04, -0.12, 0.28, 0, 0.22], 3),
-  );
-  birdGeometry.computeVertexNormals();
-  const birdMaterial = new T.MeshStandardMaterial({
-    color: "#687789",
-    roughness: 0.9,
-    side: T.DoubleSide,
-  });
-  for (let i = 0; i < 6; i++) {
-    const b = new T.Group(),
-      wings: any[] = [];
-    for (const side of [-1, 1]) {
-      const wing = new T.Mesh(birdGeometry, birdMaterial);
-      wing.scale.x = side;
-      b.add(wing);
-      wings.push(wing);
-    }
-    const body = new T.Mesh(wingGeometry, dark);
-    body.scale.set(0.09, 0.09, 0.35);
-    b.add(body);
-    group.add(b);
-    birds.push({ g: b, wings });
-  }
-  const glowGeometry = new T.SphereGeometry(0.025, 6, 4),
-    glowMaterial = new T.MeshBasicMaterial({
-      color: "#e6f09a",
-      transparent: true,
-      opacity: 0.85,
-      toneMapped: false,
-    });
-  for (let i = 0; i < 32; i++) {
-    const glow = new T.Mesh(glowGeometry, glowMaterial);
-    group.add(glow);
-    motes.push(glow);
-  }
   const smokeCanvas=document.createElement("canvas");smokeCanvas.width=smokeCanvas.height=64;
   const ctx=smokeCanvas.getContext("2d")!;
   const gradient=ctx.createRadialGradient(32,32,0,32,32,32);
@@ -123,49 +41,8 @@ export function buildAtmosphere(w: any) {
     const puff=new T.Sprite(new T.SpriteMaterial({map:smokeMap,transparent:true,opacity:.12,depthWrite:false}));
     puff.name="Chimney smoke";group.add(puff);smoke.push(puff);
   }
-  return (time: number, night: boolean, rain: boolean, low: boolean) => {
+  return (time: number, rain: boolean) => {
     const t = time * 0.001;
-    butterflies.forEach((b, i) => {
-      b.g.visible = !night && !rain && (!low || i < 8);
-      if (!b.g.visible) return;
-      const a = t * 0.55 + b.phase;
-      b.g.position.set(
-        b.center[0] + Math.sin(a) * 1.6,
-        0.8 + Math.sin(a * 1.8) * 0.32,
-        b.center[1] + Math.cos(a * 0.8) * 1.5,
-      );
-      b.g.rotation.y = -a;
-      b.g.rotation.z = Math.sin(a * 2) * 0.2;
-      b.wings.forEach(
-        (wing: any, j: number) =>
-          (wing.rotation.z = Math.sin(t * 22 + i) * (j ? 1 : -1) * 1.0),
-      );
-    });
-    birds.forEach((b, i) => {
-      b.g.visible = !night && !rain && (!low || i < 3);
-      const a = t * 0.065 + i * 0.5;
-      b.g.position.set(
-        Math.cos(a) * 31,
-        12 + i * 0.65 + Math.sin(a * 3) * 0.8,
-        Math.sin(a) * 24 + 2,
-      );
-      b.g.rotation.y = -a;
-      b.wings.forEach(
-        (wing: any, j: number) =>
-          (wing.rotation.z = Math.sin(t * 5 + i) * (j ? 1 : -1) * 0.45),
-      );
-    });
-    motes.forEach((glow, i) => {
-      glow.visible = night && !rain && (!low || i < 12);
-      const c = centers[i % centers.length],
-        a = i * 2.39;
-      glow.position.set(
-        c[0] + Math.sin(t * 0.28 + a) * 2,
-        0.55 + Math.sin(t * 0.7 + a) * 0.35,
-        c[1] + Math.cos(t * 0.22 + a) * 2,
-      );
-      glow.scale.setScalar(0.45 + Math.max(0, Math.sin(t * 1.7 + a)) * 0.9);
-    });
     smoke.forEach((puff, i) => {
       const phase = (t * 0.11 + i / 7) % 1;
       puff.visible = !rain;

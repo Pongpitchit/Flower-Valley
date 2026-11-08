@@ -18,6 +18,7 @@ import { bridge, colliders, canMove, groundHeight, type Target } from "./bridge"
 import { getState, updatePosition, type GameState } from "../game/engine";
 import { flower, FLOWERS, plotPosition, ZONES, FORAGE_SPOTS, FORAGE_ENERGY, itemName, sceneAt } from "../game/data";
 import { buildBeach, buildWoods, buildLookout } from "./scenes";
+import { buildPixelLife } from "./pixelLife";
 const T = window.AFRAME.THREE;
 let randomSeed = 7042;
 const random = () => {
@@ -397,6 +398,7 @@ if (!window.AFRAME.components["flower-world"])
       this.updateBeach = buildBeach(this);
       this.woods = buildWoods(this);
       this.updateLookout = buildLookout(this);
+      this.pixelLife = buildPixelLife(this);
       this.feedback = buildActivityFeedback(this.world);
       const grassMatrices = [];
       for (let i = 0; i < 11000; i++) {
@@ -540,24 +542,6 @@ if (!window.AFRAME.components["flower-world"])
       );
 
       this.el.sceneEl.object3D.fog = new T.FogExp2("#d6dec5", 0.0105);
-      const rainGeo = new T.BufferGeometry(),
-        rainPos = new Float32Array(1200 * 3);
-      for (let i = 0; i < 1200; i++) {
-        rainPos[i * 3] = (random() - 0.5) * 60;
-        rainPos[i * 3 + 1] = random() * 20;
-        rainPos[i * 3 + 2] = (random() - 0.5) * 60;
-      }
-      rainGeo.setAttribute("position", new T.BufferAttribute(rainPos, 3));
-      this.rain = new T.Points(
-        rainGeo,
-        new T.PointsMaterial({
-          color: "#cadfe2",
-          size: 0.09,
-          transparent: true,
-          opacity: 0.6,
-        }),
-      );
-      this.world.add(this.rain);
       const starsGeo = new T.BufferGeometry(),
         starPos = [];
       for (let i = 0; i < 650; i++) {
@@ -1435,27 +1419,24 @@ if (!window.AFRAME.components["flower-world"])
         if (o.isGroup) o.rotation.z = Math.sin(time * 0.0015 + i) * 0.035;
       });
       this.lamps.forEach((l: any) => (l.intensity = night ? 12 : sunset ? 5 : 0));
-      this.rain.visible = s.weather === "rain";
-      if (this.rain.visible) {
-        const p = this.rain.geometry.attributes.position;
-        for (let i = 0; i < p.count; i++) {
-          p.array[i * 3 + 1] -= delta * 11;
-          if (p.array[i * 3 + 1] < 0) p.array[i * 3 + 1] = 20;
-        }
-        p.needsUpdate = true;
-        this.rain.position.set(this.pos.x, 0, this.pos.z);
-      }
       this.feedback?.update(dt);
       const motionTime = this.reducedMotion ? 0 : time;
       this.breezeClock.value = motionTime * 0.001;
       if (this.windShader)
         this.windShader.uniforms.uWind.value = motionTime * 0.001;
-      this.animateAtmosphere(
-        motionTime,
+      this.animateAtmosphere(motionTime, s.weather === "rain");
+      this.pixelLife({
+        time: motionTime,
+        dt: this.reducedMotion ? 0 : delta,
+        hours,
         night,
-        s.weather === "rain",
-        bridge.quality === "low",
-      );
+        dusk: sunset,
+        rain: s.weather === "rain",
+        day: s.day,
+        scene,
+        camera: this.el.sceneEl.camera,
+        low: bridge.quality === "low",
+      });
       this.water.position.y = 0.035 + Math.sin(time * 0.0007) * 0.012;
       this.ripples.forEach((r: any, i: number) => {
         const phase = (time * 0.00015 + i * 0.11) % 1;

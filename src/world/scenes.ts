@@ -230,11 +230,15 @@ export function buildBeach(w: any) {
     c = new T.Color();
   const seaPos = seaGeo.attributes.position;
   for (let i = 0; i < seaPos.count; i++) {
-    c.copy(shallow).lerp(deep, Math.min(1, Math.max(0, (seaPos.getX(i) - 60) / 28)));
-    seaColors.push(c.r, c.g, c.b);
+    const x = seaPos.getX(i),
+      z = seaPos.getZ(i),
+      clear = Math.max(0, 1 - Math.hypot((x - 71) / 9, (z - PIER.z) / 11));
+    c.copy(shallow).lerp(deep, Math.min(1, Math.max(0, (x - 60) / 28)));
+    // Clearer water round the pier lets the fish schools and jellyfish show through.
+    seaColors.push(c.r, c.g, c.b, 0.9 - 0.24 * Math.min(1, clear * 1.6));
   }
-  seaGeo.setAttribute("color", new T.Float32BufferAttribute(seaColors, 3));
-  const seaMaterial = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.16, metalness: 0.08, transparent: true, opacity: 0.9 });
+  seaGeo.setAttribute("color", new T.Float32BufferAttribute(seaColors, 4));
+  const seaMaterial = new T.MeshStandardMaterial({ vertexColors: true, roughness: 0.16, metalness: 0.08, transparent: true, depthWrite: false });
   waves(seaMaterial, clock, 0.09);
   w.world.add(new T.Mesh(seaGeo, seaMaterial));
   const foamTexture = canvasTexture(64, 16, (ctx) => {
@@ -370,21 +374,7 @@ export function buildBeach(w: any) {
   for (const [x, z, s] of [[59.5, -38.5, 1.3], [59.8, 7.5, 1.1], [60.5, -22, 0.8]]) place(w, "/models/beach/rocks-sand-b.glb", x, -0.3, z, s, rand() * 6);
   gate(w, "BREEZY BEACH", 46.2, PIER.z, -Math.PI / 2);
 
-  // Gulls circle the bay; a silver fish leaps near the pier every few seconds.
-  const gullMat = new T.MeshStandardMaterial({ color: "#f7f7f2", roughness: 0.8, side: T.DoubleSide });
-  const gulls = Array.from({ length: 6 }, (_, i) => {
-    const g = new T.Group(),
-      wings: any[] = [];
-    w.mesh(new T.SphereGeometry(1, 10, 8), gullMat, 0, 0, 0, 0.1, 0.09, 0.26, g);
-    for (const side of [-1, 1]) {
-      const hinge = new T.Group();
-      w.mesh(new T.BoxGeometry(0.42, 0.012, 0.13), gullMat, side * 0.21, 0, 0, 1, 1, 1, hinge);
-      g.add(hinge);
-      wings.push(hinge);
-    }
-    w.world.add(g);
-    return { g, wings, r: 6 + i * 2.2, speed: 0.00018 + i * 0.00003, y: 8 + (i % 3) * 2, cx: 62 + (i % 2) * 6, cz: -16 + (i - 3) * 4 };
-  });
+  // A silver fish leaps near the pier every few seconds (the gulls are pixel art in pixelLife.ts).
   const leaper = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshStandardMaterial({ color: "#c8d4dc", metalness: 0.6, roughness: 0.3 }));
   leaper.scale.set(0.32, 0.12, 0.09);
   w.world.add(leaper);
@@ -413,13 +403,6 @@ export function buildBeach(w: any) {
     beam.rotation.y = time * 0.0006;
     beacon.intensity = night ? 40 : dusk ? 15 : 0;
     lamp.emissiveIntensity = night || dusk ? 2.4 : 0.4;
-    gulls.forEach((gull, i) => {
-      const a = time * gull.speed + i * 1.7;
-      gull.g.position.set(gull.cx + Math.cos(a) * gull.r, gull.y + Math.sin(time * 0.0007 + i) * 0.6, gull.cz + Math.sin(a) * gull.r);
-      gull.g.rotation.y = -a;
-      gull.g.visible = !night;
-      gull.wings.forEach((wing: any, j: number) => (wing.rotation.z = (j ? -1 : 1) * Math.sin(time * 0.009 + i) * 0.45));
-    });
     const t = (time - jumpStart) / 900;
     if (t > 7) {
       jumpStart = time;
@@ -543,9 +526,7 @@ export function buildWoods(w: any) {
   place(w, "/models/woods/log.glb", camp.x + 2.4, 0, camp.z - 0.4, 0.45, 1.4);
   place(w, "/models/woods/canoe.glb", camp.x - 3.2, 0, camp.z - 2.2, 0.45, 0.4);
   colliders.push({ x: camp.x - 2, z: camp.z + 2.2, w: 2.6, d: 2.6 }, { x: camp.x + 0.6, z: camp.z - 0.8, w: 1.1, d: 1.1 });
-  const flame = new T.Mesh(new T.ConeGeometry(0.18, 0.5, 8), new T.MeshBasicMaterial({ color: "#ffb347", transparent: true, opacity: 0.85 }));
-  flame.position.set(camp.x + 0.6, 0.3, camp.z - 0.8);
-  w.world.add(flame);
+  // The flames themselves are a pixel campfire in pixelLife.ts.
   const fireLight = new T.PointLight("#ff9a4a", 0, 9, 1.8);
   fireLight.position.set(camp.x + 0.6, 0.8, camp.z - 0.8);
   w.world.add(fireLight);
@@ -654,7 +635,6 @@ export function buildWoods(w: any) {
       }
       p.needsUpdate = true;
     }
-    flame.scale.set(1 + Math.sin(time * 0.02) * 0.12, 1 + Math.sin(time * 0.031) * 0.2, 1);
     fireLight.intensity = night ? 10 + Math.sin(time * 0.02) * 2 : dusk ? 5 : 0;
   };
   const refresh = (s: GameState) => spots.forEach((spot, i) => (spot.g.visible = !s.foraged.includes(i)));

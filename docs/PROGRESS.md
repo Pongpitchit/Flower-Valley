@@ -149,3 +149,16 @@ Course requirement: at least five scenes online. The world now has six named sce
 - The home pond no longer stops at six fish: it holds every freshwater fish the player owns (save guard 999). The pond panel shows the count, and each species has add-1 / add-all / return-1 / return-all buttons. Up to 24 fish swim visibly, drawn smaller when more than 12 are stocked. Sea fish stay out of the freshwater pond.
 - Skyhill kites redesigned: two-tone diamond sails with a white edge and wooden cross spars, a rippling ribbon tail with bows, and a sagging line to a ground stake and spool. A second smaller blue kite flies beside the first.
 - Validation: 85 tests pass (new bulk-transfer/no-cap test). Browser verified adding 31 fish with the add-all buttons, the pond render and both kites in flight.
+
+## Pixel-art weather, critters and water (2026-11-08)
+
+Effects from pixelfx (MIT, vendored in `src/vendor/pixelfx`), drawn at 15 fps into canvas textures and shown as camera-facing cards or sky panels (`src/world/pixelfx.ts`, `src/world/pixelLife.ts`).
+
+- **Night, rolled per day:** shooting stars (60%), aurora (40%, green-violet or pink-blue), night clouds (45%, always when raining), at least one show every night, plus fireflies on dry nights (green, amber or cyan glow by day). Sky shows fade in from 18:30 and out at dawn.
+- **Rain:** a pixel rain curtain in front of the camera replaces the old point rain; rain-splash rings and crowns on the lake and home pond.
+- **Day:** falling leaves near trees, coloured by day (autumn, spring green, cherry pink, gold or crimson).
+- **Critters:** songbirds in four colours replace the 3D birds; white pixel gulls replace the beach gulls; butterflies in six colours replace the 3D butterflies (also on Skyhill). Deep Woods: three snakes, five slimes in five colours, and a pixel campfire replaces the cone flame.
+- **Sea:** four fish schools and five jellyfish, each a different colour, swim under the pier; the sea is clearer round the pier and no longer writes depth, so they show through.
+- **Skyhill:** a waterfall pours from a boulder outcrop at the hill's north-east foot, facing the path and deck.
+- **Ponds:** bubbles rise and pop in the lake and home pond.
+- Validation: 85 tests pass, type check and production build pass. Browser verified the garden by day (butterflies, bird, leaves), an aurora night, a rainy night with clouds, lake splashes and bubbles, woods snake/slime/campfire, jellyfish and fish schools from the pier, and the waterfall from the Skyhill path. Each effect redraw measures 0.1–1.2 ms (aurora 5 ms at 10 fps). Not tested on a physical phone/iPad.
