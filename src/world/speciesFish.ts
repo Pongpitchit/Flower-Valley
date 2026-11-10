@@ -28,3 +28,39 @@ export function speciesFish(_w:any,index:number) {
   for(const side of [-1,1])fan(g,.08,-.04,side*.11,.17,.07,fin,side*1.0);
   return g;
 }
+
+// Simple saltwater swimmers for the home pond; all face +X and expose userData.tail like the lake fish.
+export function seaCreature(id:string) {
+  const T=window.AFRAME.THREE,g=new T.Group();
+  const material=(color:string,extra={})=>new T.MeshStandardMaterial({color,roughness:.6,side:T.DoubleSide,...extra});
+  const mesh=(geo:any,m:any,x:number,y:number,z:number,sx=1,sy=1,sz=1,parent:any=g)=>{geo.userData.owned=true;const o=new T.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);parent.add(o);return o;};
+  const sphere=()=>new T.SphereGeometry(1,14,10);
+  const tail=new T.Group();g.add(tail);g.userData.tail=tail;
+  if(id==='jellyfish'){
+    const bell=material('#f0a6cf',{transparent:true,opacity:.8,emissive:'#d77fb4',emissiveIntensity:.25});
+    mesh(new T.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI/2),bell,0,0,0,.17,.15,.17);
+    for(let i=0;i<6;i++){const a=i/6*Math.PI*2;mesh(new T.CylinderGeometry(1,.4,1,5),bell,Math.cos(a)*.09,-.11,Math.sin(a)*.09,.014,.22,.014,tail);}
+    return g;
+  }
+  // [body, belly, fin, length, height, width]
+  const look:Record<string,[string,string,string,number,number,number]>={
+    mackerel:['#3f7f8c','#dfe8e4','#2f5f6c',.36,.085,.075],
+    seabass:['#8f9c92','#e6e6da','#6e7a72',.4,.13,.1],
+    clownfish:['#f0701c','#f0701c','#f58a2a',.26,.13,.1],
+    tuna:['#2b4a78','#d9dee6','#e3c44c',.5,.16,.14],
+  };
+  const [bodyColor,bellyColor,finColor,len,high,wide]=look[id]??look.mackerel;
+  const body=material(bodyColor),belly=material(bellyColor),fin=material(finColor),eye=material('#141b17');
+  mesh(sphere(),body,0,0,0,len,high,wide);
+  if(bellyColor!==bodyColor)mesh(sphere(),belly,0,-high*.3,0,len*.9,high*.72,wide*.92);
+  if(id==='clownfish'){const white=material('#fbf6ea');for(const x of [.5,0,-.55])mesh(sphere(),white,x*len,0,0,len*.11,high*(1.03-Math.abs(x)*.35),wide*(1.05-Math.abs(x)*.35));}
+  if(id==='mackerel'){const stripe=material('#1f4450');for(let i=0;i<5;i++)mesh(sphere(),stripe,len*(.45-i*.22),high*.62,0,len*.05,high*.42,wide*.5).rotation.z=.5;}
+  for(const side of [-1,1]){
+    mesh(sphere(),eye,len*.72,high*.25,side*wide*.62,.02,.024,.012);
+    mesh(sphere(),fin,len*.2,-high*.3,side*wide*.95,len*.22,.012,wide*.5).rotation.y=side*.5;
+  }
+  mesh(new T.ConeGeometry(1,1,3),fin,-len*.1,high*1.05,0,len*.3,high*1.1,.02);
+  tail.position.x=-len*.9;
+  const fork=mesh(new T.ConeGeometry(1,1,3),fin,-len*.28,0,0,high*1.5,len*.6,.02,tail);fork.rotation.z=-Math.PI/2;
+  return g;
+}

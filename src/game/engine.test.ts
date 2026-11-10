@@ -682,12 +682,15 @@ describe('New scenes: sea pier, Deep Woods and Skyhill',()=>{
     }
     expect(SEA_FISH.map(f=>f.price)).toEqual([45,70,120,280,90]);
   });
-  it('sells and grills sea fish but keeps them out of the freshwater pond',()=>{
+  it('sells and grills sea fish and keeps them in the home pond',()=>{
     const s=initialState();s.inventory.tuna=2;s.home.pond=true;
     const sold=apply(s,'sell',{id:'tuna'});expect(sold.state.money).toBe(500+280);
     const grilled=apply(s,'grill',{id:'tuna'});expect(grilled.state.inventory['grilled:tuna']).toBe(1);
     expect(GRILLED_FISH.find(f=>f.id==='grilled:tuna')!.price).toBe(420);
-    expect(apply(s,'pondAdd',{id:'tuna'}).ok).toBe(false);
+    const stocked=apply(s,'pondAdd',{id:'tuna',amount:2});
+    expect(stocked.ok).toBe(true);expect(stocked.state.home.fish).toEqual(['tuna','tuna']);expect(stocked.state.inventory.tuna).toBe(0);
+    expect(validateSave(stocked.state)).toBe(true);
+    expect(apply(stocked.state,'pondRemove',{id:'tuna'}).state.inventory.tuna).toBe(1);
   });
   it('forages each spot once per day for energy and time, then regrows next morning',()=>{
     const s=initialState();

@@ -1,6 +1,7 @@
 import { HOME_STYLES } from '../game/home';
 import type { GameState } from '../game/engine';
 import { createLakeFish } from './livingDetails';
+import { seaCreature } from './speciesFish';
 import { colliders } from './bridge';
 
 export function landscapeMaterial(T:any) {
@@ -54,7 +55,7 @@ export function refreshHomeGarden(w:any,s:GameState,makeFlower:(id:string)=>any)
     const species=['carp','goldfish','rare','trout','perch','catfish'];
     // Draw at most 24 swimmers (smaller when crowded); the panel shows the full count.
     s.home.fish.slice(0,24).forEach(id=>{
-      const index=species.indexOf(id),f=createLakeFish(w,index);
+      const index=species.indexOf(id),f=index<0?seaCreature(id):createLakeFish(w,index);
       f.scale.setScalar(s.home.fish.length>12?.42:.7);f.userData.species=id;
 
       group.add(f);w.pondFish.push(f);

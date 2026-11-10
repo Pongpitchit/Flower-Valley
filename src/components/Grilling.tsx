@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FISH, GRILLED_FISH, GRILL_ENERGY, GRILL_MINUTES } from "../game/data";
+import { ALL_FISH, GRILLED_FISH, GRILL_ENERGY, GRILL_MINUTES } from "../game/data";
 import { dispatch, useGame } from "../game/engine";
 import { ItemIcon } from "./ItemIcon";
 
@@ -31,14 +31,14 @@ export function Grilling({ notify }: { notify: (message: string) => void }) {
       </p>
       {cooking && (
         <div className="grilling-progress" role="status">
-          <span>🔥 กำลังย่าง{FISH.find((f) => f.id === cooking)?.name}…</span>
+          <span>🔥 กำลังย่าง{ALL_FISH.find((f) => f.id === cooking)?.name}…</span>
           <div className="progress">
             <i />
           </div>
         </div>
       )}
       <div className="item-list">
-        {FISH.map((fish, i) => (
+        {ALL_FISH.map((fish, i) => (
           <div key={fish.id}>
             <span>
               <ItemIcon id={"grilled:" + fish.id} size={52} />

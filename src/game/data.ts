@@ -73,7 +73,7 @@ export const FISH = [
   {id:"perch",name:"ปลาเพิร์ช",price:30,icon:"🐟"},
   {id:"catfish",name:"ปลาดุก",price:55,icon:"🐟"},
 ];
-// Saltwater fish come only from the sea pier and cannot live in the freshwater home pond.
+// Saltwater catches come only from the sea pier.
 export const SEA_FISH = [
   {id:"mackerel",name:"ปลาทู",price:45,icon:"🐟"},
   {id:"seabass",name:"ปลากะพง",price:70,icon:"🐟"},
@@ -81,6 +81,7 @@ export const SEA_FISH = [
   {id:"tuna",name:"ปลาทูน่า",price:280,icon:"🐟"},
   {id:"jellyfish",name:"แมงกะพรุน",price:90,icon:"🪼"},
 ];
+export const ALL_FISH = [...FISH, ...SEA_FISH];
 export const FORAGE = [
   {id:"forage:mushroom",name:"เห็ดป่า",price:25,icon:"🍄"},
   {id:"forage:berry",name:"เบอร์รี่ป่า",price:20,icon:"🫐"},

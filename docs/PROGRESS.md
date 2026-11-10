@@ -171,3 +171,4 @@ Effects from pixelfx (MIT, vendored in `src/vendor/pixelfx`), drawn at 15 fps in
 - **Screen:** lighter rain (30% density), centre crosshair removed, logo favicon.
 - **Speed:** meadow wildflowers use low-poly shapes; the valley went from about 4.8M to 2.0M triangles with no visible change.
 - Validation: 86 tests, type check and production build pass. Browser verified the waterfall from the hill path, the stream, flag, rain, bag icons and a clear sky view.
+- **Sea fish at home (follow-up):** all five sea catches can now be grilled at the campfire panel and kept in the home pond, where each has its own simple 3D swimmer (`seaCreature` in `src/world/speciesFish.ts`). Browser verified both.

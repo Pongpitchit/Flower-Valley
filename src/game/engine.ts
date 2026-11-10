@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 import {
   FOODS, EDIBLES, CAST_MINUTES, FERTILIZERS, RODS, TRASH, catchTable,
   FLOWERS,
-  FISH, SEA_FISH, seaCatchTable, FORAGE, FORAGE_SPOTS, FORAGE_ENERGY, FORAGE_MINUTES,
+  FISH, SEA_FISH, ALL_FISH, seaCatchTable, FORAGE, FORAGE_SPOTS, FORAGE_ENERGY, FORAGE_MINUTES,
   GRILLED_FISH,
   GRILL_MINUTES,
   GRILL_ENERGY,
@@ -103,7 +103,7 @@ export function validateSave(v: any): v is GameState {
     v.foraged.every((i: unknown) => Number.isInteger(i) && finite(i, 0, FORAGE_SPOTS.length - 1)) &&
     v.home && typeof v.home.garden === "boolean" && typeof v.home.pond === "boolean" &&
     HOME_STYLES.some(x=>x.id===v.home.style) && Array.isArray(v.home.ownedStyles) && v.home.ownedStyles.includes(v.home.style) && v.home.ownedStyles.every((id:string)=>HOME_STYLES.some(x=>x.id===id)) &&
-    Array.isArray(v.home.fish) && v.home.fish.length<=POND_LIMIT && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>FISH.some(f=>f.id===id)) &&
+    Array.isArray(v.home.fish) && v.home.fish.length<=POND_LIMIT && (v.home.pond || v.home.fish.length===0) && v.home.fish.every((id:string)=>ALL_FISH.some(f=>f.id===id)) &&
     ["calm", "inspired"].includes(v.artDay?.mood) &&
     v.artDay.limit === (v.artDay.mood === "inspired" ? 2 : 1) &&
     Number.isInteger(v.artDay.used) && finite(v.artDay.used, 0, v.artDay.limit) &&
@@ -469,7 +469,7 @@ export function transition(
     return ok(key === "garden" ? "จัดสวนดอกไม้หลังบ้านแล้ว ไม่ต้องรดน้ำ" : "สร้างบ่อปลาแล้ว เลือกปลามาเลี้ยงได้");
   }
   if(a.type === "pondAdd" || a.type === "pondRemove") {
-    if(!s.home.pond || !FISH.some(f=>f.id===a.id)) return fail("ต้องมีบ่อและเลือกปลาสด");
+    if(!s.home.pond || !ALL_FISH.some(f=>f.id===a.id)) return fail("ต้องมีบ่อและเลือกปลาสด");
     // The pond holds every fish the player owns; amount moves several at once.
     const id=a.id!, count=a.amount ?? 1;
     if(!Number.isInteger(count) || count<1) return fail("เลือกจำนวนปลา");
