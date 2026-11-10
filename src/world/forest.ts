@@ -16,7 +16,7 @@ export function buildForest(w: any, random: () => number) {
     if(planted.some(p=>Math.hypot(x-p.x,z-p.z)<radius+p.radius+.8))continue;
     planted.push({x,z,radius});
     const o=new T.Object3D();o.position.set(x,0,z);o.scale.setScalar(height);o.rotation.y=random()*Math.PI*2;o.updateMatrix();matrices[i%3].push(o.matrix.clone());
-    if(Math.abs(x)<43 && Math.abs(z)<43)colliders.push({x,z,w:.65,d:.65});
+    colliders.push({x,z,w:.65,d:.65});
   }
   ['oak-lush','oak','spruce'].forEach((name,i)=>new GLTFLoader().load(`/models/forest/${name}.glb`,gltf=>{
     gltf.scene.traverse((node:any)=>{

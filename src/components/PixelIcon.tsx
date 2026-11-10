@@ -1,31 +1,7 @@
-// 16×16 pixel-art sprites for the sea fish and forage items, drawn as crisp SVG rects.
+// 16×16 pixel-art sprites for the forage items, drawn as crisp SVG rects.
 type Sprite = { palette: Record<string, string>; rows: string[] };
 
-// Fish share one silhouette (tail left, head right); each species recolours and patterns it.
-function fish(back: string, belly: string, pattern: (x: number, y: number) => string | null, tall = 0): Sprite {
-  const rows: string[] = [];
-  for (let y = 0; y < 16; y++) {
-    let row = "";
-    for (let x = 0; x < 16; x++) {
-      const inBody = (px: number, py: number) => ((px - 8.6) / 5.9) ** 2 + ((py - 8) / (3.1 + tall)) ** 2 <= 1;
-      const inTail = (px: number, py: number) => px >= 0.5 && px <= 3.2 && Math.abs(py - 8) <= (3.4 - px) * 1.15 + 0.6 && Math.abs(py - 8) >= 0.4 * (px - 0.5);
-      const solid = (px: number, py: number) => inBody(px, py) || inTail(px, py);
-      if (!solid(x, y)) {
-        row += [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => solid(x + dx, y + dy)) ? "k" : ".";
-        continue;
-      }
-      if (x === 12 && y === 7) row += "e";
-      else row += pattern(x, y) ?? (inTail(x, y) && !inBody(x, y) ? "t" : y < 8 ? "b" : "s");
-    }
-    rows.push(row);
-  }
-  return { palette: { k: "#22303a", e: "#111111", b: back, s: belly, t: back, d: "#1f4a63", w: "#fbfbf6", y: "#f2c94c", o: "#ef7d2d" }, rows };
-}
 const SPRITES: Record<string, Sprite> = {
-  mackerel: fish("#3f8aa6", "#d5e1e6", (x, y) => (y < 8 && y > 4 && (x + y * 2) % 3 === 0 && x > 3 ? "d" : null)),
-  seabass: fish("#6d8070", "#e3e6dc", (x, y) => (y === 5 && x > 5 && x < 11 && x % 2 ? "k" : null), 0.4),
-  clownfish: fish("#ef7d2d", "#f39a52", (x, y) => (x === 6 || x === 10 || x === 2 ? (y > 4 && y < 12 ? "w" : null) : null), 0.3),
-  tuna: fish("#25476a", "#cfd8de", (x, y) => (y === 8 && x > 3 && x < 13 ? "y" : null), 0.7),
   "forage:mushroom": {
     palette: { k: "#3a2a24", r: "#d8453b", w: "#fbefe3", c: "#efe3cf", s: "#cdb894" },
     rows: [

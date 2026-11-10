@@ -79,6 +79,7 @@ export const SEA_FISH = [
   {id:"seabass",name:"ปลากะพง",price:70,icon:"🐟"},
   {id:"clownfish",name:"ปลาการ์ตูน",price:120,icon:"🐠"},
   {id:"tuna",name:"ปลาทูน่า",price:280,icon:"🐟"},
+  {id:"jellyfish",name:"แมงกะพรุน",price:90,icon:"🪼"},
 ];
 export const FORAGE = [
   {id:"forage:mushroom",name:"เห็ดป่า",price:25,icon:"🍄"},
@@ -105,13 +106,13 @@ export function catchTable(level: number) {
 }
 export function seaCatchTable(level: number) {
   const rod = RODS[level];
-  const common = [{id:"mackerel",weight:30},{id:"seabass",weight:20},{id:"clownfish",weight:10}];
-  return [...TRASH.map(f => ({id:f.id,chance:rod.trash/2})),...common.map(f=>({id:f.id,chance:(1-rod.trash-rod.rare)*f.weight/60})),{id:"tuna",chance:rod.rare}];
+  const common = [{id:"mackerel",weight:30},{id:"seabass",weight:20},{id:"jellyfish",weight:12},{id:"clownfish",weight:10}];
+  return [...TRASH.map(f => ({id:f.id,chance:rod.trash/2})),...common.map(f=>({id:f.id,chance:(1-rod.trash-rod.rare)*f.weight/72})),{id:"tuna",chance:rod.rare}];
 }
 export const CAST_MINUTES = 15;
 export const GRILL_MINUTES = 10;
 export const GRILL_ENERGY = 5;
-const GRILL_ENERGY_BY_FISH: Record<string, number> = { rare: 40, trout: 35, goldfish: 30, catfish: 30, carp: 25, tuna: 45, clownfish: 30, seabass: 30, mackerel: 25 };
+const GRILL_ENERGY_BY_FISH: Record<string, number> = { rare: 40, trout: 35, goldfish: 30, catfish: 30, carp: 25, tuna: 45, clownfish: 30, seabass: 30, mackerel: 25, jellyfish: 20 };
 export const GRILLED_FISH = [...FISH, ...SEA_FISH].map(f => ({ ...f, id: 'grilled:' + f.id, name: f.name + 'ย่าง', price: Math.round(f.price * 1.5), energy: GRILL_ENERGY_BY_FISH[f.id] ?? 20 }));
 export const EDIBLES = [...FOODS, ...GRILLED_FISH];
 export const ZONES = [
@@ -197,7 +198,7 @@ export const SCENES = [
   {id:"lookout",name:"จุดชมวิวเนินฟ้า",en:"SKYHILL LOOKOUT",desc:"มองเห็นทั้งหุบเขาจากยอดเนิน",x:0,z:62,yaw:0},
 ] as const;
 export function sceneAt(x: number, z: number) {
-  const id = x > 43 ? "beach" : x < -43 ? "woods" : z > 43 ? "lookout" : z < -12 ? "lake" : z > 12 ? "village" : "garden";
+  const id = x > 45.5 ? "beach" : x < -45.5 ? "woods" : z > 43.8 ? "lookout" : z < -12 ? "lake" : z > 12 ? "village" : "garden";
   return SCENES.find((s) => s.id === id)!;
 }
 export const plotPosition = (i: number) => ({

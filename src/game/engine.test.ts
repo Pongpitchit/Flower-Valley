@@ -336,7 +336,7 @@ describe("Persistence and collisions", () => {
     colliders.length = 0;
     colliders.push({ x: 5, z: 5, w: 2, d: 2 });
     expect(canMove(0, 20)).toBe(true);
-    expect(canMove(44, 30)).toBe(false);
+    expect(canMove(46, 30)).toBe(false);
     expect(canMove(0, 90)).toBe(false);
     expect(canMove(0, -31)).toBe(false);
     expect(canMove(5, 5)).toBe(false);
@@ -680,7 +680,7 @@ describe('New scenes: sea pier, Deep Woods and Skyhill',()=>{
         start+=item.chance;
       }
     }
-    expect(SEA_FISH.map(f=>f.price)).toEqual([45,70,120,280]);
+    expect(SEA_FISH.map(f=>f.price)).toEqual([45,70,120,280,90]);
   });
   it('sells and grills sea fish but keeps them out of the freshwater pond',()=>{
     const s=initialState();s.inventory.tuna=2;s.home.pond=true;
@@ -722,6 +722,9 @@ describe('New scenes: sea pier, Deep Woods and Skyhill',()=>{
     for(let z=40;z<=66;z++)expect(canMove(0,z)).toBe(true);
     for(let x=56;x<=75;x++)expect(canMove(x,PIER.z)).toBe(true);
     expect(canMove(70,-10)).toBe(false);
+    // Areas are fenced apart and the sea is closed: entry is through the gates only.
+    for(const [x,z] of [[46,0],[46,30],[-46.5,0],[-46.5,30],[10,44.5],[-15,44.5],[60,0],[60,-30]])expect(canMove(x,z)).toBe(false);
+    for(const [x,z] of [[44.5,-40],[-44.5,40],[55,35],[55,-50],[58.5,0],[19,66]])expect(canMove(x,z)).toBe(true);
     expect(groundHeight(HILL.x,HILL.z)).toBe(HILL.height);
     expect(groundHeight(0,40)).toBe(0);
     expect(groundHeight(74,PIER.z)).toBe(PIER.height);

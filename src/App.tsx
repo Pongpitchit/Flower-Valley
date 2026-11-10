@@ -877,10 +877,10 @@ export default function App() {
         return (
           <>
             <div className="map-world">
-              <div className="map-area sea" style={area(60, 80, -48, 90)} />
-              <div className="map-area sand" style={area(47, 60, -48, 90)} />
-              <div className="map-area valley" style={area(-43, 43, -43, 43)} />
-              <div className="map-area woods" style={area(-82, -48, -12, 40)}><span>THE DEEP WOODS</span></div>
+              <div className="map-area sea" style={area(59.2, 80, -48, 90)} />
+              <div className="map-area sand" style={area(47, 59.2, -48, 90)} />
+              <div className="map-area valley" style={area(-45, 45, -45, 43.8)} />
+              <div className="map-area woods" style={area(-82.5, -47.5, -12.5, 40.5)}><span>THE DEEP WOODS</span></div>
               <div className="map-area hill" style={{ ...area(-21, 21, 45, 87), borderRadius: "50%" }}><span>SKYHILL</span></div>
               <div className="map-area lake" style={{ ...area(-13, 13, -42, -20), borderRadius: "50%" }}><span>MIRROR LAKE</span></div>
               <div className="map-area path" style={area(-1.5, 1.5, -20, 62)} />
@@ -1151,7 +1151,6 @@ export default function App() {
               {s.energy < 20 && <small>เหนื่อยแล้ว แวะนั่งพักสักหน่อย</small>}
             </div>
           </aside>
-          <div className="crosshair" />
           <div className="interaction">
             {target && !modal ? (
               <button onClick={interact}>

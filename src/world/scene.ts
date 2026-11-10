@@ -14,7 +14,7 @@ import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { buildCampProps } from "./campProps";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { bridge, colliders, canMove, groundHeight, type Target } from "./bridge";
+import { bridge, colliders, canMove, walkable, groundHeight, type Target } from "./bridge";
 import { getState, updatePosition, type GameState } from "../game/engine";
 import { flower, FLOWERS, plotPosition, ZONES, FORAGE_SPOTS, FORAGE_ENERGY, itemName, sceneAt } from "../game/data";
 import { buildBeach, buildWoods, buildLookout } from "./scenes";
@@ -27,13 +27,21 @@ const random = () => {
 };
 const mat = (color: string, extra = {}) =>
   new T.MeshStandardMaterial({ color, roughness: 0.85, ...extra });
-const geometries = {
+const baseGeometries = {
   box: new T.BoxGeometry(1, 1, 1),
   sphere: new T.SphereGeometry(1, 12, 8),
   cylinder: new T.CylinderGeometry(1, 1, 1, 10),
   cone: new T.ConeGeometry(1, 1, 12),
 };
-export function createFlower(id: string, age = 1) {
+// Coarser shapes for the meadow's hundreds of small wildflowers.
+const lowGeometries = {
+  sphere: new T.SphereGeometry(1, 6, 4),
+  cylinder: new T.CylinderGeometry(1, 1, 1, 5),
+  cone: new T.ConeGeometry(1, 1, 5),
+};
+export function createFlower(id: string, age = 1, low = false) {
+  const geometries = low ? lowGeometries : baseGeometries,
+    N = low ? 4 : 10;
   const f = flower(id),
     g = new T.Group(),
     stemMat = mat("#497140"),
@@ -76,12 +84,12 @@ export function createFlower(id: string, age = 1) {
     for(let layer=0;layer<5;layer++){
       const count=7-layer, radius=.19-layer*.034;
       const pos:number[]=[],uv:number[]=[],idx:number[]=[];
-      for(let row=0;row<=10;row++)for(let col=0;col<=10;col++){
-        const t=row/10,u=col/10*2-1,angle=u*.95;
+      for(let row=0;row<=N;row++)for(let col=0;col<=N;col++){
+        const t=row/N,u=col/N*2-1,angle=u*.95;
         const r=radius*(.35+.85*Math.sin(t*Math.PI*.65));
         const y=t*(.14+layer*.02)-.055*u*u*t;
-        pos.push(Math.sin(angle)*r,y,Math.cos(angle)*r);uv.push(col/10,t);
-        if(row<10&&col<10){const a=row*11+col;idx.push(a,a+11,a+1,a+1,a+11,a+12);}
+        pos.push(Math.sin(angle)*r,y,Math.cos(angle)*r);uv.push(col/N,t);
+        if(row<N&&col<N){const a=row*(N+1)+col;idx.push(a,a+N+1,a+1,a+1,a+N+1,a+N+2);}
       }
       const geo=new T.BufferGeometry();geo.setAttribute("position",new T.Float32BufferAttribute(pos,3));geo.setAttribute("uv",new T.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();
       const shade=mat(new T.Color(f.color).multiplyScalar(1-layer*.065),{side:T.DoubleSide,roughness:.65});
@@ -155,6 +163,7 @@ export function createFlower(id: string, age = 1) {
   merged.scale.setScalar(0.35 + age * 0.65);
   return merged;
 }
+const geometries = baseGeometries;
 // A-Frame keeps a global registry across Vite updates; rebuild the scene on reload.
 if (import.meta.hot) import.meta.hot.accept(() => window.location.reload());
 if (!window.AFRAME.components["flower-world"])
@@ -1348,8 +1357,16 @@ if (!window.AFRAME.components["flower-world"])
             nz =
               this.pos.z +
               (-dx * Math.sin(this.yaw) + dz * Math.cos(this.yaw)) * speed;
-          if (canMove(nx, this.pos.z)) this.pos.x = nx;
-          if (canMove(this.pos.x, nz)) this.pos.z = nz;
+          // A save from before the bounds changed may stand outside the walkable land: return it to the area's entrance.
+          if (!walkable(this.pos.x, this.pos.z)) {
+            const home = sceneAt(this.pos.x, this.pos.z);
+            this.pos.x = home.x;
+            this.pos.z = home.z;
+          }
+          // Standing inside a prop (again an old save) must not trap the player.
+          const free = !canMove(this.pos.x, this.pos.z);
+          if (free ? walkable(nx, this.pos.z) : canMove(nx, this.pos.z)) this.pos.x = nx;
+          if (free ? walkable(this.pos.x, nz) : canMove(this.pos.x, nz)) this.pos.z = nz;
           // Ease onto the hill and pier instead of snapping between heights.
           const ground = 1.7 + groundHeight(this.pos.x, this.pos.z);
           this.pos.y += (ground - this.pos.y) * Math.min(1, delta * 12);

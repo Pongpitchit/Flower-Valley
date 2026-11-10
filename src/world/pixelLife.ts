@@ -1,6 +1,7 @@
 // Pixel-art weather, critters and water effects from pixelfx, placed around the six scenes.
 import { colliders, groundHeight } from "./bridge";
 import { landscapeMaterial } from "./homeGarden";
+import { WATERFALL } from "./scenes";
 import { pixelMaterial, pixelPlane, pixelTexture, type PixelTexture } from "./pixelfx";
 
 export type PixelLifeFrame = {
@@ -139,10 +140,10 @@ export function buildPixelLife(w: any) {
   const place = (b: Board, x: number, y: number, z: number) => b.mesh.position.set(x, y, z);
 
   // ---- Rain: a pixel curtain pinned in front of the camera.
-  const rainTex = tex("weather/rain", { bare: true }, [0, 0, 320, 150]);
+  const rainTex = tex("weather/rain", { bare: true, density: 0.3 }, [0, 0, 320, 150]);
   const rain = new T.Mesh(
     new T.PlaneGeometry(1, 1),
-    pixelMaterial(rainTex, { fog: false, depthTest: false, alphaTest: 0, opacity: 0.8 }),
+    pixelMaterial(rainTex, { fog: false, depthTest: false, alphaTest: 0, opacity: 0.55 }),
   );
   // Two tiles across keep the drops fine on wide screens.
   rainTex.texture.wrapS = T.RepeatWrapping;
@@ -260,12 +261,12 @@ export function buildPixelLife(w: any) {
     return { b, x, z, phase: i * 2.3 };
   });
 
-  // ---- Skyhill: a waterfall pouring off a rock outcrop at the hill's foot, facing the path and the deck.
-  const fall = { x: 13, z: 52 },
+  // ---- Skyhill: a waterfall pouring off a rock outcrop at the hill's far edge, straight ahead of the path up.
+  const fall = WATERFALL,
     fallY = groundHeight(fall.x, fall.z),
     facing = Math.atan2(0 - fall.x, 58 - fall.z);
   const waterfallTex = tex("water/waterfall");
-  const waterfall = board(waterfallTex, material(waterfallTex), 11, 118, "fixed");
+  const waterfall = board(waterfallTex, material(waterfallTex), 14, 118, "fixed");
   place(waterfall, fall.x, fallY - 0.1, fall.z);
   waterfall.mesh.rotation.y = facing;
   const stone = landscapeMaterial(T),
@@ -273,8 +274,8 @@ export function buildPixelLife(w: any) {
     side = { x: Math.cos(facing), z: -Math.sin(facing) };
   // Boulders stacked behind and beside the falling water so it has something to pour from.
   for (const [along, out, up, r] of [
-    [0, 3.6, 0.6, 3.2], [0, 3.4, 4, 3], [0, 3, 7.2, 2.4], [-4.6, 2.2, 0.8, 2.4], [4.6, 2.3, 0.8, 2.5],
-    [-3.8, 2.6, 3.8, 2], [3.9, 2.7, 4, 2.1], [-1.9, 3, 9.2, 1.7], [2, 2.9, 9, 1.6], [6.4, 1.4, 0.3, 1.5], [-6.2, 1.3, 0.2, 1.3],
+    [0, 4.6, 0.8, 4.1], [0, 4.3, 5.1, 3.8], [0, 3.8, 9.2, 3.1], [-5.9, 2.8, 1, 3.1], [5.9, 2.9, 1, 3.2],
+    [-4.8, 3.3, 4.8, 2.5], [5, 3.4, 5.1, 2.7], [-2.4, 3.8, 11.7, 2.2], [2.5, 3.7, 11.5, 2], [8.2, 1.8, 0.4, 1.9], [-7.9, 1.7, 0.3, 1.7],
   ]) {
     const rock = new T.Mesh(new T.DodecahedronGeometry(r, 0), stone);
     rock.geometry.userData.owned = true;
@@ -284,7 +285,7 @@ export function buildPixelLife(w: any) {
     rock.castShadow = rock.receiveShadow = true;
     group.add(rock);
   }
-  colliders.push({ x: fall.x + back.x * 2.6, z: fall.z + back.z * 2.6, w: 10, d: 6 });
+  colliders.push({ x: fall.x + back.x * 3.3, z: fall.z + back.z * 3.3, w: 17, d: 6 });
 
   // ---- Ponds: bubbles rising through the water, rain splashes when it rains.
   const bubbleTex = tex("water/bubbles", { bare: true }, [0, 2, 104, 44]),

@@ -6,7 +6,7 @@ import { canMove } from "./bridge";
 
 export function buildMeadows(
   w: any,
-  makeFlower: (id: string) => any,
+  makeFlower: (id: string, age?: number, low?: boolean) => any,
   random: () => number,
 ) {
   const T = window.AFRAME.THREE;
@@ -54,7 +54,7 @@ export function buildMeadows(
     }
   }
   for (let i = 0; i < FLOWERS.length; i++) {
-    const template = makeFlower(FLOWERS[i].id);
+    const template = makeFlower(FLOWERS[i].id, 1, true);
     for (const part of template.children) {
       addBreeze(part.material, w.breezeClock, 0.13);
       const batch = new T.InstancedMesh(

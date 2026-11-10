@@ -419,18 +419,6 @@ kbd {
     background: #dfa674
 }
 
-.crosshair {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    border: 1px solid #ffffffaa;
-    box-shadow: 0 0 0 4px #293c2814;
-    pointer-events: none
-}
-
 .interaction {
     position: fixed;
     bottom: 142px;

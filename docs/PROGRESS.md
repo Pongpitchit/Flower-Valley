@@ -162,3 +162,12 @@ Effects from pixelfx (MIT, vendored in `src/vendor/pixelfx`), drawn at 15 fps in
 - **Skyhill:** a waterfall pours from a boulder outcrop at the hill's north-east foot, facing the path and deck.
 - **Ponds:** bubbles rise and pop in the lake and home pond.
 - Validation: 85 tests pass, type check and production build pass. Browser verified the garden by day (butterflies, bird, leaves), an aurora night, a rainy night with clouds, lake splashes and bubbles, woods snake/slime/campfire, jellyfish and fish schools from the pier, and the waterfall from the Skyhill path. Each effect redraw measures 0.1–1.2 ms (aurora 5 ms at 10 fps). Not tested on a physical phone/iPad.
+
+## Waterfall stream, wider bounds, logo and speed (2026-11-10)
+
+- **Skyhill:** the waterfall moved to the hill's far edge (0, 81), straight ahead of the path up, and a stream now runs from its base down the slope to the east. The flag shows the Flower Valley logo, readable from both sides.
+- **Walking:** the valley, beach and Deep Woods bounds are wider; fences close the valley edges so the beach, woods and Skyhill are entered only through their gates; the sea is blocked at the shoreline (pier excepted); the woods brook can be waded. A player caught outside walkable land is returned to that scene's entrance.
+- **Sea fish:** jellyfish can be caught at the pier (90 coins); the five sea catches use a new icon sheet.
+- **Screen:** lighter rain (30% density), centre crosshair removed, logo favicon.
+- **Speed:** meadow wildflowers use low-poly shapes; the valley went from about 4.8M to 2.0M triangles with no visible change.
+- Validation: 86 tests, type check and production build pass. Browser verified the waterfall from the hill path, the stream, flag, rain, bag icons and a clear sky view.

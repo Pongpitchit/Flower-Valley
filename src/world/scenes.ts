@@ -192,6 +192,27 @@ function gate(w: any, text: string, x: number, z: number, yaw: number, span = 4.
     colliders.push({ x: p.x, z: p.z, w: 0.4, d: 0.4 });
   }
 }
+// Low timber fence between two points. Fences mark the edges of the valley, so the beach, the woods and
+// Skyhill are entered through their gates.
+function fence(w: any, x1: number, z1: number, x2: number, z2: number) {
+  const T = window.AFRAME.THREE,
+    len = Math.hypot(x2 - x1, z2 - z1),
+    count = Math.max(1, Math.round(len / 2.4)),
+    posts = new T.InstancedMesh(w.geometries.box, w.m.darkWood, count + 1),
+    o = new T.Object3D();
+  for (let i = 0; i <= count; i++) {
+    o.position.set(x1 + ((x2 - x1) * i) / count, 0.5, z1 + ((z2 - z1) * i) / count);
+    o.scale.set(0.14, 1, 0.14);
+    o.updateMatrix();
+    posts.setMatrixAt(i, o.matrix);
+  }
+  posts.castShadow = true;
+  w.world.add(posts);
+  for (const y of [0.42, 0.8]) {
+    const rail = w.mesh(w.geometries.box, w.m.wood, (x1 + x2) / 2, y, (z1 + z2) / 2, len, 0.09, 0.07, w.world);
+    rail.rotation.y = -Math.atan2(z2 - z1, x2 - x1);
+  }
+}
 
 export function buildBeach(w: any) {
   const T = window.AFRAME.THREE,
@@ -373,6 +394,8 @@ export function buildBeach(w: any) {
   colliders.push({ x: 52, z: -12, w: 1.4, d: 1.4 });
   for (const [x, z, s] of [[59.5, -38.5, 1.3], [59.8, 7.5, 1.1], [60.5, -22, 0.8]]) place(w, "/models/beach/rocks-sand-b.glb", x, -0.3, z, s, rand() * 6);
   gate(w, "BREEZY BEACH", 46.2, PIER.z, -Math.PI / 2);
+  fence(w, 46.2, -45, 46.2, PIER.z - 2.5);
+  fence(w, 46.2, PIER.z + 2.5, 46.2, 43.8);
 
   // A silver fish leaps near the pier every few seconds (the gulls are pixel art in pixelLife.ts).
   const leaper = new T.Mesh(new T.SphereGeometry(1, 12, 8), new T.MeshStandardMaterial({ color: "#c8d4dc", metalness: 0.6, roughness: 0.3 }));
@@ -465,13 +488,17 @@ export function buildWoods(w: any) {
       if (Math.abs(z - 15) < 1.5) continue;
       w.mesh(w.geometries.sphere, pebble, streamX(z) + side * between(1.05, 1.35), 0.04, z + between(-0.3, 0.3), between(0.12, 0.3), between(0.06, 0.14), between(0.12, 0.28));
     }
-  for (let z = -12.5; z <= 40.5; z += 1.5) if (Math.abs(z - 15) > 1.6) colliders.push({ x: streamX(z), z, w: 2.3, d: 1.6 });
+  // The brook is ankle deep, so it can be waded anywhere, not only at the bridge.
   for (let x = -63.8; x <= -58.4; x += 0.3) w.box(w.m.wood, x, 0.11, 15, 0.26, 0.08, 2.2);
   for (const side of [-1, 1]) {
     w.box(w.m.darkWood, -61.1, 0.85, 15 + side * 1.08, 5.4, 0.08, 0.08);
     for (const x of [-63.6, -61.1, -58.6]) w.box(w.m.darkWood, x, 0.45, 15 + side * 1.08, 0.1, 0.9, 0.1);
   }
   gate(w, "THE DEEP WOODS", -48.3, 15, Math.PI / 2);
+  fence(w, -46.6, -14, -46.6, 12.4);
+  fence(w, -46.6, 17.6, -46.6, 42);
+  fence(w, -46.6, 12.4, -48.3, 12.7);
+  fence(w, -46.6, 17.6, -48.3, 17.3);
 
   // Dense canopy kept clear of trails, the brook, the camp and every forage spot.
   const camp = { x: -67, z: 26.5 };
@@ -742,6 +769,9 @@ function kite(w: any, [main, accent]: [string, string], size: number, anchor: an
   };
 }
 
+// The waterfall stands at the far edge of the hill, straight ahead of the path up; its stream runs to the sea.
+export const WATERFALL = { x: 0, z: 81 };
+const STREAM: [number, number][] = [[0, 80.3], [4.5, 80.8], [9.5, 80], [14, 77.6], [18, 74], [22, 70.3], [28, 66.5], [35, 62], [42, 56.5], [49, 51], [54.5, 47], [60, 44.5]];
 export const TELESCOPE = { x: -2.2, z: HILL.z - 4.1 };
 export function buildLookout(w: any) {
   const T = window.AFRAME.THREE,
@@ -763,6 +793,67 @@ export function buildLookout(w: any) {
   w.world.add(hill);
   ribbon(w, w.m.path, [[0, 40], [0, HILL.z - HILL.top - 0.2]], 2.2, 0.04);
   gate(w, "SKYHILL LOOKOUT", 0, 45, Math.PI);
+  fence(w, -22, 44.8, -2.3, 44.8);
+  fence(w, 2.3, 44.8, 22, 44.8);
+
+  // A stream runs from the foot of the waterfall (drawn in pixelLife.ts) round the back of the hill,
+  // across the meadow and out to the sea.
+  const streamCurve = new T.CatmullRomCurve3(STREAM.map(([x, z]) => new T.Vector3(x, 0, z))),
+    streamPts = streamCurve.getSpacedPoints(150),
+    sPos: number[] = [],
+    sUv: number[] = [],
+    sCol: number[] = [],
+    sIdx: number[] = [],
+    streamLength = streamCurve.getLength(),
+    bankRocks: [number, number, number][] = [];
+  streamPts.forEach((p: any, i: number) => {
+    const k = i / 150,
+      tan = streamCurve.getTangentAt(k),
+      width = 4.2 - 1.8 * Math.min(1, k * 8) + 1.2 * Math.max(0, k - 0.7) / 0.3;
+    for (const side of [-1, 1]) {
+      const x = p.x - tan.z * side * width * 0.5,
+        z = p.z + tan.x * side * width * 0.5;
+      // Past the tide line the water sinks to sea level and fades out.
+      sPos.push(x, groundHeight(x, z) + 0.08 - Math.max(0, x - 55.5) * 0.09, z);
+      sUv.push(side * 0.5 + 0.5, (k * streamLength) / 5);
+      sCol.push(1, 1, 1, Math.min(1, k * 40, (1 - k) * 12));
+      if (i % 2 === 0 && x < 55) bankRocks.push([x - tan.z * side * between(0.1, 0.5), z + tan.x * side * between(0.1, 0.5), between(0.16, 0.42)]);
+    }
+    if (i) sIdx.push(i * 2 - 2, i * 2 - 1, i * 2, i * 2 - 1, i * 2 + 1, i * 2);
+  });
+  const streamGeo = new T.BufferGeometry();
+  streamGeo.setAttribute("position", new T.Float32BufferAttribute(sPos, 3));
+  streamGeo.setAttribute("uv", new T.Float32BufferAttribute(sUv, 2));
+  streamGeo.setAttribute("color", new T.Float32BufferAttribute(sCol, 4));
+  streamGeo.setIndex(sIdx);
+  streamGeo.computeVertexNormals();
+  const flow = canvasTexture(64, 128, (ctx) => {
+    ctx.fillStyle = "#4f9fb0";
+    ctx.fillRect(0, 0, 64, 128);
+    // Pale streaks that wrap top to bottom so the scroll loops cleanly.
+    for (let i = 0; i < 26; i++) {
+      const x = 3 + ((i * 37) % 58),
+        y = (i * 53) % 128,
+        h = 14 + ((i * 11) % 22);
+      ctx.fillStyle = i % 3 ? "rgba(214,240,244,.45)" : "rgba(255,255,255,.75)";
+      for (const dy of [0, -128]) ctx.fillRect(x, y + dy, i % 3 ? 2 : 1, h);
+    }
+  });
+  flow.wrapS = flow.wrapT = T.RepeatWrapping;
+  const stream = new T.Mesh(streamGeo, new T.MeshStandardMaterial({ map: flow, vertexColors: true, transparent: true, opacity: 0.9, roughness: 0.12, metalness: 0.1, depthWrite: false, side: T.DoubleSide }));
+  stream.receiveShadow = true;
+  w.world.add(stream);
+  const pebbles = new T.InstancedMesh(new T.DodecahedronGeometry(1, 0), w.m.stone, bankRocks.length),
+    pebble = new T.Object3D();
+  bankRocks.forEach(([x, z, r], i) => {
+    pebble.position.set(x, groundHeight(x, z) + r * 0.25, z);
+    pebble.scale.set(r, r * 0.6, r * 0.85);
+    pebble.rotation.set(i, i * 1.7, 0);
+    pebble.updateMatrix();
+    pebbles.setMatrixAt(i, pebble.matrix);
+  });
+  pebbles.castShadow = pebbles.receiveShadow = true;
+  w.world.add(pebbles);
 
   // Round deck with a railing open toward the valley.
   const top = HILL.height;
@@ -795,7 +886,7 @@ export function buildLookout(w: any) {
   colliders.push({ x: TELESCOPE.x, z: TELESCOPE.z, w: 0.5, d: 0.5 });
   w.targets.push({ id: "viewpoint", kind: "viewpoint", name: "กล้องส่องทางไกล", hint: "ชมวิวทั้งหุบเขา", x: TELESCOPE.x, z: TELESCOPE.z + 0.6 });
 
-  // Benches facing the view, a signpost, a lone oak, flags and a kite.
+  // Benches facing the view, a signpost, a lone oak, the flag and kites.
   for (const [x, z] of [[2.4, HILL.z - 2.6], [3.6, HILL.z + 0.6]]) {
     w.box(w.m.wood, x, top + 0.45, z, 1.6, 0.08, 0.45);
     w.box(w.m.wood, x, top + 0.8, z + 0.22, 1.6, 0.5, 0.06);
@@ -809,22 +900,33 @@ export function buildLookout(w: any) {
     const board = w.sign(text, post.x, top + 2 - i * 0.42, post.z + 0.08, 1.5);
     board.rotation.y = i === 2 ? 0 : (i ? -0.12 : 0.12);
   });
-  scatter(w, "/models/forest/oak-lush.glb", [{ x: 2.5, z: HILL.z + 4.4, h: 9.5, y: groundHeight(2.5, HILL.z + 4.4) - 0.1 }], 0.012);
-  colliders.push({ x: 2.5, z: HILL.z + 4.4, w: 0.8, d: 0.8 });
-  const flagGeo = new T.PlaneGeometry(1.3, 0.75, 12, 4);
-  flagGeo.translate(0.65, 0, 0);
+  scatter(w, "/models/forest/oak-lush.glb", [{ x: 9, z: HILL.z + 2.5, h: 9.5, y: groundHeight(9, HILL.z + 2.5) - 0.1 }], 0.012);
+  colliders.push({ x: 9, z: HILL.z + 2.5, w: 0.8, d: 0.8 });
+  // The Flower Valley logo flies from the hilltop pole.
+  const flagGeo = new T.PlaneGeometry(2.6, 1.6, 14, 6);
+  flagGeo.translate(1.3, 0, 0);
   const flagBase = Float32Array.from(flagGeo.attributes.position.array);
-  const flag = new T.Mesh(flagGeo, new T.MeshStandardMaterial({ map: canvasTexture(128, 64, (ctx) => {
-    ctx.fillStyle = "#e7b54a";
-    ctx.fillRect(0, 0, 128, 64);
-    ctx.fillStyle = "#cf5f6a";
-    ctx.beginPath();
-    ctx.arc(46, 32, 16, 0, Math.PI * 2);
-    ctx.fill();
-  }), side: T.DoubleSide, roughness: 0.9 }));
-  flag.position.set(-3.6, top + 3.5, HILL.z + 3);
+  const flagMap = canvasTexture(512, 320, (ctx) => {
+    ctx.fillStyle = "#fbf3e0";
+    ctx.fillRect(0, 0, 512, 320);
+  });
+  // The back face gets a mirrored copy so the logo reads correctly from both sides.
+  const flagBack = flagMap.clone();
+  flagBack.wrapS = T.RepeatWrapping;
+  flagBack.repeat.x = -1;
+  const logo = new Image();
+  logo.onload = () => {
+    const ctx = flagMap.image.getContext("2d");
+    ctx.drawImage(logo, 16, 160 - (480 * logo.height) / logo.width / 2, 480, (480 * logo.height) / logo.width);
+    flagMap.needsUpdate = true;
+    flagBack.needsUpdate = true;
+  };
+  logo.src = "/icons/logo.png";
+  const flag = new T.Mesh(flagGeo, new T.MeshStandardMaterial({ map: flagMap, roughness: 0.9 }));
+  flag.position.set(-3.6, top + 4.6, HILL.z + 3);
+  flag.add(new T.Mesh(flagGeo, new T.MeshStandardMaterial({ map: flagBack, side: T.BackSide, roughness: 0.9 })));
   w.world.add(flag);
-  w.mesh(w.geometries.cylinder, w.m.white, -3.6, top + 1.95, HILL.z + 3, 0.05, 3.9, 0.05);
+  w.mesh(w.geometries.cylinder, w.m.white, -3.6, top + 2.75, HILL.z + 3, 0.05, 5.5, 0.05);
   colliders.push({ x: -3.6, z: HILL.z + 3, w: 0.3, d: 0.3 });
   const kites = [
     kite(w, ["#e0626d", "#f3c552"], 1, new T.Vector3(4.2, top + 0.35, HILL.z + 0.6), new T.Vector3(9, top + 14, HILL.z + 10), 0),
@@ -839,7 +941,7 @@ export function buildLookout(w: any) {
         r = between(HILL.top + 0.8, HILL.radius - 0.5),
         x = HILL.x + Math.sin(a) * r,
         z = HILL.z + Math.cos(a) * r;
-      if (Math.abs(x) < 1.8 && z < HILL.z) continue;
+      if ((Math.abs(x) < 1.8 && z < HILL.z) || nearPolyline(x, z, STREAM, 2.6) || (Math.abs(x) < 7 && z > WATERFALL.z - 1.5)) continue;
       out.push({ x, z, h: between(h0, h1) });
     }
     return out;
@@ -860,5 +962,6 @@ export function buildLookout(w: any) {
     p.needsUpdate = true;
     flagGeo.computeVertexNormals();
     kites.forEach((k) => k(time));
+    flow.offset.y = (time * 0.00045) % 1;
   };
 }
